@@ -1,0 +1,84 @@
+name: App Store Screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      simulator:
+        description: 'Simulator to use'
+        required: false
+        default: 'iPhone 16 Pro Max'
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+
+jobs:
+  screenshots:
+    name: Generate & Upload Screenshots
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 16
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Set simulator name
+        id: sim
+        run: |
+          SIM="${{ github.event.inputs.simulator || 'iPhone 16 Pro Max' }}"
+          echo "name=$SIM" >> "$GITHUB_OUTPUT"
+
+      - name: Boot simulator
+        run: xcrun simctl boot "${{ steps.sim.outputs.name }}" 2>/dev/null || true
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Run screenshot UI tests
+        working-directory: ios
+        run: |
+          rm -rf build/screenshots.xcresult
+          xcodebuild test \
+            -project Hookbot.xcodeproj \
+            -scheme Hookbot \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            -only-testing:HookbotUITests/ScreenshotTests \
+            -resultBundlePath build/screenshots.xcresult \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            -quiet
+
+      - name: Extract screenshots
+        run: |
+          mkdir -p ios/screenshots
+          python3 scripts/extract-screenshots.py ios/build/screenshots.xcresult ios/screenshots/
+          ls -la ios/screenshots/*.png 2>/dev/null || echo "No PNGs found"
+
+      - name: Upload screenshots as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-store-screenshots
+          path: ios/screenshots/*.png
+          if-no-files-found: error
+
+      - name: Upload to App Store Connect via fastlane
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+        run: |
+          gem install fastlane --no-document
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s' "$APP_STORE_CONNECT_API_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+          fastlane deliver \
+            --api_key "{\"key_id\":\"$APP_STORE_CONNECT_API_KEY_ID\",\"issuer_id\":\"$APP_STORE_CONNECT_API_ISSUER_ID\",\"key_content\":\"$APP_STORE_CONNECT_API_KEY_CONTENT\"}" \
+            --screenshots_path ios/screenshots \
+            --skip_binary_upload true \
+            --skip_metadata true \
+            --overwrite_screenshots true
