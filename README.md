@@ -1,5 +1,9 @@
 # Hookbot
 
-<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="xaxy55" data-color="#FFDD00" data-emoji="🤖"  data-font="Comic" data-text="Buy tokens" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>
+<p align="left">
+  <a href="https://www.buymeacoffee.com/xaxy55">
+    <img src="https://img.shields.io/badge/%F0%9F%A4%96-Buy%20tokens-FFDD00?style=for-the-badge" />
+  </a>
+</p>
 
 An ESP32 desk companion that reacts to your dev workflow — animated OLED avatar, LEDs, buzzer, servos, and XP leveling, all driven by Claude Code hooks. Managed via a Rust server and React dashboard.
