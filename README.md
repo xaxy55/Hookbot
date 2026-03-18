@@ -89,8 +89,10 @@ make help     # Show available commands
 make server   # Start backend dev server
 make web      # Start frontend dev server
 make build    # Production build
-make test     # Run Playwright tests
-make up       # Docker Compose
+make test          # Run Playwright tests
+make up            # Docker Compose
+make screenshots   # Generate App Store screenshots via UI tests
+make build-testflight  # Archive and upload iOS app to TestFlight
 ```
 
 ## Documentation

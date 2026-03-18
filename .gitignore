@@ -49,5 +49,10 @@ Thumbs.db
 logs/
 *.log
 
+# iOS build artifacts
+ios/build/
+ios/screenshots/
+*.xcresult
+
 # Claude Code
 .claude/

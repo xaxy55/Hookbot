@@ -22,7 +22,7 @@ up: ## Start everything with Docker Compose
 build-testflight: ## Archive and upload iOS app to TestFlight
 	cd ios && ./build-testflight.sh
 
-SCREENSHOT_SIM ?= iPhone 15 Pro Max
+SCREENSHOT_SIM ?= iPhone 17 Pro Max
 
 screenshots: ## Generate App Store screenshots via UI tests
 	cd ios && xcodegen generate

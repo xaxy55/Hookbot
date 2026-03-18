@@ -10,6 +10,7 @@ struct SettingsView: View {
     @State private var accessories: AccessoriesConfig = AccessoriesConfig()
     @State private var testResult: ServerTestResult?
     @State private var isTesting = false
+    @State private var showCigarAgeGate = false
 
     var body: some View {
         NavigationStack {
@@ -61,13 +62,30 @@ struct SettingsView: View {
 
                 Section("Accessories") {
                     Toggle("Top Hat", isOn: $accessories.topHat)
-                    Toggle("Cigar", isOn: $accessories.cigar)
                     Toggle("Crown", isOn: $accessories.crown)
                     Toggle("Devil Horns", isOn: $accessories.horns)
                     Toggle("Halo", isOn: $accessories.halo)
                     Toggle("Glasses", isOn: $accessories.glasses)
                     Toggle("Monocle", isOn: $accessories.monocle)
                     Toggle("Bow Tie", isOn: $accessories.bowtie)
+                }
+
+                Section {
+                    Toggle("Cigar", isOn: Binding(
+                        get: { accessories.cigar },
+                        set: { newValue in
+                            if newValue {
+                                showCigarAgeGate = true
+                            } else {
+                                accessories.cigar = false
+                            }
+                        }
+                    ))
+                } header: {
+                    Text("Mature Content")
+                } footer: {
+                    Text("Enabling the cigar requires age verification. This accessory may not be suitable for younger users.")
+                        .font(.caption2)
                 }
 
                 Section("Network") {
@@ -103,6 +121,14 @@ struct SettingsView: View {
                 serverURL = engine.config.serverURL
                 deviceName = engine.config.deviceName
                 accessories = engine.config.accessories
+            }
+            .alert("Age Verification", isPresented: $showCigarAgeGate) {
+                Button("I am 17 or older") {
+                    accessories.cigar = true
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("The cigar accessory is intended for users aged 17 and older. By enabling this, you confirm that you meet the age requirement.")
             }
         }
     }

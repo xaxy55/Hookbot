@@ -55,10 +55,10 @@ struct TaskItem: Identifiable {
 
 struct AccessoriesConfig: Codable {
     var topHat: Bool = true
-    var cigar: Bool = true
+    var cigar: Bool = false
     var glasses: Bool = false
     var monocle: Bool = false
-    var bowtie: Bool = false
+    var bowtie: Bool = true
     var crown: Bool = false
     var horns: Bool = false
     var halo: Bool = false
