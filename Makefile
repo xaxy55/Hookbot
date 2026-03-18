@@ -1,4 +1,4 @@
-.PHONY: help test server web up build build-testflight screenshots gh-secrets
+.PHONY: help test server web up build build-testflight screenshots gh-secrets cloud-secrets
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -29,6 +29,30 @@ gh-secrets: ## Set GitHub secrets for Docker Hub from .env (prompts if missing)
 		gh secret set DOCKERHUB_USERNAME --body "$$DOCKERHUB_USERNAME" && \
 		gh secret set DOCKERHUB_TOKEN --body "$$DOCKERHUB_TOKEN" && \
 		echo "GitHub secrets set successfully"
+
+cloud-secrets: ## Set GitHub secrets for GCE + Cloudflare deployment (interactive)
+	@echo "=== Google Cloud ==="
+	@read -p "GCP Project ID: " gcp_proj; \
+	echo ""; \
+	echo "Paste the path to your GCP service account JSON key file:"; \
+	read -p "Path to SA key JSON: " gcp_key_path; \
+	echo ""; \
+	echo "=== Cloudflare ==="; \
+	read -p "Cloudflare API Token: " cf_token; \
+	read -p "Cloudflare Account ID: " cf_account; \
+	echo ""; \
+	echo "=== API URL ==="; \
+	echo "(This is your GCE static IP — run 'terraform output server_ip' after first deploy)"; \
+	read -p "API Base URL (e.g. http://34.xx.xx.xx): " api_url; \
+	echo ""; \
+	echo "Setting GitHub secrets..."; \
+	gh secret set GCP_PROJECT_ID --body "$$gcp_proj" && \
+	gh secret set GCP_SA_KEY < "$$gcp_key_path" && \
+	gh secret set CLOUDFLARE_API_TOKEN --body "$$cf_token" && \
+	gh secret set CLOUDFLARE_ACCOUNT_ID --body "$$cf_account" && \
+	gh secret set API_BASE_URL --body "$$api_url" && \
+	echo "" && \
+	echo "All cloud secrets set successfully!"
 
 up: ## Start everything with Docker Compose
 	docker compose up --build

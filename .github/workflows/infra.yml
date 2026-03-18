@@ -1,0 +1,77 @@
+name: Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/*.tf"
+  pull_request:
+    paths:
+      - "infra/*.tf"
+
+defaults:
+  run:
+    working-directory: infra
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        env:
+          TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Comment Plan on PR
+        uses: actions/github-script@v7
+        env:
+          PLAN_OUTPUT: ${{ steps.plan.outputs.stdout }}
+        with:
+          script: |
+            const plan = process.env.PLAN_OUTPUT || 'No plan output captured';
+            const body = `### Terraform Plan\n\`\`\`\n${plan}\n\`\`\``;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body,
+            });
+
+  apply:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false
+        env:
+          TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
