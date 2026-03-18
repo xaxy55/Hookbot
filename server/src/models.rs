@@ -345,6 +345,23 @@ pub struct SensorChannelUpdate {
     pub threshold: Option<i32>,
 }
 
+// --- Sensor reading types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SensorReading {
+    pub id: i64,
+    pub device_id: String,
+    pub channel: i32,
+    pub value: f64,
+    pub recorded_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SensorReadingsQuery {
+    pub channel: Option<i32>,
+    pub hours: Option<u64>,
+}
+
 // --- Automation types ---
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -381,6 +398,99 @@ pub struct UpdateRule {
     pub action_type: Option<String>,
     pub action_config: Option<serde_json::Value>,
     pub cooldown_secs: Option<i64>,
+}
+
+// --- Project routing types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectRoute {
+    pub id: String,
+    pub project_path: String,
+    pub device_id: String,
+    pub label: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ProjectRouteWithDevice {
+    pub id: String,
+    pub project_path: String,
+    pub device_id: String,
+    pub label: Option<String>,
+    pub created_at: String,
+    pub device_name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateProjectRoute {
+    pub project_path: String,
+    pub device_id: String,
+    pub label: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateProjectRoute {
+    pub project_path: Option<String>,
+    pub device_id: Option<String>,
+    pub label: Option<String>,
+}
+
+// --- Device Group types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeviceGroup {
+    pub id: String,
+    pub name: String,
+    pub color: String,
+    pub created_at: String,
+    pub device_ids: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateGroup {
+    pub name: String,
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateGroup {
+    pub name: Option<String>,
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AddGroupMember {
+    pub device_id: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GroupStateRequest {
+    pub state: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GroupCommandRequest {
+    pub endpoint: String,
+    pub body: serde_json::Value,
+}
+
+// --- Verified publisher types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VerifiedPublisher {
+    pub id: String,
+    pub name: String,
+    pub display_name: String,
+    pub badge_type: String,
+    pub verified_at: String,
+    pub verified_by: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateVerifiedPublisher {
+    pub name: String,
+    pub display_name: String,
+    pub badge_type: Option<String>,
 }
 
 // --- Context types ---

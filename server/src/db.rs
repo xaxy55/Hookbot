@@ -25,6 +25,8 @@ fn run_migrations(conn: &Connection) {
     let migrations: &[&str] = &[
         "ALTER TABLE devices ADD COLUMN device_type TEXT",
         "ALTER TABLE device_config ADD COLUMN sound_pack TEXT DEFAULT 'default'",
+        "ALTER TABLE community_plugins ADD COLUMN verified BOOLEAN DEFAULT 0",
+        "ALTER TABLE shared_assets ADD COLUMN verified BOOLEAN DEFAULT 0",
     ];
 
     for sql in migrations {
@@ -266,5 +268,51 @@ CREATE TABLE IF NOT EXISTS shared_asset_ratings (
     stars INTEGER NOT NULL CHECK(stars >= 1 AND stars <= 5),
     rated_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(asset_id, device_id)
+);
+
+CREATE TABLE IF NOT EXISTS sensor_readings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    device_id TEXT NOT NULL,
+    channel INTEGER NOT NULL,
+    value REAL NOT NULL,
+    recorded_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (device_id) REFERENCES devices(id)
+);
+CREATE INDEX IF NOT EXISTS idx_sensor_readings_device_time ON sensor_readings(device_id, recorded_at);
+
+-- Device groups
+CREATE TABLE IF NOT EXISTS device_groups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    color TEXT DEFAULT '#6366f1',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS device_group_members (
+    group_id TEXT NOT NULL,
+    device_id TEXT NOT NULL,
+    PRIMARY KEY (group_id, device_id),
+    FOREIGN KEY (group_id) REFERENCES device_groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
+);
+
+-- Verified publishers
+CREATE TABLE IF NOT EXISTS verified_publishers (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL,
+    badge_type TEXT NOT NULL DEFAULT 'verified',
+    verified_at TEXT NOT NULL DEFAULT (datetime('now')),
+    verified_by TEXT DEFAULT 'system'
+);
+
+-- Per-project device routing
+CREATE TABLE IF NOT EXISTS project_routes (
+    id TEXT PRIMARY KEY,
+    project_path TEXT NOT NULL UNIQUE,
+    device_id TEXT NOT NULL,
+    label TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (device_id) REFERENCES devices(id)
 );
 "#;

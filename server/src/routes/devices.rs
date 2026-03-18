@@ -715,3 +715,30 @@ pub async fn import_config(
         }
     })))
 }
+
+/// POST /api/devices/:id/animation - forward animation to device
+pub async fn forward_animation(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let ip = {
+        let conn = db.lock().unwrap();
+        query_device_ip(&conn, &id)?
+    };
+    proxy::forward_json(&format!("http://{}/animation", ip), &body).await?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+/// POST /api/devices/:id/animation/stop - stop animation on device
+pub async fn stop_animation(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let ip = {
+        let conn = db.lock().unwrap();
+        query_device_ip(&conn, &id)?
+    };
+    proxy::forward_json(&format!("http://{}/animation/stop", ip), &json!({})).await?;
+    Ok(Json(json!({ "ok": true })))
+}

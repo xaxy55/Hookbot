@@ -19,6 +19,7 @@ pub struct SharedAsset {
     pub rating_avg: f64,
     pub rating_count: i64,
     pub installed: bool,
+    pub verified: bool,
     pub created_at: String,
 }
 
@@ -60,6 +61,14 @@ fn resolve_device_id(conn: &rusqlite::Connection, device_id: Option<&str>) -> Re
         .map_err(|_| AppError::NotFound("No devices registered".into()))
 }
 
+fn is_verified_publisher(conn: &rusqlite::Connection, author: &str) -> bool {
+    conn.query_row(
+        "SELECT COUNT(*) FROM verified_publishers WHERE name = ?1",
+        [author],
+        |row| row.get::<_, i32>(0),
+    ).map(|c| c > 0).unwrap_or(false)
+}
+
 // ── Handlers ──────────────────────────────────────────────────────
 
 /// GET /api/community/assets — list shared assets
@@ -73,13 +82,17 @@ pub async fn list_assets(
     let order = match q.sort.as_deref() {
         Some("popular") => "a.downloads DESC",
         Some("rating") => "(CASE WHEN a.rating_count = 0 THEN 0 ELSE CAST(a.rating_sum AS REAL) / a.rating_count END) DESC",
+        Some("verified") => "verified DESC, a.created_at DESC",
         Some("newest") | _ => "a.created_at DESC",
     };
 
     let sql = format!(
         "SELECT a.id, a.name, a.description, a.author, a.asset_type, a.payload, \
-         a.downloads, a.rating_sum, a.rating_count, a.created_at \
-         FROM shared_assets a ORDER BY {order}"
+         a.downloads, a.rating_sum, a.rating_count, a.created_at, \
+         CASE WHEN vp.id IS NOT NULL THEN 1 ELSE a.verified END AS verified \
+         FROM shared_assets a \
+         LEFT JOIN verified_publishers vp ON a.author = vp.name \
+         ORDER BY {order}"
     );
 
     let mut stmt = conn.prepare(&sql)?;
@@ -95,13 +108,14 @@ pub async fn list_assets(
             row.get::<_, i64>(7)?,
             row.get::<_, i64>(8)?,
             row.get::<_, String>(9)?,
+            row.get::<_, bool>(10)?,
         ))
     })?;
 
     let mut assets = Vec::new();
     for row in rows {
         let (id, name, description, author, asset_type, payload_json,
-             downloads, rating_sum, rating_count, created_at) = row?;
+             downloads, rating_sum, rating_count, created_at, verified) = row?;
 
         // Filter by type
         if let Some(ref at) = q.asset_type {
@@ -137,7 +151,7 @@ pub async fn list_assets(
 
         assets.push(SharedAsset {
             id, name, description, author, asset_type, payload,
-            downloads, rating_avg, rating_count, installed, created_at,
+            downloads, rating_avg, rating_count, installed, verified, created_at,
         });
     }
 
@@ -163,10 +177,12 @@ pub async fn publish_asset(
     let author = input.author.unwrap_or_else(|| "anonymous".to_string());
     let payload_json = serde_json::to_string(&input.payload).unwrap_or_else(|_| "{}".to_string());
 
+    let verified = is_verified_publisher(&conn, &author);
+
     conn.execute(
-        "INSERT INTO shared_assets (id, name, description, author, asset_type, payload) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        rusqlite::params![id, input.name, description, author, input.asset_type, payload_json],
+        "INSERT INTO shared_assets (id, name, description, author, asset_type, payload, verified) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        rusqlite::params![id, input.name, description, author, input.asset_type, payload_json, verified],
     )?;
 
     Ok(Json(SharedAsset {
@@ -180,6 +196,7 @@ pub async fn publish_asset(
         rating_avg: 0.0,
         rating_count: 0,
         installed: false,
+        verified,
         created_at: "just now".into(),
     }))
 }

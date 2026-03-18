@@ -30,9 +30,22 @@ pub async fn handle_hook(
     };
 
     // Find target device IP and ID - scoped to drop MutexGuard before await
+    // Priority: 1) project_routes lookup by project path, 2) device_id from request, 3) first device
     let (device_ip, device_id): (Option<String>, Option<String>) = {
         let conn = db.lock().unwrap();
-        if let Some(ref did) = input.device_id {
+
+        // Try project-based routing first
+        let routed_device_id: Option<String> = input.project.as_ref().and_then(|project| {
+            conn.query_row(
+                "SELECT device_id FROM project_routes WHERE project_path = ?1",
+                [project],
+                |row| row.get(0),
+            ).ok()
+        });
+
+        let effective_device_id = routed_device_id.or_else(|| input.device_id.clone());
+
+        if let Some(ref did) = effective_device_id {
             let ip = conn.query_row(
                 "SELECT ip_address FROM devices WHERE id = ?1", [did],
                 |row| row.get(0),

@@ -139,9 +139,31 @@ async fn poll_device(db: &DbPool, device_id: &str, ip: &str, retention_hours: u6
                     );
                 }
 
+                // Record sensor readings if present in status response
+                if let Some(sensors) = json.get("sensors") {
+                    if let Some(arr) = sensors.as_array() {
+                        for sensor in arr {
+                            let channel = sensor["channel"].as_i64();
+                            let value = sensor["value"].as_f64();
+                            if let (Some(ch), Some(val)) = (channel, value) {
+                                let _ = conn.execute(
+                                    "INSERT INTO sensor_readings (device_id, channel, value) VALUES (?1, ?2, ?3)",
+                                    rusqlite::params![device_id, ch, val],
+                                );
+                            }
+                        }
+                    }
+                }
+
                 // Prune entries older than retention period
                 let _ = conn.execute(
                     "DELETE FROM status_log WHERE device_id = ?1 AND recorded_at < datetime('now', ?2)",
+                    rusqlite::params![device_id, format!("-{} hours", retention_hours)],
+                );
+
+                // Prune old sensor readings (same retention)
+                let _ = conn.execute(
+                    "DELETE FROM sensor_readings WHERE device_id = ?1 AND recorded_at < datetime('now', ?2)",
                     rusqlite::params![device_id, format!("-{} hours", retention_hours)],
                 );
 
