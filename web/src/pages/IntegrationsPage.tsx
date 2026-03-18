@@ -467,7 +467,7 @@ export default function IntegrationsPage() {
 function TeamsIntegration({ devices }: { devices?: { id: string; name: string; online: boolean }[] }) {
   const [targetDevice, setTargetDevice] = useState('');
   const [testCount, setTestCount] = useState(3);
-  const [webhookUrl, setWebhookUrl] = useState('');
+  const [_webhookUrl, _setWebhookUrl] = useState('');
   const [copied, setCopied] = useState('');
 
   const sendNotif = useMutation({

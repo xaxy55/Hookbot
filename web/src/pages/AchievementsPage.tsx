@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAchievements, getGamificationStats, getLeaderboard, getDevices } from '../api/client';
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 
 const BADGE_ICONS: Record<string, (props: { className?: string }) => JSX.Element> = {
   zap: ZapIcon,

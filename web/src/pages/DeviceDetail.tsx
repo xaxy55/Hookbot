@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getDevice, getDeviceConfig, getDeviceHistory, sendState, sendTasks, updateDevice, updateDeviceConfig, pushConfig, getOtaJobs, getFirmware, getServos, setServoAngle, restServos, configureServos, getSensors, updateSensors, getRules, createRule, updateRule, deleteRule } from '../api/client';
-import type { ServoChannel, SensorChannelConfig, AutomationRule } from '../api/client';
+import type { ServoChannel, SensorChannelConfig } from '../api/client';
 import StateIndicator from '../components/StateIndicator';
 import type { AvatarState } from '../types';
 

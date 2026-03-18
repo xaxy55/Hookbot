@@ -19,8 +19,8 @@ export default function BleSetupPage() {
   const [password, setPassword] = useState('');
   const [statusMsg, setStatusMsg] = useState('');
   const [error, setError] = useState('');
-  const [device, setDevice] = useState<BluetoothDevice | null>(null);
-  const [server, setServer] = useState<BluetoothRemoteGATTServer | null>(null);
+  const [device, setDevice] = useState<any>(null);
+  const [server, setServer] = useState<any>(null);
 
   const isWebBluetoothSupported = typeof navigator !== 'undefined' && 'bluetooth' in navigator;
 
@@ -35,7 +35,7 @@ export default function BleSetupPage() {
     setStatusMsg('');
 
     try {
-      const bleDevice = await navigator.bluetooth.requestDevice({
+      const bleDevice = await (navigator as any).bluetooth.requestDevice({
         filters: [{ namePrefix: 'DeskBot' }],
         optionalServices: [BLE_SERVICE_UUID],
       });

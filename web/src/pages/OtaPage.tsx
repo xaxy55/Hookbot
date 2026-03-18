@@ -10,10 +10,6 @@ const DEVICE_TYPE_LABELS: Record<string, string> = {
   esp32_4848s040c_lcd: 'ESP32-S3 LCD (480x480 Touch)',
 };
 
-const ENV_NAMES: Record<string, string> = {
-  esp32: 'esp32_oled',
-  'esp32-4848s040c': 'esp32_4848s040c_lcd',
-};
 
 export default function OtaPage() {
   const qc = useQueryClient();
