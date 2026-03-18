@@ -75,14 +75,14 @@ function sendDirect(host, state, toolName) {
   });
 }
 
-function sendToServer(host, event, input) {
+function sendToServer(host, event, input, deviceId) {
   const url = new URL("/api/hook", host);
   const body = JSON.stringify({
     event,
     tool_name: input.tool_name || "",
     tool_output: input.tool_output || "",
     project: process.cwd(),
-    device_id: input.device_id || undefined,
+    device_id: deviceId || input.device_id || undefined,
   });
   const mod = url.protocol === "https:" ? https : http;
 
@@ -148,8 +148,8 @@ async function main() {
 
   // Server mode: route through management server
   if (config.mode === "server") {
-    log(`Event: ${hookEvent} -> server at ${config.host}`);
-    await sendToServer(config.host, hookEvent, input);
+    log(`Event: ${hookEvent} -> server at ${config.host} (device: ${config.device_id || "auto"})`);
+    await sendToServer(config.host, hookEvent, input, config.device_id);
     process.exit(0);
   }
 

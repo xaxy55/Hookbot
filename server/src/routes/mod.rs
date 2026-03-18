@@ -4,6 +4,7 @@ pub mod diagnostics;
 pub mod discovery;
 pub mod firmware;
 pub mod gamification;
+pub mod github;
 pub mod hooks;
 pub mod notifications;
 pub mod ota;

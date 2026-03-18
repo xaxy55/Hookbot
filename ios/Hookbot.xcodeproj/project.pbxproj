@@ -1,0 +1,548 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		059E26B7DE33F1D35D4E3D76 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */; };
+		07BD3F555688C63668D7FA3F /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 364282E1BF9F1960110F6626 /* WatchBridge.swift */; };
+		1F911629F6DC6BB9ED760626 /* WatchMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5F1894C33647E074AD0A11 /* WatchMainView.swift */; };
+		2F7D8DA5F1E23D87D838B732 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68548CC1A6546E161E55B81D /* SoundManager.swift */; };
+		399EF3D57059F96999216474 /* DeskBotWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */; };
+		3F3594DB7EFB6F264533284F /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151A6E66A879D9F121E3EB91 /* AvatarView.swift */; };
+		4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */; };
+		696CDAF55768C0421919F035 /* AvatarTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */; };
+		69BE7ECCBB8C64D610ED5831 /* DeskBotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ADD593CC146528A0CF8D232 /* DeskBotApp.swift */; };
+		70F30BBAE5FA7E4DAE16FE57 /* AvatarEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958E05B4490FBB82AF160800 /* AvatarEngine.swift */; };
+		795F9096463D614E1D8D278E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */; };
+		83D3838B6D8A2585F9BBAD6E /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007B5E84C28B4F2FAD647E7F /* HapticManager.swift */; };
+		9E32267AD83F31502A1ABB68 /* WatchAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E4D4006F271E0691E8E892 /* WatchAvatarView.swift */; };
+		B217C2B121308687C0468A8A /* AvatarTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */; };
+		B74A9C85770C5DDF74DF7DB7 /* AvatarEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958E05B4490FBB82AF160800 /* AvatarEngine.swift */; };
+		C839B809A95F20092F26DF60 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2C3CE9DB464C7E911F7F18C0 /* Assets.xcassets */; };
+		C935543D379DAE0399A03D44 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64E4ED6FDD298958EA1DB744 /* NetworkService.swift */; };
+		E121B6972428789C62702CCD /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FEFC46D0D53977D14F910B1 /* MainView.swift */; };
+		F156A3AF2CC4A7BA2413911A /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
+		FF2350D11B46FB9A7B22EB30 /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		41E15DD8903181203F222BC8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3FB113BB92292451E5D9FF81;
+			remoteInfo = Hookbot;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		007B5E84C28B4F2FAD647E7F /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		03397893315BCC3E84C561BE /* AvatarRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarRenderer.swift; sourceTree = "<group>"; };
+		151A6E66A879D9F121E3EB91 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
+		2C3CE9DB464C7E911F7F18C0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		364282E1BF9F1960110F6626 /* WatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridge.swift; sourceTree = "<group>"; };
+		54D7C47D418E782FC63F6973 /* Hookbot.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Hookbot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		64E4ED6FDD298958EA1DB744 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
+		68548CC1A6546E161E55B81D /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
+		6FEFC46D0D53977D14F910B1 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlPanelView.swift; sourceTree = "<group>"; };
+		77E4D4006F271E0691E8E892 /* WatchAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAvatarView.swift; sourceTree = "<group>"; };
+		7ADD593CC146528A0CF8D232 /* DeskBotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotApp.swift; sourceTree = "<group>"; };
+		7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarTypes.swift; sourceTree = "<group>"; };
+		7FF48B21F485D574BFEE833B /* HookbotWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HookbotWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotWatchApp.swift; sourceTree = "<group>"; };
+		958E05B4490FBB82AF160800 /* AvatarEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEngine.swift; sourceTree = "<group>"; };
+		9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		EB5F1894C33647E074AD0A11 /* WatchMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMainView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		06CBB800FED0EF03CF145128 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				007B5E84C28B4F2FAD647E7F /* HapticManager.swift */,
+				64E4ED6FDD298958EA1DB744 /* NetworkService.swift */,
+				68548CC1A6546E161E55B81D /* SoundManager.swift */,
+				364282E1BF9F1960110F6626 /* WatchBridge.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		3C05CF566F178449FBE7D2CF /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				151A6E66A879D9F121E3EB91 /* AvatarView.swift */,
+				766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */,
+				6FEFC46D0D53977D14F910B1 /* MainView.swift */,
+				9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		3EE5533E5E90E9E02740FB5E /* HookbotWatch */ = {
+			isa = PBXGroup;
+			children = (
+				9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */,
+				D7F650FA895FE33B5586EFA5 /* App */,
+				73890AFDE0437EFEA421E1B8 /* Views */,
+			);
+			path = HookbotWatch;
+			sourceTree = "<group>";
+		};
+		73890AFDE0437EFEA421E1B8 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				77E4D4006F271E0691E8E892 /* WatchAvatarView.swift */,
+				EB5F1894C33647E074AD0A11 /* WatchMainView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		7D4CE94BEFE6407C1D50CF9F = {
+			isa = PBXGroup;
+			children = (
+				FE0BF9ABE084FD708B082190 /* Hookbot */,
+				3EE5533E5E90E9E02740FB5E /* HookbotWatch */,
+				9CBF57E722CAA136A89B9F81 /* Shared */,
+				91D9E95A31162E3E6CA43DFA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8A03C8999E692EEE93D0A597 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				7ADD593CC146528A0CF8D232 /* DeskBotApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		91D9E95A31162E3E6CA43DFA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				54D7C47D418E782FC63F6973 /* Hookbot.app */,
+				7FF48B21F485D574BFEE833B /* HookbotWatch.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9CBF57E722CAA136A89B9F81 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				958E05B4490FBB82AF160800 /* AvatarEngine.swift */,
+				03397893315BCC3E84C561BE /* AvatarRenderer.swift */,
+				7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		D7F650FA895FE33B5586EFA5 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		FE0BF9ABE084FD708B082190 /* Hookbot */ = {
+			isa = PBXGroup;
+			children = (
+				2C3CE9DB464C7E911F7F18C0 /* Assets.xcassets */,
+				8A03C8999E692EEE93D0A597 /* App */,
+				06CBB800FED0EF03CF145128 /* Services */,
+				3C05CF566F178449FBE7D2CF /* Views */,
+			);
+			path = Hookbot;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		00837AA4718731B110629A8A /* HookbotWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8CCA5A9E3726CFB3C173DCC1 /* Build configuration list for PBXNativeTarget "HookbotWatch" */;
+			buildPhases = (
+				83B71C0FD82430537B2DB014 /* Sources */,
+				308B800743C11585009C12D4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1ED986F80F81E779AF02F3DB /* PBXTargetDependency */,
+			);
+			name = HookbotWatch;
+			packageProductDependencies = (
+			);
+			productName = HookbotWatch;
+			productReference = 7FF48B21F485D574BFEE833B /* HookbotWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		3FB113BB92292451E5D9FF81 /* Hookbot */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 12E5B5AF220A6CE4E637A8C8 /* Build configuration list for PBXNativeTarget "Hookbot" */;
+			buildPhases = (
+				04892BDBEAE83EC4A58E869D /* Sources */,
+				5F3F63080D02D66D882F7C2E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Hookbot;
+			packageProductDependencies = (
+			);
+			productName = Hookbot;
+			productReference = 54D7C47D418E782FC63F6973 /* Hookbot.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F7A1AB380677B6739118F360 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					00837AA4718731B110629A8A = {
+						DevelopmentTeam = 56YDP2JJ35;
+						ProvisioningStyle = Automatic;
+					};
+					3FB113BB92292451E5D9FF81 = {
+						DevelopmentTeam = 56YDP2JJ35;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 6674E57AEF0675312652A33C /* Build configuration list for PBXProject "Hookbot" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7D4CE94BEFE6407C1D50CF9F;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 91D9E95A31162E3E6CA43DFA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3FB113BB92292451E5D9FF81 /* Hookbot */,
+				00837AA4718731B110629A8A /* HookbotWatch */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		308B800743C11585009C12D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				795F9096463D614E1D8D278E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5F3F63080D02D66D882F7C2E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C839B809A95F20092F26DF60 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		04892BDBEAE83EC4A58E869D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B74A9C85770C5DDF74DF7DB7 /* AvatarEngine.swift in Sources */,
+				F156A3AF2CC4A7BA2413911A /* AvatarRenderer.swift in Sources */,
+				B217C2B121308687C0468A8A /* AvatarTypes.swift in Sources */,
+				3F3594DB7EFB6F264533284F /* AvatarView.swift in Sources */,
+				059E26B7DE33F1D35D4E3D76 /* ControlPanelView.swift in Sources */,
+				69BE7ECCBB8C64D610ED5831 /* DeskBotApp.swift in Sources */,
+				83D3838B6D8A2585F9BBAD6E /* HapticManager.swift in Sources */,
+				E121B6972428789C62702CCD /* MainView.swift in Sources */,
+				C935543D379DAE0399A03D44 /* NetworkService.swift in Sources */,
+				4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */,
+				2F7D8DA5F1E23D87D838B732 /* SoundManager.swift in Sources */,
+				07BD3F555688C63668D7FA3F /* WatchBridge.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		83B71C0FD82430537B2DB014 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				70F30BBAE5FA7E4DAE16FE57 /* AvatarEngine.swift in Sources */,
+				FF2350D11B46FB9A7B22EB30 /* AvatarRenderer.swift in Sources */,
+				696CDAF55768C0421919F035 /* AvatarTypes.swift in Sources */,
+				399EF3D57059F96999216474 /* DeskBotWatchApp.swift in Sources */,
+				9E32267AD83F31502A1ABB68 /* WatchAvatarView.swift in Sources */,
+				1F911629F6DC6BB9ED760626 /* WatchMainView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1ED986F80F81E779AF02F3DB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3FB113BB92292451E5D9FF81 /* Hookbot */;
+			targetProxy = 41E15DD8903181203F222BC8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		10C5A22FAC67523BF77203E0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_NSBonjourServices = (
+					_http._tcp,
+				);
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2B66037D80644430230BE37A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.mr-ai.hookbot";
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.watchkitapp";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		6D944C8B012071CD502B44A8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.mr-ai.hookbot";
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.watchkitapp";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		9B83070B64205AD36DC8F262 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 56YDP2JJ35;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		A11108E0C2CBA8041ED32397 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_NSBonjourServices = (
+					_http._tcp,
+				);
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CC9289B03D5E901D8A5200B1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 56YDP2JJ35;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		12E5B5AF220A6CE4E637A8C8 /* Build configuration list for PBXNativeTarget "Hookbot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				10C5A22FAC67523BF77203E0 /* Debug */,
+				A11108E0C2CBA8041ED32397 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6674E57AEF0675312652A33C /* Build configuration list for PBXProject "Hookbot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9B83070B64205AD36DC8F262 /* Debug */,
+				CC9289B03D5E901D8A5200B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8CCA5A9E3726CFB3C173DCC1 /* Build configuration list for PBXNativeTarget "HookbotWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6D944C8B012071CD502B44A8 /* Debug */,
+				2B66037D80644430230BE37A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F7A1AB380677B6739118F360 /* Project object */;
+}

@@ -223,6 +223,52 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* GitHub Webhook */}
+      <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-fg-2">GitHub Webhook</h2>
+        <p className="text-xs text-subtle">
+          Receive GitHub events (pushes, PRs, CI, issues) and map them to avatar states. Works the same way as the Claude Code hook.
+        </p>
+
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-subtle font-medium">Webhook URL</label>
+            <button
+              onClick={() => copyToClipboard(`${hookHost}/api/hook/github`, 'github-url')}
+              className="text-[10px] text-subtle hover:text-fg transition-colors"
+            >
+              {copied === 'github-url' ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          <pre className="text-[11px] bg-inset rounded-md p-3 text-green-400 font-mono border border-edge">
+            {hookHost}/api/hook/github
+          </pre>
+        </div>
+
+        {hookDeviceId && (
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-subtle font-medium">With device targeting</label>
+              <button
+                onClick={() => copyToClipboard(`${hookHost}/api/hook/github?device_id=${hookDeviceId}`, 'github-url-device')}
+                className="text-[10px] text-subtle hover:text-fg transition-colors"
+              >
+                {copied === 'github-url-device' ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <pre className="text-[11px] bg-inset rounded-md p-3 text-blue-400 font-mono border border-edge">
+              {hookHost}/api/hook/github?device_id={hookDeviceId}
+            </pre>
+          </div>
+        )}
+
+        <div className="text-[11px] text-subtle space-y-1">
+          <p>In your GitHub repo: <span className="text-fg">Settings → Webhooks → Add webhook</span></p>
+          <p>Content type: <code className="text-green-400 bg-inset px-1 rounded">application/json</code></p>
+          <p>Events: Pushes, Pull requests, Workflow runs, Issues, Stars</p>
+        </div>
+      </div>
+
       {/* Status Log Retention */}
       <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
         <h2 className="text-sm font-semibold text-fg-2">Status Log Retention</h2>

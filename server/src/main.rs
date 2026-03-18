@@ -47,6 +47,7 @@ async fn main() {
         .route("/api/discovery", get(routes::discovery::scan))
         .route("/api/diagnostics", get(routes::diagnostics::run_diagnostics))
         .route("/api/hook", post(routes::hooks::handle_hook))
+        .route("/api/hook/github", post(routes::github::handle_github_hook))
         .route("/api/gamification/stats", get(routes::gamification::get_stats))
         .route("/api/gamification/activity", get(routes::gamification::get_activity))
         .route("/api/gamification/analytics", get(routes::gamification::get_analytics))
