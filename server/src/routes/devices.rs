@@ -529,47 +529,43 @@ pub async fn export_config(
     let config = query_config(&conn, &id)?;
 
     // Sensor configs
-    let sensor_configs = {
-        let mut stmt = conn.prepare(
-            "SELECT id, device_id, channel, pin, sensor_type, label, poll_interval_ms, threshold
-             FROM sensor_configs WHERE device_id = ?1 ORDER BY channel",
-        )?;
-        stmt.query_map([&id], |row| {
-            Ok(SensorConfig {
-                id: row.get(0)?,
-                device_id: row.get(1)?,
-                channel: row.get(2)?,
-                pin: row.get(3)?,
-                sensor_type: row.get(4)?,
-                label: row.get(5)?,
-                poll_interval_ms: row.get(6)?,
-                threshold: row.get(7)?,
-            })
-        })?
-        .collect::<Result<Vec<_>, _>>()?
-    };
+    let mut sensor_stmt = conn.prepare(
+        "SELECT id, device_id, channel, pin, sensor_type, label, poll_interval_ms, threshold
+         FROM sensor_configs WHERE device_id = ?1 ORDER BY channel",
+    )?;
+    let sensor_configs = sensor_stmt.query_map([&id], |row| {
+        Ok(SensorConfig {
+            id: row.get(0)?,
+            device_id: row.get(1)?,
+            channel: row.get(2)?,
+            pin: row.get(3)?,
+            sensor_type: row.get(4)?,
+            label: row.get(5)?,
+            poll_interval_ms: row.get(6)?,
+            threshold: row.get(7)?,
+        })
+    })?
+    .collect::<Result<Vec<_>, _>>()?;
 
     // Automation rules (strip IDs for portability)
-    let automation_rules = {
-        let mut stmt = conn.prepare(
-            "SELECT name, enabled, trigger_type, trigger_config, action_type, action_config, cooldown_secs
-             FROM automation_rules WHERE device_id = ?1 ORDER BY created_at",
-        )?;
-        stmt.query_map([&id], |row| {
-            let tc: String = row.get(3)?;
-            let ac: String = row.get(5)?;
-            Ok(ExportRule {
-                name: row.get(0)?,
-                enabled: row.get::<_, i32>(1)? != 0,
-                trigger_type: row.get(2)?,
-                trigger_config: serde_json::from_str(&tc).unwrap_or_default(),
-                action_type: row.get(4)?,
-                action_config: serde_json::from_str(&ac).unwrap_or_default(),
-                cooldown_secs: row.get(6)?,
-            })
-        })?
-        .collect::<Result<Vec<_>, _>>()?
-    };
+    let mut rules_stmt = conn.prepare(
+        "SELECT name, enabled, trigger_type, trigger_config, action_type, action_config, cooldown_secs
+         FROM automation_rules WHERE device_id = ?1 ORDER BY created_at",
+    )?;
+    let automation_rules = rules_stmt.query_map([&id], |row| {
+        let tc: String = row.get(3)?;
+        let ac: String = row.get(5)?;
+        Ok(ExportRule {
+            name: row.get(0)?,
+            enabled: row.get::<_, i32>(1)? != 0,
+            trigger_type: row.get(2)?,
+            trigger_config: serde_json::from_str(&tc).unwrap_or_default(),
+            action_type: row.get(4)?,
+            action_config: serde_json::from_str(&ac).unwrap_or_default(),
+            cooldown_secs: row.get(6)?,
+        })
+    })?
+    .collect::<Result<Vec<_>, _>>()?;
 
     // Try to get servo config from live device
     let servo_config = {
