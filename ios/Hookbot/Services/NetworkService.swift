@@ -60,7 +60,12 @@ final class NetworkService: ObservableObject {
     private func startBonjourAdvertising(name: String) {
         // Advertise as _http._tcp so the management server's mDNS scan finds us
         // Hostname must start with "hookbot" to match the server's filter
-        let serviceName = name.hasPrefix("hookbot") ? name : "hookbot-ios"
+        #if targetEnvironment(macCatalyst)
+        let fallback = "hookbot-mac"
+        #else
+        let fallback = "hookbot-ios"
+        #endif
+        let serviceName = name.hasPrefix("hookbot") ? name : fallback
         bonjourService = NetService(domain: "local.", type: "_http._tcp.", name: serviceName, port: Int32(port))
         bonjourService?.publish()
         print("[Network] Bonjour advertising: \(serviceName)._http._tcp.local. on port \(port)")
@@ -135,14 +140,14 @@ final class NetworkService: ObservableObject {
         guard let engine else { return "{\"error\":\"not ready\"}" }
         let uptime = ProcessInfo.processInfo.systemUptime
         return """
-        {"state":"\(engine.currentState.rawValue)","uptime":\(Int(uptime * 1000)),"ip":"\(Self.localIPAddress() ?? "unknown")","hostname":"\(engine.config.deviceName)","firmware_version":"ios-1.0.0","platform":"ios"}
+        {"state":"\(engine.currentState.rawValue)","uptime":\(Int(uptime * 1000)),"ip":"\(Self.localIPAddress() ?? "unknown")","hostname":"\(engine.config.deviceName)","firmware_version":"\(Self.platformID)-1.0.0","platform":"\(Self.platformID)"}
         """
     }
 
     private func handleInfo() -> String {
         guard let engine else { return "{\"error\":\"not ready\"}" }
         return """
-        {"hostname":"\(engine.config.deviceName)","firmware_version":"ios-1.0.0","ip":"\(Self.localIPAddress() ?? "unknown")","platform":"ios","capabilities":["display","sound","haptics"]}
+        {"hostname":"\(engine.config.deviceName)","firmware_version":"\(Self.platformID)-1.0.0","ip":"\(Self.localIPAddress() ?? "unknown")","platform":"\(Self.platformID)","capabilities":["display","sound","haptics"]}
         """
     }
 
@@ -223,7 +228,7 @@ final class NetworkService: ObservableObject {
             "name": engine.config.deviceName,
             "hostname": engine.config.deviceName,
             "ip_address": Self.localIPAddress() ?? "unknown",
-            "purpose": "hookbot-ios"
+            "purpose": "hookbot-\(Self.platformID)"
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
 
@@ -234,6 +239,16 @@ final class NetworkService: ObservableObject {
                 print("[Network] Registered with server: \(http.statusCode)")
             }
         }.resume()
+    }
+
+    // MARK: - Platform
+
+    static var platformID: String {
+        #if targetEnvironment(macCatalyst)
+        return "macos"
+        #else
+        return "ios"
+        #endif
     }
 
     // MARK: - IP Address

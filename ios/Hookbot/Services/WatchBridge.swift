@@ -1,3 +1,4 @@
+#if !targetEnvironment(macCatalyst)
 import WatchConnectivity
 
 // Forwards state changes from the iPhone to the Apple Watch
@@ -33,3 +34,11 @@ final class WatchBridge: NSObject, WCSessionDelegate {
         session.activate()
     }
 }
+#else
+// Stub for Mac Catalyst where WatchConnectivity is unavailable
+final class WatchBridge {
+    static let shared = WatchBridge()
+    func activate() {}
+    func sendState(_ state: AvatarState, tool: String = "", detail: String = "") {}
+}
+#endif

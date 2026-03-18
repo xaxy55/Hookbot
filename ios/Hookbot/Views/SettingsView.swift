@@ -6,7 +6,11 @@ struct SettingsView: View {
 
     @State private var soundEnabled: Bool = true
     @State private var serverURL: String = ""
+    #if targetEnvironment(macCatalyst)
+    @State private var deviceName: String = "hookbot-mac"
+    #else
     @State private var deviceName: String = "hookbot-ios"
+    #endif
     @State private var accessories: AccessoriesConfig = AccessoriesConfig()
     @State private var testResult: ServerTestResult?
     @State private var isTesting = false

@@ -19,7 +19,7 @@ pub struct AppConfig {
 impl AppConfig {
     pub fn from_env() -> Self {
         let database_url = env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "data/hookbot.db".to_string())
+            .unwrap_or_else(|_| "data/deskbot.db".to_string())
             .into();
 
         let firmware_dir = env::var("FIRMWARE_DIR")

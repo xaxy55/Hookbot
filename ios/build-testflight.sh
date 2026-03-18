@@ -11,8 +11,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
 SCHEME="Hookbot"
-ARCHIVE_PATH="$PROJECT_DIR/build/Hookbot.xcarchive"
-EXPORT_PATH="$PROJECT_DIR/build/export"
 
 echo "=== Hookbot TestFlight Build ==="
 echo "Bundle ID: com.mr-ai.hookbot"
@@ -29,44 +27,76 @@ else
     exit 1
 fi
 
-# Step 2: Archive
-echo "→ Archiving..."
+# Step 2: Archive & upload iOS
+echo ""
+echo "=== iOS ==="
+IOS_ARCHIVE="$PROJECT_DIR/build/Hookbot-iOS.xcarchive"
+IOS_EXPORT="$PROJECT_DIR/build/export-ios"
+
+echo "→ Archiving iOS..."
 xcodebuild archive \
     -project Hookbot.xcodeproj \
     -scheme "$SCHEME" \
     -destination "generic/platform=iOS" \
-    -archivePath "$ARCHIVE_PATH" \
+    -archivePath "$IOS_ARCHIVE" \
     -allowProvisioningUpdates \
     CODE_SIGN_STYLE=Automatic \
     | tail -1
 
-echo "→ Archive created at $ARCHIVE_PATH"
-
-# Step 3: Export for App Store / TestFlight
-echo "→ Exporting for TestFlight..."
+echo "→ Exporting iOS for TestFlight..."
 xcodebuild -exportArchive \
-    -archivePath "$ARCHIVE_PATH" \
+    -archivePath "$IOS_ARCHIVE" \
     -exportOptionsPlist "$PROJECT_DIR/ExportOptions.plist" \
-    -exportPath "$EXPORT_PATH" \
+    -exportPath "$IOS_EXPORT" \
     -allowProvisioningUpdates \
     | tail -1
 
-echo "→ Export complete at $EXPORT_PATH"
-
-# Step 4: Upload to App Store Connect
-echo "→ Uploading to TestFlight..."
+echo "→ Uploading iOS to TestFlight..."
 xcrun altool --upload-app \
-    -f "$EXPORT_PATH/Hookbot.ipa" \
+    -f "$IOS_EXPORT/Hookbot.ipa" \
     -t ios \
     --apiKey "${APP_STORE_API_KEY:-}" \
     --apiIssuer "${APP_STORE_API_ISSUER:-}" \
     2>/dev/null || {
-    echo ""
-    echo "Auto-upload skipped. Upload manually via:"
-    echo "  1. Xcode → Window → Organizer → Distribute App"
-    echo "  2. Or: xcrun altool --upload-app -f $EXPORT_PATH/Hookbot.ipa -t ios --apiKey KEY --apiIssuer ISSUER"
-    echo "  3. Or: Transporter.app (drag .ipa)"
+    echo "  Auto-upload skipped. Upload manually via Xcode Organizer or Transporter."
+}
+
+# Step 3: Archive & upload Mac Catalyst
+echo ""
+echo "=== Mac Catalyst ==="
+MAC_ARCHIVE="$PROJECT_DIR/build/Hookbot-Mac.xcarchive"
+MAC_EXPORT="$PROJECT_DIR/build/export-mac"
+
+echo "→ Archiving Mac Catalyst..."
+xcodebuild archive \
+    -project Hookbot.xcodeproj \
+    -scheme "$SCHEME" \
+    -destination "generic/platform=macOS,variant=Mac Catalyst" \
+    -archivePath "$MAC_ARCHIVE" \
+    -allowProvisioningUpdates \
+    CODE_SIGN_STYLE=Automatic \
+    | tail -1
+
+echo "→ Exporting Mac for TestFlight..."
+xcodebuild -exportArchive \
+    -archivePath "$MAC_ARCHIVE" \
+    -exportOptionsPlist "$PROJECT_DIR/ExportOptions.plist" \
+    -exportPath "$MAC_EXPORT" \
+    -allowProvisioningUpdates \
+    | tail -1
+
+echo "→ Uploading Mac to TestFlight..."
+xcrun altool --upload-app \
+    -f "$MAC_EXPORT/Hookbot.pkg" \
+    -t macos \
+    --apiKey "${APP_STORE_API_KEY:-}" \
+    --apiIssuer "${APP_STORE_API_ISSUER:-}" \
+    2>/dev/null || {
+    echo "  Auto-upload skipped. Upload manually via Xcode Organizer or Transporter."
 }
 
 echo ""
 echo "=== Done ==="
+echo "Archives:"
+echo "  iOS: $IOS_ARCHIVE"
+echo "  Mac: $MAC_ARCHIVE"

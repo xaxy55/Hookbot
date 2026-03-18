@@ -6,8 +6,8 @@ help: ## Show this help
 test: ## Run Playwright tests
 	npx playwright test
 
-server: ## Start backend dev server (port 3000)
-	cd server && cargo run
+server: ## Start backend dev server (port 3000, debug logging)
+	cd server && RUST_LOG=debug cargo run
 
 web: ## Start frontend dev server (port 5173)
 	cd web && npm run dev
