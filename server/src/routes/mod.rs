@@ -1,5 +1,6 @@
 pub mod automation;
 pub mod build;
+pub mod community_store;
 pub mod context;
 pub mod devices;
 pub mod diagnostics;
@@ -12,4 +13,5 @@ pub mod notifications;
 pub mod ota;
 pub mod sensors;
 pub mod settings;
+pub mod shared_assets;
 pub mod store;

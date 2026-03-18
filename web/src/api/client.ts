@@ -370,3 +370,108 @@ export const getOwnedItems = (deviceId?: string) => {
   const params = deviceId ? `?device_id=${deviceId}` : '';
   return request<string[]>(`/store/owned${params}`);
 };
+
+// Community Plugin Store
+export interface CommunityPlugin {
+  id: string;
+  name: string;
+  description: string;
+  author: string;
+  version: string;
+  category: string;
+  tags: string[];
+  payload: Record<string, unknown>;
+  downloads: number;
+  rating_avg: number;
+  rating_count: number;
+  installed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getCommunityPlugins = (opts?: { deviceId?: string; category?: string; search?: string; sort?: string }) => {
+  const params = new URLSearchParams();
+  if (opts?.deviceId) params.set('device_id', opts.deviceId);
+  if (opts?.category) params.set('category', opts.category);
+  if (opts?.search) params.set('search', opts.search);
+  if (opts?.sort) params.set('sort', opts.sort);
+  const qs = params.toString();
+  return request<CommunityPlugin[]>(`/community/plugins${qs ? `?${qs}` : ''}`);
+};
+
+export const publishPlugin = (data: {
+  name: string;
+  description: string;
+  author?: string;
+  version?: string;
+  category?: string;
+  tags?: string[];
+  payload?: Record<string, unknown>;
+}) => request<CommunityPlugin>('/community/plugins', { method: 'POST', body: JSON.stringify(data) });
+
+export const installPlugin = (pluginId: string, deviceId?: string) =>
+  request<{ ok: boolean }>(`/community/plugins/${pluginId}/install`, {
+    method: 'POST',
+    body: JSON.stringify({ device_id: deviceId }),
+  });
+
+export const uninstallPlugin = (pluginId: string, deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ ok: boolean }>(`/community/plugins/${pluginId}/install${params}`, { method: 'DELETE' });
+};
+
+export const ratePlugin = (pluginId: string, stars: number, deviceId?: string) =>
+  request<{ ok: boolean }>(`/community/plugins/${pluginId}/rate`, {
+    method: 'POST',
+    body: JSON.stringify({ stars, device_id: deviceId }),
+  });
+
+// Shared Assets
+export interface SharedAsset {
+  id: string;
+  name: string;
+  description: string;
+  author: string;
+  asset_type: string;
+  payload: Record<string, unknown>;
+  downloads: number;
+  rating_avg: number;
+  rating_count: number;
+  installed: boolean;
+  created_at: string;
+}
+
+export const getSharedAssets = (opts?: { deviceId?: string; assetType?: string; search?: string; sort?: string }) => {
+  const params = new URLSearchParams();
+  if (opts?.deviceId) params.set('device_id', opts.deviceId);
+  if (opts?.assetType) params.set('asset_type', opts.assetType);
+  if (opts?.search) params.set('search', opts.search);
+  if (opts?.sort) params.set('sort', opts.sort);
+  const qs = params.toString();
+  return request<SharedAsset[]>(`/community/assets${qs ? `?${qs}` : ''}`);
+};
+
+export const publishAsset = (data: {
+  name: string;
+  description?: string;
+  author?: string;
+  asset_type: string;
+  payload: Record<string, unknown>;
+}) => request<SharedAsset>('/community/assets', { method: 'POST', body: JSON.stringify(data) });
+
+export const installAsset = (assetId: string, deviceId?: string) =>
+  request<{ ok: boolean }>(`/community/assets/${assetId}/install`, {
+    method: 'POST',
+    body: JSON.stringify({ device_id: deviceId }),
+  });
+
+export const uninstallAsset = (assetId: string, deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ ok: boolean }>(`/community/assets/${assetId}/install${params}`, { method: 'DELETE' });
+};
+
+export const rateAsset = (assetId: string, stars: number, deviceId?: string) =>
+  request<{ ok: boolean }>(`/community/assets/${assetId}/rate`, {
+    method: 'POST',
+    body: JSON.stringify({ stars, device_id: deviceId }),
+  });

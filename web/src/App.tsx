@@ -17,6 +17,8 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import AchievementsPage from './pages/AchievementsPage';
 import BleSetupPage from './pages/BleSetupPage';
 import StorePage from './pages/StorePage';
+import CommunityStorePage from './pages/CommunityStorePage';
+import AssetSharingPage from './pages/AssetSharingPage';
 
 export default function App() {
   return (
@@ -36,6 +38,8 @@ export default function App() {
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
           <Route path="/store" element={<StorePage />} />
+          <Route path="/community" element={<CommunityStorePage />} />
+          <Route path="/shared-assets" element={<AssetSharingPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/logs" element={<LogsPage />} />

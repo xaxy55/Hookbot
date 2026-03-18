@@ -31,6 +31,13 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    label: 'Community',
+    items: [
+      { path: '/community', label: 'Plugin Store', icon: PuzzleIcon },
+      { path: '/shared-assets', label: 'Shared Assets', icon: ShareIcon },
+    ],
+  },
+  {
     label: 'Connect',
     items: [
       { path: '/integrations', label: 'Integrations', icon: PlugIcon },
@@ -308,6 +315,25 @@ function BluetoothIcon({ active }: { active: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className={active ? 'text-brand-fg' : 'text-subtle'}>
       <polyline points="5 4.5 11 10.5 8 14 8 2 11 5.5 5 11.5" />
+    </svg>
+  );
+}
+
+function PuzzleIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M9 2H4a1 1 0 00-1 1v4h1a1.5 1.5 0 010 3H3v3a1 1 0 001 1h3v-1a1.5 1.5 0 013 0v1h3a1 1 0 001-1V9h-1a1.5 1.5 0 010-3h1V3a1 1 0 00-1-1h-3" />
+    </svg>
+  );
+}
+
+function ShareIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <circle cx="12" cy="4" r="2" />
+      <circle cx="4" cy="8" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M6 7l4-2M6 9l4 2" />
     </svg>
   );
 }
