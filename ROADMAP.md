@@ -51,6 +51,23 @@
 - [x] **Presence detection** — PIR or ultrasonic sensor: sleep avatar when away, wake on return
 - [ ] **Ambient light** — Auto-adjust LED brightness based on room light level
 
+## Phase 3.5: Community Plugin Store & Asset Sharing
+
+> Open marketplace for community-created plugins, shared avatars, animations, and screensavers.
+
+- [x] **Community plugin registry** — SQLite-backed catalog for user-submitted plugins with name, description, author, version, category, and download count
+- [x] **Plugin publishing** — Upload new plugins with metadata, auto-assigned unique IDs
+- [x] **Plugin installation tracking** — Per-device install/uninstall with version pinning
+- [x] **Plugin ratings & reviews** — Star ratings (1-5) per device, average score displayed
+- [x] **Shared asset library** — Community-uploaded avatars, animations, and screensavers with JSON payloads
+- [x] **Asset publishing** — Upload custom avatar presets, keyframe animations, screensaver configs for others to use
+- [x] **Asset installation** — Browse, preview metadata, and install shared assets to your device
+- [x] **Asset ratings** — Rate and sort shared assets by popularity
+- [x] **Community Store page** — Frontend browse/search/install UI for community plugins
+- [x] **Asset Sharing page** — Frontend browse/upload/install UI for shared avatars & animations
+- [ ] **Plugin sandboxing** — Run community plugins in isolated contexts with permission scoping
+- [ ] **Verified publishers** — Badge system for trusted community plugin authors
+
 ## Phase 4: Multi-Device & Collaboration
 
 > Scale from one hookbot to a fleet. Different bots for different jobs.

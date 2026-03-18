@@ -197,4 +197,73 @@ CREATE TABLE IF NOT EXISTS automation_rules (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_rules_device ON automation_rules(device_id);
+
+-- Community plugins
+CREATE TABLE IF NOT EXISTS community_plugins (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    author TEXT NOT NULL DEFAULT 'anonymous',
+    version TEXT NOT NULL DEFAULT '1.0.0',
+    category TEXT NOT NULL DEFAULT 'utility',
+    tags TEXT NOT NULL DEFAULT '[]',
+    payload TEXT NOT NULL DEFAULT '{}',
+    downloads INTEGER NOT NULL DEFAULT 0,
+    rating_sum INTEGER NOT NULL DEFAULT 0,
+    rating_count INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS community_plugin_installs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    plugin_id TEXT NOT NULL REFERENCES community_plugins(id) ON DELETE CASCADE,
+    device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    installed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(plugin_id, device_id)
+);
+CREATE INDEX IF NOT EXISTS idx_plugin_installs_device ON community_plugin_installs(device_id);
+CREATE INDEX IF NOT EXISTS idx_plugin_installs_plugin ON community_plugin_installs(plugin_id);
+
+CREATE TABLE IF NOT EXISTS community_plugin_ratings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    plugin_id TEXT NOT NULL REFERENCES community_plugins(id) ON DELETE CASCADE,
+    device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    stars INTEGER NOT NULL CHECK(stars >= 1 AND stars <= 5),
+    rated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(plugin_id, device_id)
+);
+
+-- Shared assets (avatars, animations, screensavers)
+CREATE TABLE IF NOT EXISTS shared_assets (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    author TEXT NOT NULL DEFAULT 'anonymous',
+    asset_type TEXT NOT NULL,
+    payload TEXT NOT NULL DEFAULT '{}',
+    downloads INTEGER NOT NULL DEFAULT 0,
+    rating_sum INTEGER NOT NULL DEFAULT 0,
+    rating_count INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_shared_assets_type ON shared_assets(asset_type);
+
+CREATE TABLE IF NOT EXISTS shared_asset_installs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    asset_id TEXT NOT NULL REFERENCES shared_assets(id) ON DELETE CASCADE,
+    device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    installed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(asset_id, device_id)
+);
+CREATE INDEX IF NOT EXISTS idx_asset_installs_device ON shared_asset_installs(device_id);
+
+CREATE TABLE IF NOT EXISTS shared_asset_ratings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    asset_id TEXT NOT NULL REFERENCES shared_assets(id) ON DELETE CASCADE,
+    device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    stars INTEGER NOT NULL CHECK(stars >= 1 AND stars <= 5),
+    rated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(asset_id, device_id)
+);
 "#;

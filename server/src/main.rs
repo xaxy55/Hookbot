@@ -91,6 +91,16 @@ async fn main() {
         .route("/api/store/owned", get(routes::store::owned_items))
         .with_state(pool.clone());
 
+    // Community plugin store routes
+    let community_routes = Router::new()
+        .route("/api/community/plugins", get(routes::community_store::list_plugins).post(routes::community_store::publish_plugin))
+        .route("/api/community/plugins/{id}/install", post(routes::community_store::install_plugin).delete(routes::community_store::uninstall_plugin))
+        .route("/api/community/plugins/{id}/rate", post(routes::community_store::rate_plugin))
+        .route("/api/community/assets", get(routes::shared_assets::list_assets).post(routes::shared_assets::publish_asset))
+        .route("/api/community/assets/{id}/install", post(routes::shared_assets::install_asset).delete(routes::shared_assets::uninstall_asset))
+        .route("/api/community/assets/{id}/rate", post(routes::shared_assets::rate_asset))
+        .with_state(pool.clone());
+
     let app = Router::new()
         .route("/api/health", get(|| async {
             axum::Json(serde_json::json!({
@@ -105,6 +115,7 @@ async fn main() {
         .merge(firmware_routes)
         .merge(settings_routes)
         .merge(store_routes)
+        .merge(community_routes)
         .layer(cors);
 
     let listener = tokio::net::TcpListener::bind(&config.bind_addr).await.unwrap();
