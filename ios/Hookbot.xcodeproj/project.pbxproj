@@ -528,6 +528,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.mr-ai.hookbot";
 				MARKETING_VERSION = 1.0.0;
@@ -544,6 +545,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.mr-ai.hookbot";
 				MARKETING_VERSION = 1.0.0;

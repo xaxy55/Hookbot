@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getHealth } from '../api/client';
+import { getHealth, getDevices } from '../api/client';
 import { useTheme } from '../hooks/useTheme';
+import { useKeyboardShortcuts, SHORTCUT_LIST } from '../hooks/useKeyboardShortcuts';
 
 const NAV_SECTIONS = [
   {
@@ -55,12 +57,21 @@ const NAV_SECTIONS = [
 export default function Layout() {
   const location = useLocation();
   const { theme, setTheme } = useTheme();
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   const { data: health } = useQuery({
     queryKey: ['health'],
     queryFn: getHealth,
     refetchInterval: 10000,
   });
+
+  const { data: devices } = useQuery({
+    queryKey: ['devices'],
+    queryFn: getDevices,
+  });
+
+  const firstDeviceId = devices?.[0]?.id;
+  useKeyboardShortcuts(firstDeviceId);
 
   const isOk = health?.status === 'ok';
 
@@ -117,6 +128,37 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header className="h-14 flex items-center justify-end gap-3 px-6 border-b border-edge bg-canvas/80 backdrop-blur-sm">
+          {/* Keyboard shortcuts help */}
+          <div className="relative">
+            <button
+              onClick={() => setShowShortcuts(s => !s)}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold text-subtle hover:text-fg hover:bg-inset transition-colors"
+              title="Keyboard shortcuts"
+            >
+              ?
+            </button>
+            {showShortcuts && (
+              <div className="absolute right-0 top-full mt-2 w-52 rounded-lg border border-edge bg-surface shadow-lg shadow-black/20 p-3 z-50">
+                <div className="text-[11px] font-medium text-subtle uppercase tracking-wider mb-2">
+                  Keyboard Shortcuts
+                </div>
+                <div className="space-y-1">
+                  {SHORTCUT_LIST.map(({ key, state }) => (
+                    <div key={key} className="flex items-center justify-between text-sm">
+                      <kbd className="px-1.5 py-0.5 rounded bg-inset border border-edge text-xs font-mono text-muted">
+                        {key}
+                      </kbd>
+                      <span className="text-muted">{state}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 pt-2 border-t border-edge text-[11px] text-dim">
+                  Sends state to first device
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Health badge */}
           <Link
             to="/diagnostics"

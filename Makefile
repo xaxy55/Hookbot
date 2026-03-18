@@ -57,7 +57,7 @@ cloud-secrets: ## Set GitHub secrets for GCE + Cloudflare deployment (interactiv
 up: ## Start everything with Docker Compose
 	docker compose up --build
 
-build-testflight: ## Archive and upload iOS app to TestFlight
+build-testflight: ## Archive and upload iOS, Mac, and watchOS to TestFlight
 	cd ios && ./build-testflight.sh
 
 SCREENSHOT_SIM ?= iPhone 17 Pro Max

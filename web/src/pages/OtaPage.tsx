@@ -1,9 +1,28 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFirmware, getDevices, getOtaJobs, deployOta, buildFirmware } from '../api/client';
 import type { BuildStatus } from '../api/client';
+import type { OtaJob } from '../types';
 import OtaUpload from '../components/OtaUpload';
 import FirmwareFlasher from '../components/FirmwareFlasher';
+
+/** Group OTA jobs into batches where created_at timestamps are within 5s of each other */
+function groupIntoBatches(jobs: OtaJob[]): OtaJob[][] {
+  if (!jobs.length) return [];
+  const sorted = [...jobs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const batches: OtaJob[][] = [[sorted[0]]];
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = batches[batches.length - 1];
+    const prevTime = new Date(prev[0].created_at).getTime();
+    const curTime = new Date(sorted[i].created_at).getTime();
+    if (Math.abs(prevTime - curTime) <= 5000) {
+      prev.push(sorted[i]);
+    } else {
+      batches.push([sorted[i]]);
+    }
+  }
+  return batches;
+}
 
 const DEVICE_TYPE_LABELS: Record<string, string> = {
   esp32_oled: 'ESP32 OLED (128x64)',
@@ -92,38 +111,38 @@ export default function OtaPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold text-white">OTA Updates</h1>
+      <h1 className="text-xl font-bold text-fg">OTA Updates</h1>
 
       <OtaUpload />
 
       <FirmwareFlasher />
 
       {/* Build from Source */}
-      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-white">Build from Source</h3>
-        <p className="text-xs text-gray-500">
-          Build firmware using PlatformIO directly from the server. Requires <code className="text-gray-400">pio</code> in PATH.
+      <div className="rounded-lg border border-edge bg-surface p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-fg">Build from Source</h3>
+        <p className="text-xs text-subtle">
+          Build firmware using PlatformIO directly from the server. Requires <code className="text-muted">pio</code> in PATH.
         </p>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Target Board</label>
+            <label className="block text-sm text-muted mb-1">Target Board</label>
             <select
               value={buildEnv}
               onChange={(e) => setBuildEnv(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white"
+              className="w-full px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
             >
               <option value="esp32">ESP32 OLED (SSD1306)</option>
               <option value="esp32-4848s040c">ESP32-S3 LCD (480x480 Touch)</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Version (optional)</label>
+            <label className="block text-sm text-muted mb-1">Version (optional)</label>
             <input
               value={buildVersion}
               onChange={(e) => setBuildVersion(e.target.value)}
               placeholder="auto-generated if empty"
-              className="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-600"
+              className="w-full px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg placeholder-dim"
             />
           </div>
         </div>
@@ -142,7 +161,7 @@ export default function OtaPage() {
               {buildResult.message}
             </p>
             {buildResult.firmware && (
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-muted text-xs mt-1">
                 {buildResult.firmware.filename} ({(buildResult.firmware.size_bytes / 1024).toFixed(0)} KB)
                 {buildResult.firmware.device_type && (
                   <span className="ml-2 text-purple-400">
@@ -155,7 +174,7 @@ export default function OtaPage() {
               <div className="mt-2">
                 <button
                   onClick={() => setShowBuildLog(!showBuildLog)}
-                  className="text-xs text-gray-500 hover:text-gray-300"
+                  className="text-xs text-subtle hover:text-fg-2"
                 >
                   {showBuildLog ? 'Hide' : 'Show'} build log
                 </button>
@@ -171,15 +190,15 @@ export default function OtaPage() {
       </div>
 
       {/* Deploy Section */}
-      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-white">Deploy Firmware</h3>
+      <div className="rounded-lg border border-edge bg-surface p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-fg">Deploy Firmware</h3>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Firmware Version</label>
+          <label className="block text-sm text-muted mb-1">Firmware Version</label>
           <select
             value={selectedFw}
             onChange={(e) => setSelectedFw(e.target.value)}
-            className="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white"
+            className="w-full px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
           >
             <option value="">Select firmware...</option>
             {firmwares?.map((fw) => (
@@ -198,7 +217,7 @@ export default function OtaPage() {
 
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-sm text-gray-400">Target Devices</label>
+            <label className="text-sm text-muted">Target Devices</label>
             <button onClick={selectCompatible} className="text-xs text-blue-400 hover:text-blue-300">
               {selectedFirmware?.device_type ? 'Select Compatible' : 'Select All'}
             </button>
@@ -207,15 +226,15 @@ export default function OtaPage() {
             {devices?.map((d) => {
               const isMismatch = typeMismatches.includes(d.id);
               return (
-                <label key={d.id} className={`flex items-center gap-2 text-sm ${isMismatch ? 'text-red-400' : 'text-gray-300'}`}>
+                <label key={d.id} className={`flex items-center gap-2 text-sm ${isMismatch ? 'text-red-400' : 'text-fg-2'}`}>
                   <input
                     type="checkbox"
                     checked={selectedDevices.includes(d.id)}
                     onChange={() => toggleDevice(d.id)}
-                    className="rounded border-gray-600"
+                    className="rounded border-edge"
                   />
                   <span>{d.name}</span>
-                  <span className="text-gray-500 text-xs">({d.ip_address})</span>
+                  <span className="text-subtle text-xs">({d.ip_address})</span>
                   {d.device_type && (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
                       d.device_type === 'esp32_4848s040c_lcd'
@@ -253,15 +272,15 @@ export default function OtaPage() {
 
       {/* Job History */}
       {jobs && jobs.length > 0 && (
-        <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4">
-          <h3 className="text-sm font-semibold text-white mb-3">OTA Jobs</h3>
+        <div className="rounded-lg border border-edge bg-surface p-4">
+          <h3 className="text-sm font-semibold text-fg mb-3">OTA Jobs</h3>
           <div className="space-y-2">
             {jobs.map((job) => (
               <div key={job.id} className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">
+                <span className="text-muted">
                   {job.device_id.slice(0, 8)}... &rarr; {job.firmware_id.slice(0, 8)}...
                 </span>
-                <span className={statusColor[job.status] || 'text-gray-400'}>
+                <span className={statusColor[job.status] || 'text-muted'}>
                   {job.status}
                   {job.error_msg && ` - ${job.error_msg}`}
                 </span>

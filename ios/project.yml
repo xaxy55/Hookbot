@@ -19,6 +19,9 @@ targets:
     type: application
     platform: iOS
     supportedDestinations: [iOS, macCatalyst]
+    scheme:
+      testTargets:
+        - HookbotUITests
     sources:
       - path: Hookbot
         excludes:
@@ -52,6 +55,8 @@ targets:
   HookbotWatch:
     type: application
     platform: watchOS
+    scheme:
+      gatherCoverageData: false
     sources:
       - path: HookbotWatch
         excludes:

@@ -960,27 +960,47 @@ static void drawNotifications(DisplayCanvas* d) {
     d->setTextColor(COLOR_WHITE);
 }
 
-static void drawIpAddress(DisplayCanvas* d) {
-    // Show IP address when connected to WiFi but no management server configured
-    if (!HookbotServer::isConnected()) return;
-
-    const RuntimeConfig& cfg = HookbotServer::getConfig();
-    if (strlen(cfg.mgmtServer) > 0) return;  // Server configured, don't show IP
-
+static void drawIdleInfo(DisplayCanvas* d) {
     // Only show in IDLE state so it doesn't clutter other states
     if (currentState != AvatarState::IDLE) return;
 
     d->setTextSize(1);
     d->setTextColor(COLOR_WHITE);
 
-    // Draw small IP text at top-left
     int16_t x = 2;
     int16_t y = 2;
 
-    // Get IP from WiFi
-    String ip = ::_hookbot_get_ip();
-    d->setCursor(x, y);
-    d->print(ip.c_str());
+    // Line 1: IP address (when connected, no mgmt server)
+    if (HookbotServer::isConnected()) {
+        const RuntimeConfig& cfg = HookbotServer::getConfig();
+        if (strlen(cfg.mgmtServer) == 0) {
+            String ip = ::_hookbot_get_ip();
+            d->setCursor(x, y);
+            d->print(ip.c_str());
+        }
+    }
+
+    // Line 2: Firmware version
+    d->setCursor(x, y + 10);
+    d->print("FW v" FIRMWARE_VERSION);
+
+    // Line 3: Uptime
+    unsigned long ms = millis();
+    unsigned long totalSec = ms / 1000;
+    unsigned long minutes = (totalSec / 60) % 60;
+    unsigned long hours   = (totalSec / 3600) % 24;
+    unsigned long days    = totalSec / 86400;
+
+    char uptimeStr[20];
+    if (days > 0) {
+        snprintf(uptimeStr, sizeof(uptimeStr), "Up %lud %luh", days, hours);
+    } else if (hours > 0) {
+        snprintf(uptimeStr, sizeof(uptimeStr), "Up %luh %lum", hours, minutes);
+    } else {
+        snprintf(uptimeStr, sizeof(uptimeStr), "Up %lum", minutes);
+    }
+    d->setCursor(x, y + 20);
+    d->print(uptimeStr);
 }
 
 static void drawWifiStatus(DisplayCanvas* d) {
@@ -1084,7 +1104,7 @@ void draw() {
     drawTaskList(d);
     drawNotifications(d);
     drawWifiStatus(d);
-    drawIpAddress(d);
+    drawIdleInfo(d);
     drawXpBar(d);
 }
 

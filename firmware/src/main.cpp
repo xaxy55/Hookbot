@@ -4,6 +4,7 @@
 #ifndef NO_DISPLAY
 #include "display.h"
 #include "avatar.h"
+#include "screensaver.h"
 #endif
 #ifndef NO_LED
 #include "led.h"
@@ -17,6 +18,14 @@
 #include "ble_prov.h"
 #ifdef BOARD_ESP32_4848S040C
 #include "touch_ui.h"
+#endif
+
+// ─── Screensaver ────────────────────────────────────────────────
+
+#define SCREENSAVER_TIMEOUT_MS 300000  // 5 minutes of idle before screensaver
+
+#ifndef NO_DISPLAY
+static bool screensaverActive = false;
 #endif
 
 // ─── State machine ──────────────────────────────────────────────

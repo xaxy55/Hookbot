@@ -7,6 +7,44 @@ use crate::error::AppError;
 use crate::models::*;
 use crate::services::proxy;
 
+// --- Config export/import types ---
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct ConfigExport {
+    pub metadata: ExportMetadata,
+    pub device_info: ExportDeviceInfo,
+    pub device_config: DeviceConfig,
+    pub servo_config: Option<serde_json::Value>,
+    pub sensor_configs: Vec<SensorConfig>,
+    pub automation_rules: Vec<ExportRule>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct ExportMetadata {
+    pub export_date: String,
+    pub firmware_version: Option<String>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct ExportDeviceInfo {
+    pub name: String,
+    pub hostname: String,
+    pub purpose: Option<String>,
+    pub personality: Option<String>,
+    pub device_type: Option<String>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct ExportRule {
+    pub name: String,
+    pub enabled: bool,
+    pub trigger_type: String,
+    pub trigger_config: serde_json::Value,
+    pub action_type: String,
+    pub action_config: serde_json::Value,
+    pub cooldown_secs: i64,
+}
+
 pub async fn list_devices(State(db): State<DbPool>) -> Result<Json<Vec<DeviceWithStatus>>, AppError> {
     let conn = db.lock().unwrap();
     let mut stmt = conn.prepare(
