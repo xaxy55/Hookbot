@@ -1,0 +1,859 @@
+#include "server.h"
+#include "config.h"
+#include "servo.h"
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include <ESPmDNS.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncJson.h>
+#include <ArduinoJson.h>
+#include <Preferences.h>
+#include <HTTPClient.h>
+#include <HTTPUpdate.h>
+
+namespace HookbotServer {
+
+static AsyncWebServer server(80);
+static WiFiMulti wifiMulti;
+static std::function<void(AvatarState)> stateCallback;
+static uint32_t connectStart = 0;
+static ToolInfo currentTool = {"", ""};
+static RuntimeConfig runtimeConfig;
+static TaskList taskList = {};
+static Preferences prefs;
+static String pendingOtaUrl;
+static NotificationData notifications[MAX_NOTIFICATIONS] = {};
+static int notificationCount = 0;
+static XpData xpData = {0, 0, 0, "Newbie"};
+
+static const char* stateToString(AvatarState s) {
+    switch (s) {
+        case AvatarState::IDLE:      return "idle";
+        case AvatarState::THINKING:  return "thinking";
+        case AvatarState::WAITING:   return "waiting";
+        case AvatarState::SUCCESS:   return "success";
+        case AvatarState::TASKCHECK: return "taskcheck";
+        case AvatarState::ERROR:     return "error";
+    }
+    return "unknown";
+}
+
+static AvatarState stringToState(const String& s) {
+    if (s == "idle")      return AvatarState::IDLE;
+    if (s == "thinking")  return AvatarState::THINKING;
+    if (s == "waiting")   return AvatarState::WAITING;
+    if (s == "success")   return AvatarState::SUCCESS;
+    if (s == "taskcheck") return AvatarState::TASKCHECK;
+    if (s == "error")     return AvatarState::ERROR;
+    return AvatarState::IDLE;
+}
+
+void loadConfigFromNVS() {
+    prefs.begin("hookbot", true); // read-only
+    runtimeConfig.ledBrightness = prefs.getInt("ledBright", 60);
+    runtimeConfig.soundEnabled = prefs.getBool("soundOn", true);
+    runtimeConfig.soundVolume = prefs.getInt("soundVol", 50);
+    // Default hostname: hookbot-XXYY from last 2 bytes of MAC
+    String defaultHostname = MDNS_HOSTNAME;
+    {
+        String mac = WiFi.macAddress(); // "AA:BB:CC:DD:EE:FF"
+        String suffix = mac.substring(mac.length() - 5);
+        suffix.replace(":", "");
+        suffix.toLowerCase();
+        defaultHostname += "-" + suffix;
+    }
+    String hostname = prefs.getString("hostname", "");
+    if (hostname.length() == 0) hostname = defaultHostname;
+    strncpy(runtimeConfig.hostname, hostname.c_str(), sizeof(runtimeConfig.hostname) - 1);
+    String mgmt = prefs.getString("mgmtServer", DEFAULT_MGMT_SERVER);
+    strncpy(runtimeConfig.mgmtServer, mgmt.c_str(), sizeof(runtimeConfig.mgmtServer) - 1);
+    // Accessories (default: hat + cigar for the CEO)
+    runtimeConfig.topHat = prefs.getBool("accHat", true);
+    runtimeConfig.cigar = prefs.getBool("accCigar", true);
+    runtimeConfig.glasses = prefs.getBool("accGlasses", false);
+    runtimeConfig.monocle = prefs.getBool("accMonocle", false);
+    runtimeConfig.bowtie = prefs.getBool("accBowtie", false);
+    runtimeConfig.crown = prefs.getBool("accCrown", false);
+    runtimeConfig.horns = prefs.getBool("accHorns", false);
+    runtimeConfig.halo = prefs.getBool("accHalo", false);
+    prefs.end();
+    Serial.printf("[Server] Config loaded: brightness=%d, sound=%s, vol=%d, host=%s\n",
+        runtimeConfig.ledBrightness,
+        runtimeConfig.soundEnabled ? "on" : "off",
+        runtimeConfig.soundVolume,
+        runtimeConfig.hostname);
+}
+
+void saveConfigToNVS() {
+    prefs.begin("hookbot", false); // read-write
+    prefs.putInt("ledBright", runtimeConfig.ledBrightness);
+    prefs.putBool("soundOn", runtimeConfig.soundEnabled);
+    prefs.putInt("soundVol", runtimeConfig.soundVolume);
+    prefs.putString("hostname", runtimeConfig.hostname);
+    prefs.putString("mgmtServer", runtimeConfig.mgmtServer);
+    prefs.putBool("accHat", runtimeConfig.topHat);
+    prefs.putBool("accCigar", runtimeConfig.cigar);
+    prefs.putBool("accGlasses", runtimeConfig.glasses);
+    prefs.putBool("accMonocle", runtimeConfig.monocle);
+    prefs.putBool("accBowtie", runtimeConfig.bowtie);
+    prefs.putBool("accCrown", runtimeConfig.crown);
+    prefs.putBool("accHorns", runtimeConfig.horns);
+    prefs.putBool("accHalo", runtimeConfig.halo);
+    prefs.end();
+    Serial.println("[Server] Config saved to NVS");
+}
+
+static void registerWithServer() {
+    if (strlen(runtimeConfig.mgmtServer) == 0) return;
+
+    HTTPClient http;
+    String url = String(runtimeConfig.mgmtServer) + "/api/devices";
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+
+    JsonDocument doc;
+    doc["name"] = runtimeConfig.hostname;
+    doc["hostname"] = runtimeConfig.hostname;
+    doc["ip_address"] = WiFi.localIP().toString();
+    doc["purpose"] = "hookbot";
+
+    String body;
+    serializeJson(doc, body);
+
+    int code = http.POST(body);
+    if (code > 0) {
+        Serial.printf("[Server] Registration response: %d\n", code);
+    } else {
+        Serial.printf("[Server] Registration failed: %s\n", http.errorToString(code).c_str());
+    }
+    http.end();
+}
+
+static const char CONTROL_PAGE[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CEO - Destroyer of Worlds</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0a0a0a;color:#eee;
+     display:flex;flex-direction:column;align-items:center;padding:20px;min-height:100vh}
+h1{font-size:1.5rem;margin-bottom:4px;color:#ff4444;text-transform:uppercase;letter-spacing:2px}
+h2{font-size:0.85rem;margin-bottom:20px;color:#666;font-weight:400;letter-spacing:4px}
+.status{background:#1a0a0a;padding:12px 24px;border-radius:12px;margin-bottom:24px;
+        font-size:0.9rem;color:#94a3b8;border:1px solid #331111}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:340px;width:100%}
+button{padding:16px;border:none;border-radius:12px;font-size:1rem;font-weight:600;
+       cursor:pointer;transition:transform 0.1s,opacity 0.1s;color:#fff}
+button:active{transform:scale(0.95);opacity:0.8}
+.idle{background:#8b0000}.thinking{background:#4a0080}
+.waiting{background:#b8860b}.success{background:#006400}
+.taskcheck{background:#005555}.error{background:#ff0000}
+#resp{margin-top:16px;font-size:0.8rem;color:#64748b;min-height:1.5em}
+</style>
+</head>
+<body>
+<h1>Destroyer of Worlds</h1>
+<h2>CEO COMMAND CENTER</h2>
+<div class="status" id="status">Loading...</div>
+<div class="grid">
+<button class="idle" onclick="send('idle')">Scheming</button>
+<button class="thinking" onclick="send('thinking')">Plotting</button>
+<button class="waiting" onclick="send('waiting')">Displeased</button>
+<button class="success" onclick="send('success')">Conquered</button>
+<button class="taskcheck" onclick="send('taskcheck')">Approved</button>
+<button class="error" onclick="send('error')">DESTROY</button>
+</div>
+<div id="resp"></div>
+<script>
+async function send(state){
+  document.getElementById('resp').textContent='Sending...';
+  try{
+    const r=await fetch('/state',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({state})});
+    const j=await r.json();
+    document.getElementById('resp').textContent=JSON.stringify(j);
+    refresh();
+  }catch(e){document.getElementById('resp').textContent='Error: '+e.message}
+}
+async function refresh(){
+  try{
+    const r=await fetch('/status');
+    const j=await r.json();
+    const up=Math.floor(j.uptime/1000);
+    document.getElementById('status').textContent=
+      'Mood: '+j.state.toUpperCase()+' | Reign: '+up+'s | Power: '+j.freeHeap+'B | FW: '+j.firmware_version;
+  }catch(e){}
+}
+refresh();setInterval(refresh,3000);
+</script>
+</body>
+</html>
+)rawliteral";
+
+void init(std::function<void(AvatarState)> onStateChange) {
+    stateCallback = onStateChange;
+
+    // Load config from NVS
+    loadConfigFromNVS();
+
+    // Connect WiFi (multi-network support)
+    WiFi.mode(WIFI_STA);
+
+    // Add compile-time networks (if secrets.h was provided)
+#ifdef WIFI_SSID
+    wifiMulti.addAP(WIFI_SSID, WIFI_PASS);
+    Serial.printf("[Server] WiFi network added: %s\n", WIFI_SSID);
+#ifdef WIFI_SSID2
+    wifiMulti.addAP(WIFI_SSID2, WIFI_PASS2);
+    Serial.printf("[Server] WiFi network added: %s\n", WIFI_SSID2);
+#endif
+#ifdef WIFI_SSID3
+    wifiMulti.addAP(WIFI_SSID3, WIFI_PASS3);
+    Serial.printf("[Server] WiFi network added: %s\n", WIFI_SSID3);
+#endif
+#endif
+
+    // Add NVS-stored networks
+    {
+        Preferences wifiPrefs;
+        wifiPrefs.begin("wifi", true);
+        for (int i = 0; i < MAX_WIFI_NETWORKS; i++) {
+            char keyS[8], keyP[8];
+            snprintf(keyS, sizeof(keyS), "ssid%d", i);
+            snprintf(keyP, sizeof(keyP), "pass%d", i);
+            String ssid = wifiPrefs.getString(keyS, "");
+            String pass = wifiPrefs.getString(keyP, "");
+            if (ssid.length() > 0) {
+                wifiMulti.addAP(ssid.c_str(), pass.c_str());
+                Serial.printf("[Server] WiFi network added from NVS: %s\n", ssid.c_str());
+            }
+        }
+        wifiPrefs.end();
+    }
+
+    connectStart = millis();
+    Serial.print("[Server] Connecting to WiFi");
+
+    while (wifiMulti.run() != WL_CONNECTED && millis() - connectStart < 15000) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println();
+
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.printf("[Server] Connected to %s | IP: %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
+    } else {
+        Serial.println("[Server] WiFi connection failed - continuing offline");
+    }
+
+    // mDNS - use configurable hostname
+    if (MDNS.begin(runtimeConfig.hostname)) {
+        MDNS.addService("http", "tcp", 80);
+        Serial.printf("[Server] mDNS: %s.local\n", runtimeConfig.hostname);
+    }
+
+    // Routes
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest* req) {
+        req->send_P(200, "text/html", CONTROL_PAGE);
+    });
+
+    server.on("/status", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument doc;
+        doc["state"] = stateToString(Avatar::getState());
+        doc["uptime"] = millis();
+        doc["freeHeap"] = ESP.getFreeHeap();
+        doc["ip"] = WiFi.localIP().toString();
+        doc["hostname"] = runtimeConfig.hostname;
+        doc["firmware_version"] = FIRMWARE_VERSION;
+#ifdef BOARD_ESP32_4848S040C
+        doc["device_type"] = "esp32_4848s040c_lcd";
+#else
+        doc["device_type"] = "esp32_oled";
+#endif
+
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
+    });
+
+    // GET /info - device info for management server
+    server.on("/info", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument doc;
+        doc["hostname"] = runtimeConfig.hostname;
+        doc["mac"] = WiFi.macAddress();
+        doc["firmware_version"] = FIRMWARE_VERSION;
+        doc["ip"] = WiFi.localIP().toString();
+        doc["freeHeap"] = ESP.getFreeHeap();
+        doc["uptime"] = millis();
+        doc["chip_model"] = ESP.getChipModel();
+#ifdef BOARD_ESP32_4848S040C
+        doc["device_type"] = "esp32_4848s040c_lcd";
+#else
+        doc["device_type"] = "esp32_oled";
+#endif
+
+        JsonArray caps = doc["capabilities"].to<JsonArray>();
+        caps.add("display");
+#ifndef NO_LED
+        caps.add("led");
+#endif
+#ifndef NO_SOUND
+        caps.add("buzzer");
+#endif
+        caps.add("ota");
+#ifdef BOARD_ESP32_4848S040C
+        caps.add("touch");
+#endif
+
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
+    });
+
+    // POST /state with body handler
+    AsyncCallbackJsonWebHandler* stateHandler = new AsyncCallbackJsonWebHandler(
+        "/state",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+            String stateStr = body["state"] | "idle";
+            AvatarState newState = stringToState(stateStr);
+
+            // Parse tool info if present
+            const char* toolName = body["tool"] | "";
+            const char* toolDetail = body["detail"] | "";
+            strncpy(currentTool.name, toolName, sizeof(currentTool.name) - 1);
+            currentTool.name[sizeof(currentTool.name) - 1] = '\0';
+            strncpy(currentTool.detail, toolDetail, sizeof(currentTool.detail) - 1);
+            currentTool.detail[sizeof(currentTool.detail) - 1] = '\0';
+
+            if (strlen(currentTool.name) > 0) {
+                Serial.printf("[Server] Tool: %s (%s)\n", currentTool.name, currentTool.detail);
+                Servos::onToolChange(currentTool.name);
+            }
+
+            if (stateCallback) {
+                stateCallback(newState);
+            }
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["state"] = stateToString(newState);
+            resp["tool"] = currentTool.name;
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(stateHandler);
+
+    // POST /ota - receive OTA URL, defer download to loop()
+    AsyncCallbackJsonWebHandler* otaHandler = new AsyncCallbackJsonWebHandler(
+        "/ota",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+            const char* url = body["url"] | "";
+            if (strlen(url) == 0) {
+                req->send(400, "application/json", "{\"error\":\"url required\"}");
+                return;
+            }
+            pendingOtaUrl = String(url);
+            Serial.printf("[Server] OTA queued from: %s\n", url);
+            req->send(200, "application/json", "{\"ok\":true,\"msg\":\"OTA queued\"}");
+        }
+    );
+    server.addHandler(otaHandler);
+
+    // POST /config - update runtime config from management server
+    AsyncCallbackJsonWebHandler* configHandler = new AsyncCallbackJsonWebHandler(
+        "/config",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            if (!body["led_brightness"].isNull()) {
+                runtimeConfig.ledBrightness = body["led_brightness"];
+            }
+            if (!body["sound_enabled"].isNull()) {
+                runtimeConfig.soundEnabled = body["sound_enabled"];
+            }
+            if (!body["sound_volume"].isNull()) {
+                runtimeConfig.soundVolume = body["sound_volume"];
+            }
+            if (!body["hostname"].isNull()) {
+                const char* h = body["hostname"];
+                strncpy(runtimeConfig.hostname, h, sizeof(runtimeConfig.hostname) - 1);
+            }
+            if (!body["mgmt_server"].isNull()) {
+                const char* m = body["mgmt_server"];
+                strncpy(runtimeConfig.mgmtServer, m, sizeof(runtimeConfig.mgmtServer) - 1);
+            }
+            // Accessories from avatar_preset
+            if (!body["avatar_preset"].isNull()) {
+                JsonObject preset = body["avatar_preset"];
+                if (!preset["accessories"].isNull()) {
+                    JsonObject acc = preset["accessories"];
+                    if (!acc["topHat"].isNull())  runtimeConfig.topHat  = acc["topHat"];
+                    if (!acc["cigar"].isNull())   runtimeConfig.cigar   = acc["cigar"];
+                    if (!acc["glasses"].isNull()) runtimeConfig.glasses = acc["glasses"];
+                    if (!acc["monocle"].isNull()) runtimeConfig.monocle = acc["monocle"];
+                    if (!acc["bowtie"].isNull())  runtimeConfig.bowtie  = acc["bowtie"];
+                    if (!acc["crown"].isNull())   runtimeConfig.crown   = acc["crown"];
+                    if (!acc["horns"].isNull())   runtimeConfig.horns   = acc["horns"];
+                    if (!acc["halo"].isNull())    runtimeConfig.halo    = acc["halo"];
+                    Serial.printf("[Server] Accessories updated: hat=%d cigar=%d glasses=%d\n",
+                        runtimeConfig.topHat, runtimeConfig.cigar, runtimeConfig.glasses);
+                }
+            }
+
+            saveConfigToNVS();
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["led_brightness"] = runtimeConfig.ledBrightness;
+            resp["sound_enabled"] = runtimeConfig.soundEnabled;
+            resp["sound_volume"] = runtimeConfig.soundVolume;
+            resp["hostname"] = runtimeConfig.hostname;
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(configHandler);
+
+    // POST /tasks - receive checklist from management server
+    AsyncCallbackJsonWebHandler* tasksHandler = new AsyncCallbackJsonWebHandler(
+        "/tasks",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            // Clear existing
+            taskList.count = 0;
+            taskList.activeIndex = 0;
+
+            if (!body["items"].isNull()) {
+                JsonArray items = body["items"];
+                for (size_t i = 0; i < items.size() && i < MAX_TASKS; i++) {
+                    JsonObject item = items[i];
+                    const char* label = item["label"] | "";
+                    strncpy(taskList.items[i].label, label, MAX_TASK_LEN - 1);
+                    taskList.items[i].label[MAX_TASK_LEN - 1] = '\0';
+                    taskList.items[i].status = item["status"] | 0;
+                    taskList.count++;
+                }
+            }
+            if (!body["active"].isNull()) {
+                taskList.activeIndex = body["active"] | 0;
+            }
+
+            Serial.printf("[Server] Tasks updated: %d items, active=%d\n", taskList.count, taskList.activeIndex);
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["count"] = taskList.count;
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(tasksHandler);
+
+    // POST /notifications - receive notification data (Teams unread, etc.)
+    AsyncCallbackJsonWebHandler* notifHandler = new AsyncCallbackJsonWebHandler(
+        "/notifications",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            const char* source = body["source"] | "teams";
+            int unread = body["unread"] | 0;
+            bool active = body["active"].isNull() ? (unread > 0) : (bool)body["active"];
+
+            // Find or create slot for this source
+            int slot = -1;
+            for (int i = 0; i < notificationCount; i++) {
+                if (strcmp(notifications[i].source, source) == 0) {
+                    slot = i;
+                    break;
+                }
+            }
+            if (slot < 0 && notificationCount < MAX_NOTIFICATIONS) {
+                slot = notificationCount++;
+            }
+            if (slot >= 0) {
+                strncpy(notifications[slot].source, source, MAX_NOTIF_SOURCE - 1);
+                notifications[slot].source[MAX_NOTIF_SOURCE - 1] = '\0';
+                notifications[slot].unread = unread;
+                notifications[slot].active = active;
+            }
+
+            Serial.printf("[Server] Notification: %s unread=%d active=%d\n", source, unread, active);
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["source"] = source;
+            resp["unread"] = unread;
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(notifHandler);
+
+    // POST /xp - receive XP/level data from management server
+    AsyncCallbackJsonWebHandler* xpHandler = new AsyncCallbackJsonWebHandler(
+        "/xp",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            xpData.level = body["level"] | 0;
+            xpData.xp = body["xp"] | 0;
+            xpData.progress = body["progress"] | 0;
+            const char* title = body["title"] | "Newbie";
+            strncpy(xpData.title, title, sizeof(xpData.title) - 1);
+            xpData.title[sizeof(xpData.title) - 1] = '\0';
+
+            Serial.printf("[Server] XP update: level=%d xp=%d progress=%d%% title=%s\n",
+                xpData.level, xpData.xp, xpData.progress, xpData.title);
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["level"] = xpData.level;
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(xpHandler);
+
+    // GET /notifications - read current notification state
+    server.on("/notifications", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument doc;
+        JsonArray arr = doc["notifications"].to<JsonArray>();
+        for (int i = 0; i < notificationCount; i++) {
+            JsonObject n = arr.add<JsonObject>();
+            n["source"] = notifications[i].source;
+            n["unread"] = notifications[i].unread;
+            n["active"] = notifications[i].active;
+        }
+
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
+    });
+
+    // GET /wifi - list configured networks + current connection
+    server.on("/wifi", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument doc;
+        doc["connected"] = WiFi.status() == WL_CONNECTED;
+        doc["ssid"] = WiFi.SSID();
+        doc["rssi"] = WiFi.RSSI();
+        doc["ip"] = WiFi.localIP().toString();
+
+        JsonArray nets = doc["networks"].to<JsonArray>();
+        // Compile-time networks (names only, not passwords)
+#ifdef WIFI_SSID
+        JsonObject n0 = nets.add<JsonObject>();
+        n0["ssid"] = WIFI_SSID;
+        n0["source"] = "compile";
+#ifdef WIFI_SSID2
+        JsonObject n1 = nets.add<JsonObject>();
+        n1["ssid"] = WIFI_SSID2;
+        n1["source"] = "compile";
+#endif
+#ifdef WIFI_SSID3
+        JsonObject n2 = nets.add<JsonObject>();
+        n2["ssid"] = WIFI_SSID3;
+        n2["source"] = "compile";
+#endif
+#endif
+        // NVS networks
+        Preferences wifiPrefs;
+        wifiPrefs.begin("wifi", true);
+        for (int i = 0; i < MAX_WIFI_NETWORKS; i++) {
+            char keyS[8];
+            snprintf(keyS, sizeof(keyS), "ssid%d", i);
+            String ssid = wifiPrefs.getString(keyS, "");
+            if (ssid.length() > 0) {
+                JsonObject n = nets.add<JsonObject>();
+                n["ssid"] = ssid;
+                n["source"] = "nvs";
+                n["index"] = i;
+            }
+        }
+        wifiPrefs.end();
+
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
+    });
+
+    // POST /wifi - add or remove WiFi networks in NVS
+    AsyncCallbackJsonWebHandler* wifiHandler = new AsyncCallbackJsonWebHandler(
+        "/wifi",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            Preferences wifiPrefs;
+            wifiPrefs.begin("wifi", false);
+
+            // Add a network: {"action": "add", "ssid": "...", "password": "..."}
+            if (String((const char*)(body["action"] | "")) == "add") {
+                const char* ssid = body["ssid"] | "";
+                const char* pass = body["password"] | "";
+                if (strlen(ssid) == 0) {
+                    req->send(400, "application/json", "{\"error\":\"ssid required\"}");
+                    wifiPrefs.end();
+                    return;
+                }
+                // Find empty slot
+                int slot = -1;
+                for (int i = 0; i < MAX_WIFI_NETWORKS; i++) {
+                    char keyS[8];
+                    snprintf(keyS, sizeof(keyS), "ssid%d", i);
+                    String existing = wifiPrefs.getString(keyS, "");
+                    if (existing.length() == 0) { slot = i; break; }
+                    if (existing == ssid) { slot = i; break; } // overwrite same SSID
+                }
+                if (slot < 0) {
+                    req->send(400, "application/json", "{\"error\":\"max networks reached\"}");
+                    wifiPrefs.end();
+                    return;
+                }
+                char keyS[8], keyP[8];
+                snprintf(keyS, sizeof(keyS), "ssid%d", slot);
+                snprintf(keyP, sizeof(keyP), "pass%d", slot);
+                wifiPrefs.putString(keyS, ssid);
+                wifiPrefs.putString(keyP, pass);
+                wifiMulti.addAP(ssid, pass);
+                Serial.printf("[Server] WiFi network added: %s (slot %d)\n", ssid, slot);
+
+                JsonDocument resp;
+                resp["ok"] = true;
+                resp["slot"] = slot;
+                resp["ssid"] = ssid;
+                String json;
+                serializeJson(resp, json);
+                req->send(200, "application/json", json);
+            }
+            // Remove a network: {"action": "remove", "index": 0}
+            else if (String((const char*)(body["action"] | "")) == "remove") {
+                int idx = body["index"] | -1;
+                if (idx < 0 || idx >= MAX_WIFI_NETWORKS) {
+                    req->send(400, "application/json", "{\"error\":\"invalid index\"}");
+                    wifiPrefs.end();
+                    return;
+                }
+                char keyS[8], keyP[8];
+                snprintf(keyS, sizeof(keyS), "ssid%d", idx);
+                snprintf(keyP, sizeof(keyP), "pass%d", idx);
+                wifiPrefs.remove(keyS);
+                wifiPrefs.remove(keyP);
+                Serial.printf("[Server] WiFi network removed: slot %d\n", idx);
+
+                // Note: WiFiMulti doesn't support removing. Reboot needed for full effect.
+                JsonDocument resp;
+                resp["ok"] = true;
+                resp["msg"] = "Removed. Reboot device to apply.";
+                String json;
+                serializeJson(resp, json);
+                req->send(200, "application/json", json);
+            }
+            else {
+                req->send(400, "application/json", "{\"error\":\"action must be add or remove\"}");
+            }
+
+            wifiPrefs.end();
+        }
+    );
+    server.addHandler(wifiHandler);
+
+    // GET /servos - read current servo state
+    server.on("/servos", HTTP_GET, [](AsyncWebServerRequest* req) {
+        ServoChannel* ch = Servos::getChannels();
+        ServoStateMap* maps = Servos::getStateMaps();
+        JsonDocument doc;
+        JsonArray arr = doc["channels"].to<JsonArray>();
+        for (int i = 0; i < MAX_SERVOS; i++) {
+            JsonObject o = arr.add<JsonObject>();
+            o["pin"] = ch[i].pin;
+            o["min"] = ch[i].minAngle;
+            o["max"] = ch[i].maxAngle;
+            o["rest"] = ch[i].restAngle;
+            o["current"] = ch[i].currentAngle;
+            o["label"] = ch[i].label;
+            o["enabled"] = ch[i].enabled;
+        }
+        // Include state maps
+        JsonObject sm = doc["state_maps"].to<JsonObject>();
+        const char* stateNames[] = {"idle","thinking","waiting","success","taskcheck","error"};
+        for (int s = 0; s < 6; s++) {
+            JsonArray a = sm[stateNames[s]].to<JsonArray>();
+            for (int i = 0; i < MAX_SERVOS; i++) {
+                a.add(maps[s].angles[i]);
+            }
+        }
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
+    });
+
+    // POST /servos - set servo positions
+    AsyncCallbackJsonWebHandler* servoHandler = new AsyncCallbackJsonWebHandler(
+        "/servos",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            // Set individual angles: {"angles": [90, 90, 45, 135]}
+            if (!body["angles"].isNull()) {
+                JsonArray angles = body["angles"];
+                for (size_t i = 0; i < angles.size() && i < MAX_SERVOS; i++) {
+                    Servos::setAngle(i, angles[i]);
+                }
+            }
+
+            // Set single channel: {"channel": 0, "angle": 45}
+            if (!body["channel"].isNull()) {
+                uint8_t ch = body["channel"];
+                uint8_t angle = body["angle"] | 90;
+                Servos::setAngle(ch, angle);
+            }
+
+            // Rest all: {"rest": true}
+            if (body["rest"] == true) {
+                Servos::setAllToRest();
+            }
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(servoHandler);
+
+    // POST /servos/config - configure servo channels
+    AsyncCallbackJsonWebHandler* servoConfigHandler = new AsyncCallbackJsonWebHandler(
+        "/servos/config",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            if (!body["channels"].isNull()) {
+                JsonArray chArr = body["channels"];
+                for (size_t i = 0; i < chArr.size() && i < MAX_SERVOS; i++) {
+                    JsonObject ch = chArr[i];
+                    int8_t pin = ch["pin"] | -1;
+                    uint8_t minA = ch["min"] | 0;
+                    uint8_t maxA = ch["max"] | 180;
+                    uint8_t rest = ch["rest"] | 90;
+                    const char* label = ch["label"] | "servo";
+                    Servos::configureChannel(i, pin, minA, maxA, rest, label);
+                }
+            }
+
+            // Update state maps if provided
+            if (!body["state_maps"].isNull()) {
+                JsonObject sm = body["state_maps"];
+                ServoStateMap* maps = Servos::getStateMaps();
+                const char* stateNames[] = {"idle","thinking","waiting","success","taskcheck","error"};
+                for (int s = 0; s < 6; s++) {
+                    if (!sm[stateNames[s]].isNull()) {
+                        JsonArray a = sm[stateNames[s]];
+                        for (size_t i = 0; i < a.size() && i < MAX_SERVOS; i++) {
+                            maps[s].angles[i] = a[i];
+                        }
+                    }
+                }
+                Servos::saveToNVS();
+            }
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(servoConfigHandler);
+
+    server.begin();
+    Serial.println("[Server] HTTP server started on port 80");
+
+    // Register with management server on boot
+    if (WiFi.status() == WL_CONNECTED) {
+        registerWithServer();
+    }
+}
+
+void update() {
+    // WiFi reconnection (tries all configured networks)
+    static uint32_t lastReconnect = 0;
+    if (WiFi.status() != WL_CONNECTED && millis() - lastReconnect > 10000) {
+        lastReconnect = millis();
+        wifiMulti.run();
+    }
+
+    // Handle pending OTA (must run from loop, not from async handler)
+    if (pendingOtaUrl.length() > 0) {
+        String url = pendingOtaUrl;
+        pendingOtaUrl = "";
+        Serial.printf("[OTA] Starting HTTP update from: %s\n", url.c_str());
+
+        WiFiClient client;
+        httpUpdate.rebootOnUpdate(true);
+        t_httpUpdate_return ret = httpUpdate.update(client, url);
+
+        switch (ret) {
+            case HTTP_UPDATE_FAILED:
+                Serial.printf("[OTA] Failed: %s\n", httpUpdate.getLastErrorString().c_str());
+                break;
+            case HTTP_UPDATE_NO_UPDATES:
+                Serial.println("[OTA] No update available");
+                break;
+            case HTTP_UPDATE_OK:
+                Serial.println("[OTA] Success - rebooting");
+                break;
+        }
+    }
+}
+
+bool isConnected() {
+    return WiFi.status() == WL_CONNECTED;
+}
+
+const ToolInfo& getCurrentTool() {
+    return currentTool;
+}
+
+RuntimeConfig& getConfig() {
+    return runtimeConfig;
+}
+
+TaskList& getTasks() {
+    return taskList;
+}
+
+NotificationData* getNotifications() {
+    return notifications;
+}
+
+int getNotificationCount() {
+    return notificationCount;
+}
+
+XpData& getXpData() {
+    return xpData;
+}
+
+} // namespace HookbotServer
+
+// Global helper for avatar IP display
+String _hookbot_get_ip() {
+    return WiFi.localIP().toString();
+}

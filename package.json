@@ -1,0 +1,14 @@
+{
+  "name": "hookbot",
+  "version": "0.2.0",
+  "description": "ESP32 desk companion that reacts to your dev workflow via Claude Code hooks",
+  "scripts": {
+    "test": "npx playwright test"
+  },
+  "keywords": ["esp32", "claude-code", "desk-companion", "iot", "oled"],
+  "author": "Joakim",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

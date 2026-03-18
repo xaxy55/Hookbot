@@ -1,0 +1,22 @@
+services:
+  server:
+    build: ./server
+    network_mode: host
+    volumes:
+      - db-data:/app/data
+    environment:
+      - DATABASE_URL=/app/data/hookbot.db
+      - FIRMWARE_DIR=/app/data/firmware
+      - BIND_ADDR=0.0.0.0:3000
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  db-data:

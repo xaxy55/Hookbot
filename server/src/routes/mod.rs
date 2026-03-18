@@ -1,0 +1,11 @@
+pub mod build;
+pub mod devices;
+pub mod diagnostics;
+pub mod discovery;
+pub mod firmware;
+pub mod gamification;
+pub mod hooks;
+pub mod notifications;
+pub mod ota;
+pub mod settings;
+pub mod store;

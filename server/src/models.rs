@@ -1,0 +1,288 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Device {
+    pub id: String,
+    pub name: String,
+    pub hostname: String,
+    pub ip_address: String,
+    pub purpose: Option<String>,
+    pub personality: Option<String>,
+    pub device_type: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeviceConfig {
+    pub device_id: String,
+    pub led_brightness: i32,
+    pub led_colors: Option<serde_json::Value>,
+    pub sound_enabled: bool,
+    pub sound_volume: i32,
+    pub avatar_preset: Option<serde_json::Value>,
+    pub custom_data: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Firmware {
+    pub id: String,
+    pub version: String,
+    pub filename: String,
+    pub size_bytes: i64,
+    pub checksum: String,
+    pub uploaded_at: String,
+    pub notes: Option<String>,
+    pub device_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OtaJob {
+    pub id: String,
+    pub firmware_id: String,
+    pub device_id: String,
+    pub status: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub error_msg: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
+pub struct StatusLog {
+    pub device_id: String,
+    pub state: String,
+    pub uptime_ms: i64,
+    pub free_heap: i64,
+    pub recorded_at: String,
+}
+
+// --- API request/response types ---
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDevice {
+    pub name: String,
+    pub hostname: String,
+    pub ip_address: String,
+    pub purpose: Option<String>,
+    pub personality: Option<String>,
+    pub device_type: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateDevice {
+    pub name: Option<String>,
+    pub hostname: Option<String>,
+    pub ip_address: Option<String>,
+    pub purpose: Option<String>,
+    pub personality: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateConfig {
+    pub led_brightness: Option<i32>,
+    pub led_colors: Option<serde_json::Value>,
+    pub sound_enabled: Option<bool>,
+    pub sound_volume: Option<i32>,
+    pub avatar_preset: Option<serde_json::Value>,
+    pub custom_data: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StateChange {
+    pub state: String,
+    pub tool: Option<String>,
+    pub detail: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct OtaDeploy {
+    pub firmware_id: String,
+    pub device_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskItem {
+    pub label: String,
+    pub status: u8, // 0=pending, 1=active, 2=done, 3=failed
+}
+
+#[derive(Debug, Deserialize)]
+pub struct HookEvent {
+    pub event: String,
+    pub tool_name: Option<String>,
+    pub tool_output: Option<String>,
+    #[allow(dead_code)]
+    pub project: Option<String>,
+    pub device_id: Option<String>,
+    pub tasks: Option<Vec<TaskItem>>,
+    pub active_task: Option<u8>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DeviceWithStatus {
+    #[serde(flatten)]
+    pub device: Device,
+    pub latest_status: Option<StatusSnapshot>,
+    pub online: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StatusSnapshot {
+    pub state: String,
+    pub uptime_ms: i64,
+    pub free_heap: i64,
+    pub recorded_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DiscoveredDevice {
+    pub hostname: String,
+    pub ip_address: String,
+    pub port: u16,
+    pub already_registered: bool,
+}
+
+// --- Gamification types ---
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolUse {
+    pub id: i64,
+    pub device_id: Option<String>,
+    pub tool_name: String,
+    pub event: String,
+    pub project: Option<String>,
+    pub duration_ms: Option<i64>,
+    pub xp_earned: i64,
+    pub created_at: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Session {
+    pub id: i64,
+    pub device_id: Option<String>,
+    pub started_at: String,
+    pub ended_at: Option<String>,
+    pub tool_count: i64,
+    pub xp_earned: i64,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct XpEntry {
+    pub id: i64,
+    pub device_id: Option<String>,
+    pub amount: i64,
+    pub reason: String,
+    pub created_at: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Achievement {
+    pub id: i64,
+    pub device_id: Option<String>,
+    pub badge_id: String,
+    pub earned_at: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Streak {
+    pub device_id: String,
+    pub current_streak: i64,
+    pub longest_streak: i64,
+    pub last_active_date: Option<String>,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GamificationStats {
+    pub total_xp: i64,
+    pub level: i64,
+    pub xp_for_current_level: i64,
+    pub xp_for_next_level: i64,
+    pub total_tool_uses: i64,
+    pub current_streak: i64,
+    pub longest_streak: i64,
+    pub achievements_earned: i64,
+    pub title: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ActivityEntry {
+    pub id: i64,
+    pub tool_name: String,
+    pub event: String,
+    pub xp_earned: i64,
+    pub created_at: String,
+    pub device_id: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AnalyticsData {
+    pub tools_per_day: Vec<DayCount>,
+    pub hourly_activity: Vec<HourCount>,
+    pub tool_distribution: Vec<ToolCount>,
+    pub state_distribution: Vec<StateCount>,
+    pub session_lengths: Vec<SessionLength>,
+    pub xp_over_time: Vec<DayXp>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DayCount {
+    pub date: String,
+    pub count: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct HourCount {
+    pub hour: i64,
+    pub count: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ToolCount {
+    pub tool_name: String,
+    pub count: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct StateCount {
+    pub state: String,
+    pub count: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SessionLength {
+    pub date: String,
+    pub duration_minutes: f64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DayXp {
+    pub date: String,
+    pub xp: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct BadgeDefinition {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+    pub icon: &'static str,
+    pub earned: bool,
+    pub earned_at: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct LeaderboardEntry {
+    pub device_id: String,
+    pub device_name: String,
+    pub total_xp: i64,
+    pub level: i64,
+    pub current_streak: i64,
+    pub achievements: i64,
+}

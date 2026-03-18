@@ -1,0 +1,421 @@
+use axum::extract::{Path, State};
+use axum::Json;
+use serde_json::json;
+
+use crate::db::DbPool;
+use crate::error::AppError;
+use crate::models::*;
+use crate::services::proxy;
+
+pub async fn list_devices(State(db): State<DbPool>) -> Result<Json<Vec<DeviceWithStatus>>, AppError> {
+    let conn = db.lock().unwrap();
+    let mut stmt = conn.prepare(
+        "SELECT d.id, d.name, d.hostname, d.ip_address, d.purpose, d.personality,
+                d.created_at, d.updated_at, d.device_type,
+                s.state, s.uptime_ms, s.free_heap, s.recorded_at
+         FROM devices d
+         LEFT JOIN (
+             SELECT device_id, state, uptime_ms, free_heap, recorded_at,
+                    ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY recorded_at DESC) as rn
+             FROM status_log
+         ) s ON s.device_id = d.id AND s.rn = 1
+         ORDER BY d.name",
+    )?;
+
+    let devices = stmt.query_map([], |row| {
+        let state: Option<String> = row.get(9)?;
+        let latest_status = state.map(|s| StatusSnapshot {
+            state: s,
+            uptime_ms: row.get(10).unwrap_or(0),
+            free_heap: row.get(11).unwrap_or(0),
+            recorded_at: row.get(12).unwrap_or_default(),
+        });
+
+        let online = latest_status.as_ref().map_or(false, |s| {
+            chrono::NaiveDateTime::parse_from_str(&s.recorded_at, "%Y-%m-%d %H:%M:%S")
+                .map(|dt| {
+                    let now = chrono::Utc::now().naive_utc();
+                    (now - dt).num_seconds() < 30
+                })
+                .unwrap_or(false)
+        });
+
+        Ok(DeviceWithStatus {
+            device: Device {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                hostname: row.get(2)?,
+                ip_address: row.get(3)?,
+                purpose: row.get(4)?,
+                personality: row.get(5)?,
+                device_type: row.get(8)?,
+                created_at: row.get(6)?,
+                updated_at: row.get(7)?,
+            },
+            latest_status,
+            online,
+        })
+    })?
+    .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(Json(devices))
+}
+
+pub async fn create_device(
+    State(db): State<DbPool>,
+    Json(input): Json<CreateDevice>,
+) -> Result<Json<Device>, AppError> {
+    let id = uuid::Uuid::new_v4().to_string();
+    let conn = db.lock().unwrap();
+
+    conn.execute(
+        "INSERT INTO devices (id, name, hostname, ip_address, purpose, personality, device_type)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        rusqlite::params![id, input.name, input.hostname, input.ip_address, input.purpose, input.personality, input.device_type],
+    )?;
+
+    conn.execute(
+        "INSERT INTO device_config (device_id) VALUES (?1)",
+        [&id],
+    )?;
+
+    let device = conn.query_row(
+        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type
+         FROM devices WHERE id = ?1",
+        [&id],
+        |row| {
+            Ok(Device {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                hostname: row.get(2)?,
+                ip_address: row.get(3)?,
+                purpose: row.get(4)?,
+                personality: row.get(5)?,
+                device_type: row.get(8)?,
+                created_at: row.get(6)?,
+                updated_at: row.get(7)?,
+            })
+        },
+    )?;
+
+    Ok(Json(device))
+}
+
+fn query_device(conn: &rusqlite::Connection, id: &str) -> Result<Device, AppError> {
+    conn.query_row(
+        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type
+         FROM devices WHERE id = ?1",
+        [id],
+        |row| {
+            Ok(Device {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                hostname: row.get(2)?,
+                ip_address: row.get(3)?,
+                purpose: row.get(4)?,
+                personality: row.get(5)?,
+                device_type: row.get(8)?,
+                created_at: row.get(6)?,
+                updated_at: row.get(7)?,
+            })
+        },
+    ).map_err(|_| AppError::NotFound(format!("Device {id} not found")))
+}
+
+fn query_latest_status(conn: &rusqlite::Connection, id: &str) -> Option<StatusSnapshot> {
+    conn.query_row(
+        "SELECT state, uptime_ms, free_heap, recorded_at FROM status_log
+         WHERE device_id = ?1 ORDER BY recorded_at DESC LIMIT 1",
+        [id],
+        |row| {
+            Ok(StatusSnapshot {
+                state: row.get(0)?,
+                uptime_ms: row.get(1)?,
+                free_heap: row.get(2)?,
+                recorded_at: row.get(3)?,
+            })
+        },
+    ).ok()
+}
+
+fn is_online(status: &Option<StatusSnapshot>) -> bool {
+    status.as_ref().map_or(false, |s| {
+        chrono::NaiveDateTime::parse_from_str(&s.recorded_at, "%Y-%m-%d %H:%M:%S")
+            .map(|dt| (chrono::Utc::now().naive_utc() - dt).num_seconds() < 30)
+            .unwrap_or(false)
+    })
+}
+
+fn query_device_ip(conn: &rusqlite::Connection, id: &str) -> Result<String, AppError> {
+    conn.query_row(
+        "SELECT ip_address FROM devices WHERE id = ?1", [id],
+        |row| row.get(0),
+    ).map_err(|_| AppError::NotFound(format!("Device {id} not found")))
+}
+
+pub async fn get_device(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+) -> Result<Json<DeviceWithStatus>, AppError> {
+    let conn = db.lock().unwrap();
+    let device = query_device(&conn, &id)?;
+    let latest_status = query_latest_status(&conn, &id);
+    let online = is_online(&latest_status);
+    Ok(Json(DeviceWithStatus { device, latest_status, online }))
+}
+
+pub async fn update_device(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+    Json(input): Json<UpdateDevice>,
+) -> Result<Json<Device>, AppError> {
+    let conn = db.lock().unwrap();
+
+    let exists: bool = conn.query_row(
+        "SELECT COUNT(*) FROM devices WHERE id = ?1", [&id], |row| row.get::<_, i32>(0),
+    ).map(|c| c > 0)?;
+    if !exists {
+        return Err(AppError::NotFound(format!("Device {id} not found")));
+    }
+
+    if let Some(name) = &input.name {
+        conn.execute("UPDATE devices SET name = ?1, updated_at = datetime('now') WHERE id = ?2", rusqlite::params![name, id])?;
+    }
+    if let Some(hostname) = &input.hostname {
+        conn.execute("UPDATE devices SET hostname = ?1, updated_at = datetime('now') WHERE id = ?2", rusqlite::params![hostname, id])?;
+    }
+    if let Some(ip) = &input.ip_address {
+        conn.execute("UPDATE devices SET ip_address = ?1, updated_at = datetime('now') WHERE id = ?2", rusqlite::params![ip, id])?;
+    }
+    if let Some(purpose) = &input.purpose {
+        conn.execute("UPDATE devices SET purpose = ?1, updated_at = datetime('now') WHERE id = ?2", rusqlite::params![purpose, id])?;
+    }
+    if let Some(personality) = &input.personality {
+        conn.execute("UPDATE devices SET personality = ?1, updated_at = datetime('now') WHERE id = ?2", rusqlite::params![personality, id])?;
+    }
+
+    let device = query_device(&conn, &id)?;
+    Ok(Json(device))
+}
+
+pub async fn delete_device(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let conn = db.lock().unwrap();
+    let rows = conn.execute("DELETE FROM devices WHERE id = ?1", [&id])?;
+    if rows == 0 {
+        return Err(AppError::NotFound(format!("Device {id} not found")));
+    }
+    Ok(Json(json!({ "ok": true })))
+}
+
+pub async fn forward_state(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+    Json(input): Json<StateChange>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let ip = {
+        let conn = db.lock().unwrap();
+        query_device_ip(&conn, &id)?
+    };
+
+    let device_url = format!("http://{}/state", ip);
+    let body = json!({
+        "state": input.state,
+        "tool": input.tool.unwrap_or_default(),
+        "detail": input.detail.unwrap_or_default(),
+    });
+
+    proxy::forward_json(&device_url, &body).await?;
+    Ok(Json(json!({ "ok": true, "state": input.state })))
+}
+
+pub async fn forward_servos(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let ip = {
+        let conn = db.lock().unwrap();
+        query_device_ip(&conn, &id)?
+    };
+    proxy::forward_json(&format!("http://{}/servos", ip), &body).await?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+pub async fn forward_servo_config(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let ip = {
+        let conn = db.lock().unwrap();
+        query_device_ip(&conn, &id)?
+    };
+    proxy::forward_json(&format!("http://{}/servos/config", ip), &body).await?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+pub async fn get_servos(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let ip = {
+        let conn = db.lock().unwrap();
+        query_device_ip(&conn, &id)?
+    };
+    let result = proxy::get_json(&format!("http://{}/servos", ip)).await?;
+    Ok(Json(result))
+}
+
+pub async fn forward_tasks(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let ip = {
+        let conn = db.lock().unwrap();
+        query_device_ip(&conn, &id)?
+    };
+
+    proxy::forward_json(&format!("http://{}/tasks", ip), &body).await?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+pub async fn get_device_status(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let ip = {
+        let conn = db.lock().unwrap();
+        query_device_ip(&conn, &id)?
+    };
+
+    let result = proxy::get_json(&format!("http://{}/status", ip)).await?;
+    Ok(Json(result))
+}
+
+pub async fn get_device_history(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+) -> Result<Json<Vec<StatusSnapshot>>, AppError> {
+    let conn = db.lock().unwrap();
+    let mut stmt = conn.prepare(
+        "SELECT state, uptime_ms, free_heap, recorded_at FROM status_log
+         WHERE device_id = ?1 ORDER BY recorded_at DESC LIMIT 100",
+    )?;
+
+    let history = stmt.query_map([&id], |row| {
+        Ok(StatusSnapshot {
+            state: row.get(0)?,
+            uptime_ms: row.get(1)?,
+            free_heap: row.get(2)?,
+            recorded_at: row.get(3)?,
+        })
+    })?.collect::<Result<Vec<_>, _>>()?;
+
+    Ok(Json(history))
+}
+
+fn query_config(conn: &rusqlite::Connection, id: &str) -> Result<DeviceConfig, AppError> {
+    conn.query_row(
+        "SELECT device_id, led_brightness, led_colors, sound_enabled, sound_volume, avatar_preset, custom_data
+         FROM device_config WHERE device_id = ?1",
+        [id],
+        |row| {
+            let led_colors_str: Option<String> = row.get(2)?;
+            let avatar_preset_str: Option<String> = row.get(5)?;
+            let custom_data_str: Option<String> = row.get(6)?;
+            Ok(DeviceConfig {
+                device_id: row.get(0)?,
+                led_brightness: row.get(1)?,
+                led_colors: led_colors_str.and_then(|s| serde_json::from_str(&s).ok()),
+                sound_enabled: row.get::<_, i32>(3)? != 0,
+                sound_volume: row.get(4)?,
+                avatar_preset: avatar_preset_str.and_then(|s| serde_json::from_str(&s).ok()),
+                custom_data: custom_data_str.and_then(|s| serde_json::from_str(&s).ok()),
+            })
+        },
+    ).map_err(|_| AppError::NotFound(format!("Config for device {id} not found")))
+}
+
+pub async fn get_config(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+) -> Result<Json<DeviceConfig>, AppError> {
+    let conn = db.lock().unwrap();
+    let config = query_config(&conn, &id)?;
+    Ok(Json(config))
+}
+
+pub async fn update_config(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+    Json(input): Json<UpdateConfig>,
+) -> Result<Json<DeviceConfig>, AppError> {
+    let config = {
+        let conn = db.lock().unwrap();
+
+        if let Some(b) = input.led_brightness {
+            conn.execute("UPDATE device_config SET led_brightness = ?1 WHERE device_id = ?2", rusqlite::params![b, id])?;
+        }
+        if let Some(ref c) = input.led_colors {
+            let s = serde_json::to_string(c).unwrap();
+            conn.execute("UPDATE device_config SET led_colors = ?1 WHERE device_id = ?2", rusqlite::params![s, id])?;
+        }
+        if let Some(e) = input.sound_enabled {
+            conn.execute("UPDATE device_config SET sound_enabled = ?1 WHERE device_id = ?2", rusqlite::params![e as i32, id])?;
+        }
+        if let Some(v) = input.sound_volume {
+            conn.execute("UPDATE device_config SET sound_volume = ?1 WHERE device_id = ?2", rusqlite::params![v, id])?;
+        }
+        if let Some(ref a) = input.avatar_preset {
+            let s = serde_json::to_string(a).unwrap();
+            conn.execute("UPDATE device_config SET avatar_preset = ?1 WHERE device_id = ?2", rusqlite::params![s, id])?;
+        }
+        if let Some(ref d) = input.custom_data {
+            let s = serde_json::to_string(d).unwrap();
+            conn.execute("UPDATE device_config SET custom_data = ?1 WHERE device_id = ?2", rusqlite::params![s, id])?;
+        }
+
+        query_config(&conn, &id)?
+    };
+
+    Ok(Json(config))
+}
+
+pub async fn push_config(
+    State(db): State<DbPool>,
+    Path(id): Path<String>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let (ip, config) = {
+        let conn = db.lock().unwrap();
+
+        let ip = query_device_ip(&conn, &id)?;
+
+        let config = conn.query_row(
+            "SELECT led_brightness, led_colors, sound_enabled, sound_volume, avatar_preset, custom_data
+             FROM device_config WHERE device_id = ?1",
+            [&id],
+            |row| {
+                let led_colors_str: Option<String> = row.get(1)?;
+                let avatar_preset_str: Option<String> = row.get(4)?;
+                let custom_data_str: Option<String> = row.get(5)?;
+                Ok(json!({
+                    "led_brightness": row.get::<_, i32>(0)?,
+                    "led_colors": led_colors_str.and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok()),
+                    "sound_enabled": row.get::<_, i32>(2)? != 0,
+                    "sound_volume": row.get::<_, i32>(3)?,
+                    "avatar_preset": avatar_preset_str.and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok()),
+                    "custom_data": custom_data_str.and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok()),
+                }))
+            },
+        ).map_err(|_| AppError::NotFound(format!("Config for device {id} not found")))?;
+
+        (ip, config)
+    };
+
+    proxy::forward_json(&format!("http://{}/config", ip), &config).await?;
+    Ok(Json(json!({ "ok": true })))
+}

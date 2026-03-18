@@ -1,0 +1,196 @@
+#include <Arduino.h>
+#include <ArduinoOTA.h>
+#include "config.h"
+#ifndef NO_DISPLAY
+#include "display.h"
+#include "avatar.h"
+#endif
+#ifndef NO_LED
+#include "led.h"
+#endif
+#ifndef NO_SOUND
+#include "sound.h"
+#endif
+#include "server.h"
+#include "servo.h"
+#include "ble_prov.h"
+#ifdef BOARD_ESP32_4848S040C
+#include "touch_ui.h"
+#endif
+
+// ─── State machine ──────────────────────────────────────────────
+
+static AvatarState currentState = AvatarState::IDLE;
+static uint32_t stateEnteredAt = 0;
+
+static void setState(AvatarState state) {
+    currentState = state;
+    stateEnteredAt = millis();
+#ifndef NO_DISPLAY
+    Avatar::setState(state);
+#endif
+#ifndef NO_LED
+    Led::setState(state);
+#endif
+    Servos::onStateChange(state);
+#ifndef NO_SOUND
+    if (HookbotServer::getConfig().soundEnabled) {
+        Sound::playStateSound(state);
+    }
+#endif
+}
+
+// ─── Touch input (LCD board only) ───────────────────────────────
+
+#if defined(BOARD_ESP32_4848S040C) && !defined(NO_DISPLAY)
+static uint32_t lastTouchTime = 0;
+static bool wasTouchingMain = false;
+
+static void handleTouch(uint32_t deltaMs) {
+    int16_t tx, ty;
+    bool touching = Display::getTouchPoint(tx, ty);
+
+    // Feed touch data to the overlay UI
+    TouchUI::update(deltaMs, tx, ty, touching);
+
+    // If overlay is active, it consumes all touches
+    if (TouchUI::isOverlayActive()) {
+        wasTouchingMain = touching;
+        return;
+    }
+
+    // Default touch behavior when no overlay
+    if (touching && !wasTouchingMain && (millis() - lastTouchTime > 500)) {
+        lastTouchTime = millis();
+
+        // Tap zones on the 120x120 virtual canvas:
+        // Top half: cycle forward through states
+        // Bottom half: back to idle
+        if (ty < 60) {
+            int next = ((int)currentState + 1) % 6;
+            setState((AvatarState)next);
+            Serial.printf("[Touch] State -> %d\n", next);
+        } else {
+            setState(AvatarState::IDLE);
+            Serial.println("[Touch] State -> IDLE");
+        }
+    }
+    wasTouchingMain = touching;
+}
+#endif
+
+// ─── Setup ──────────────────────────────────────────────────────
+
+void setup() {
+    Serial.begin(115200);
+    delay(500);
+    Serial.println("\n=== THE DESTROYER OF WORLDS IS BOOTING ===");
+    Serial.printf("[Main] Free heap: %d\n", ESP.getFreeHeap());
+#if BOARD_HAS_PSRAM
+    Serial.printf("[Main] PSRAM: %d bytes\n", ESP.getFreePsram());
+#endif
+
+#ifndef NO_DISPLAY
+    Serial.println("[Main] Display init...");
+    Display::init();
+    Serial.println("[Main] Avatar init...");
+    Avatar::init();
+#endif
+#ifndef NO_LED
+    Serial.println("[Main] LED init...");
+    Led::init();
+#endif
+#ifndef NO_SOUND
+    Sound::init();
+#endif
+    Serial.println("[Main] Servo init...");
+    Servos::init();
+
+#ifndef NO_DISPLAY
+    Avatar::draw();
+    Display::flush();
+#endif
+
+    Serial.println("[Main] Server init...");
+    HookbotServer::init([](AvatarState newState) {
+        setState(newState);
+        Serial.printf("[Main] State changed to %d via HTTP\n", (int)newState);
+    });
+
+    // OTA updates - no more USB cables for the CEO
+    ArduinoOTA.setHostname(HookbotServer::getConfig().hostname);
+    ArduinoOTA.onStart([]() {
+        Serial.println("[OTA] Firmware update incoming...");
+    });
+    ArduinoOTA.onEnd([]() {
+        Serial.println("[OTA] Update complete. Rebooting the Destroyer...");
+    });
+    ArduinoOTA.onError([](ota_error_t error) {
+        Serial.printf("[OTA] Error[%u]\n", error);
+    });
+    ArduinoOTA.begin();
+
+    Serial.printf("[Main] Free heap: %d bytes\n", ESP.getFreeHeap());
+#ifdef BOARD_HAS_PSRAM
+    if (BOARD_HAS_PSRAM) {
+        Serial.printf("[Main] Free PSRAM: %d bytes\n", ESP.getFreePsram());
+    }
+#endif
+    Serial.println("=== THE CEO HAS ARRIVED. TREMBLE. ===");
+
+    BleProv::init();
+#ifdef BOARD_ESP32_4848S040C
+    TouchUI::init();
+#endif
+}
+
+// ─── Loop ───────────────────────────────────────────────────────
+
+static uint32_t lastFrame = 0;
+
+void loop() {
+    uint32_t now = millis();
+    uint32_t delta = now - lastFrame;
+
+    if (delta < FRAME_TIME_MS) {
+        return;  // Frame rate limiter
+    }
+    lastFrame = now;
+
+    // Auto-return from transient states
+    if ((currentState == AvatarState::SUCCESS || currentState == AvatarState::TASKCHECK)
+        && (now - stateEnteredAt >= AUTO_RETURN_MS)) {
+        setState(AvatarState::IDLE);
+    }
+
+    // Update all subsystems
+#ifndef NO_DISPLAY
+    Avatar::update(delta);
+#endif
+#ifndef NO_LED
+    Led::update(delta);
+#endif
+    Servos::update(delta);
+#ifndef NO_SOUND
+    Sound::update(delta);
+    // Escalating angry beeps when waiting for user input
+    if (currentState == AvatarState::WAITING) {
+        Sound::updateWaitingEscalation(now - stateEnteredAt);
+    }
+#endif
+    HookbotServer::update();
+    ArduinoOTA.handle();
+    BleProv::update();
+
+#if defined(BOARD_ESP32_4848S040C) && !defined(NO_DISPLAY)
+    handleTouch(delta);
+#endif
+
+#ifndef NO_DISPLAY
+    Avatar::draw();
+#ifdef BOARD_ESP32_4848S040C
+    TouchUI::draw();  // Draw touch overlay on top of avatar
+#endif
+    Display::flush();
+#endif
+}

@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+@variant light (&:where(.light, .light *));
+
+@theme {
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  --color-canvas: var(--c-canvas);
+  --color-surface: var(--c-surface);
+  --color-inset: var(--c-inset);
+  --color-raised: var(--c-raised);
+  --color-edge: var(--c-edge);
+  --color-fg: var(--c-fg);
+  --color-fg-2: var(--c-fg2);
+  --color-muted: var(--c-muted);
+  --color-subtle: var(--c-subtle);
+  --color-dim: var(--c-dim);
+  --color-brand: var(--c-brand);
+  --color-brand-fg: var(--c-brand-fg);
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Dark theme (default) ──────────────────────────── */
+:root, .dark {
+  --c-canvas: #080b12;
+  --c-surface: #0f1219;
+  --c-inset: #181c27;
+  --c-raised: #232838;
+  --c-edge: #1f2433;
+  --c-fg: #e8eaf0;
+  --c-fg2: #b8bcc8;
+  --c-muted: #7c8194;
+  --c-subtle: #565b6e;
+  --c-dim: #3e4455;
+  --c-brand: #ef4444;
+  --c-brand-fg: #f87171;
+  color-scheme: dark;
+}
+
+/* ── Light theme ───────────────────────────────────── */
+.light {
+  --c-canvas: #f2f4f7;
+  --c-surface: #ffffff;
+  --c-inset: #ebeef3;
+  --c-raised: #dde1ea;
+  --c-edge: #d5d9e2;
+  --c-fg: #111827;
+  --c-fg2: #374151;
+  --c-muted: #6b7280;
+  --c-subtle: #9ca3af;
+  --c-dim: #b4bac8;
+  --c-brand: #dc2626;
+  --c-brand-fg: #dc2626;
+  color-scheme: light;
+}
+
+/* ── Scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-dim); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--c-subtle); }
+
+/* ── Range inputs ──────────────────────────────────── */
+input[type="range"] {
+  appearance: none;
+  height: 4px;
+  background: var(--c-inset);
+  border-radius: 2px;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c-brand);
+  cursor: pointer;
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--c-brand) 15%, transparent);
+}
+
+/* ── Select styling ────────────────────────────────── */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
