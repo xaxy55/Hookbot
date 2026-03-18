@@ -59,3 +59,14 @@ ios/screenshots/
 
 # GCP service account key (never commit)
 gcp-sa-key.json
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/*.tfplan
+infra/terraform.tfvars
+infra/.terraform.tfstate.lock.info
+*.tfvars
+!*.tfvars.example
