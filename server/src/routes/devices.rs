@@ -520,72 +520,64 @@ pub async fn export_config(
     State(db): State<DbPool>,
     Path(id): Path<String>,
 ) -> Result<Json<ConfigExport>, AppError> {
-    let conn = db.lock().unwrap();
+    // All sync DB work in a block so MutexGuard is dropped before any .await
+    let (device, config, sensor_configs, automation_rules, device_ip) = {
+        let conn = db.lock().unwrap();
+        let device = query_device(&conn, &id)?;
+        let config = query_config(&conn, &id)?;
 
-    // Device info
-    let device = query_device(&conn, &id)?;
+        let mut sensor_stmt = conn.prepare(
+            "SELECT id, device_id, channel, pin, sensor_type, label, poll_interval_ms, threshold
+             FROM sensor_configs WHERE device_id = ?1 ORDER BY channel",
+        )?;
+        let sensor_configs = sensor_stmt.query_map([&id], |row| {
+            Ok(SensorConfig {
+                id: row.get(0)?,
+                device_id: row.get(1)?,
+                channel: row.get(2)?,
+                pin: row.get(3)?,
+                sensor_type: row.get(4)?,
+                label: row.get(5)?,
+                poll_interval_ms: row.get(6)?,
+                threshold: row.get(7)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    // Device config
-    let config = query_config(&conn, &id)?;
+        let mut rules_stmt = conn.prepare(
+            "SELECT name, enabled, trigger_type, trigger_config, action_type, action_config, cooldown_secs
+             FROM automation_rules WHERE device_id = ?1 ORDER BY created_at",
+        )?;
+        let automation_rules = rules_stmt.query_map([&id], |row| {
+            let tc: String = row.get(3)?;
+            let ac: String = row.get(5)?;
+            Ok(ExportRule {
+                name: row.get(0)?,
+                enabled: row.get::<_, i32>(1)? != 0,
+                trigger_type: row.get(2)?,
+                trigger_config: serde_json::from_str(&tc).unwrap_or_default(),
+                action_type: row.get(4)?,
+                action_config: serde_json::from_str(&ac).unwrap_or_default(),
+                cooldown_secs: row.get(6)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    // Sensor configs
-    let mut sensor_stmt = conn.prepare(
-        "SELECT id, device_id, channel, pin, sensor_type, label, poll_interval_ms, threshold
-         FROM sensor_configs WHERE device_id = ?1 ORDER BY channel",
-    )?;
-    let sensor_configs = sensor_stmt.query_map([&id], |row| {
-        Ok(SensorConfig {
-            id: row.get(0)?,
-            device_id: row.get(1)?,
-            channel: row.get(2)?,
-            pin: row.get(3)?,
-            sensor_type: row.get(4)?,
-            label: row.get(5)?,
-            poll_interval_ms: row.get(6)?,
-            threshold: row.get(7)?,
-        })
-    })?
-    .collect::<Result<Vec<_>, _>>()?;
+        let device_ip = query_device_ip(&conn, &id).ok();
+        (device, config, sensor_configs, automation_rules, device_ip)
+    }; // conn (MutexGuard) dropped here
 
-    // Automation rules (strip IDs for portability)
-    let mut rules_stmt = conn.prepare(
-        "SELECT name, enabled, trigger_type, trigger_config, action_type, action_config, cooldown_secs
-         FROM automation_rules WHERE device_id = ?1 ORDER BY created_at",
-    )?;
-    let automation_rules = rules_stmt.query_map([&id], |row| {
-        let tc: String = row.get(3)?;
-        let ac: String = row.get(5)?;
-        Ok(ExportRule {
-            name: row.get(0)?,
-            enabled: row.get::<_, i32>(1)? != 0,
-            trigger_type: row.get(2)?,
-            trigger_config: serde_json::from_str(&tc).unwrap_or_default(),
-            action_type: row.get(4)?,
-            action_config: serde_json::from_str(&ac).unwrap_or_default(),
-            cooldown_secs: row.get(6)?,
-        })
-    })?
-    .collect::<Result<Vec<_>, _>>()?;
-
-    // Drop prepared statements before dropping conn
-    drop(sensor_stmt);
-    drop(rules_stmt);
-
-    // Try to get servo config from live device
-    let servo_config = {
-        let ip = query_device_ip(&conn, &id).ok();
-        drop(conn);
-        if let Some(ip) = ip {
-            proxy::get_json(&format!("http://{}/servos", ip)).await.ok()
-        } else {
-            None
-        }
+    // Async work: fetch servo config from live device
+    let servo_config = if let Some(ip) = device_ip {
+        proxy::get_json(&format!("http://{}/servos", ip)).await.ok()
+    } else {
+        None
     };
 
-    // Firmware version from latest successful OTA job
-    let conn = db.lock().unwrap();
-    let firmware_version: Option<String> = conn
-        .query_row(
+    // Re-acquire lock for firmware version query
+    let firmware_version = {
+        let conn = db.lock().unwrap();
+        conn.query_row(
             "SELECT f.version FROM ota_jobs o
              JOIN firmware f ON f.id = o.firmware_id
              WHERE o.device_id = ?1 AND o.status = 'success'
@@ -593,7 +585,8 @@ pub async fn export_config(
             [&id],
             |row| row.get(0),
         )
-        .ok();
+        .ok()
+    };
 
     Ok(Json(ConfigExport {
         metadata: ExportMetadata {
@@ -620,81 +613,69 @@ pub async fn import_config(
     Path(id): Path<String>,
     Json(input): Json<ConfigExport>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let conn = db.lock().unwrap();
+    // All sync DB work in a block so MutexGuard is dropped before any .await
+    let device_ip = {
+        let conn = db.lock().unwrap();
+        let _device = query_device(&conn, &id)?;
 
-    // Verify device exists
-    let _device = query_device(&conn, &id)?;
+        if let Some(purpose) = &input.device_info.purpose {
+            conn.execute(
+                "UPDATE devices SET purpose = ?1, updated_at = datetime('now') WHERE id = ?2",
+                rusqlite::params![purpose, id],
+            )?;
+        }
+        if let Some(personality) = &input.device_info.personality {
+            conn.execute(
+                "UPDATE devices SET personality = ?1, updated_at = datetime('now') WHERE id = ?2",
+                rusqlite::params![personality, id],
+            )?;
+        }
 
-    // Update device soft fields (purpose, personality, device_type) but NOT name/hostname/ip
-    if let Some(purpose) = &input.device_info.purpose {
+        let cfg = &input.device_config;
         conn.execute(
-            "UPDATE devices SET purpose = ?1, updated_at = datetime('now') WHERE id = ?2",
-            rusqlite::params![purpose, id],
+            "UPDATE device_config SET led_brightness = ?1, sound_enabled = ?2, sound_volume = ?3, sound_pack = ?4 WHERE device_id = ?5",
+            rusqlite::params![cfg.led_brightness, cfg.sound_enabled as i32, cfg.sound_volume, cfg.sound_pack.as_deref().unwrap_or("default"), id],
         )?;
-    }
-    if let Some(personality) = &input.device_info.personality {
-        conn.execute(
-            "UPDATE devices SET personality = ?1, updated_at = datetime('now') WHERE id = ?2",
-            rusqlite::params![personality, id],
-        )?;
-    }
+        if let Some(ref colors) = cfg.led_colors {
+            let s = serde_json::to_string(colors).unwrap();
+            conn.execute("UPDATE device_config SET led_colors = ?1 WHERE device_id = ?2", rusqlite::params![s, id])?;
+        }
+        if let Some(ref preset) = cfg.avatar_preset {
+            let s = serde_json::to_string(preset).unwrap();
+            conn.execute("UPDATE device_config SET avatar_preset = ?1 WHERE device_id = ?2", rusqlite::params![s, id])?;
+        }
+        if let Some(ref data) = cfg.custom_data {
+            let s = serde_json::to_string(data).unwrap();
+            conn.execute("UPDATE device_config SET custom_data = ?1 WHERE device_id = ?2", rusqlite::params![s, id])?;
+        }
 
-    // Update device config
-    let cfg = &input.device_config;
-    conn.execute(
-        "UPDATE device_config SET led_brightness = ?1, sound_enabled = ?2, sound_volume = ?3, sound_pack = ?4 WHERE device_id = ?5",
-        rusqlite::params![cfg.led_brightness, cfg.sound_enabled as i32, cfg.sound_volume, cfg.sound_pack.as_deref().unwrap_or("default"), id],
-    )?;
-    if let Some(ref colors) = cfg.led_colors {
-        let s = serde_json::to_string(colors).unwrap();
-        conn.execute(
-            "UPDATE device_config SET led_colors = ?1 WHERE device_id = ?2",
-            rusqlite::params![s, id],
-        )?;
-    }
-    if let Some(ref preset) = cfg.avatar_preset {
-        let s = serde_json::to_string(preset).unwrap();
-        conn.execute(
-            "UPDATE device_config SET avatar_preset = ?1 WHERE device_id = ?2",
-            rusqlite::params![s, id],
-        )?;
-    }
-    if let Some(ref data) = cfg.custom_data {
-        let s = serde_json::to_string(data).unwrap();
-        conn.execute(
-            "UPDATE device_config SET custom_data = ?1 WHERE device_id = ?2",
-            rusqlite::params![s, id],
-        )?;
-    }
+        conn.execute("DELETE FROM sensor_configs WHERE device_id = ?1", [&id])?;
+        for sc in &input.sensor_configs {
+            conn.execute(
+                "INSERT INTO sensor_configs (device_id, channel, pin, sensor_type, label, poll_interval_ms, threshold)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                rusqlite::params![id, sc.channel, sc.pin, sc.sensor_type, sc.label, sc.poll_interval_ms, sc.threshold],
+            )?;
+        }
 
-    // Replace sensor configs
-    conn.execute("DELETE FROM sensor_configs WHERE device_id = ?1", [&id])?;
-    for sc in &input.sensor_configs {
-        conn.execute(
-            "INSERT INTO sensor_configs (device_id, channel, pin, sensor_type, label, poll_interval_ms, threshold)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-            rusqlite::params![id, sc.channel, sc.pin, sc.sensor_type, sc.label, sc.poll_interval_ms, sc.threshold],
-        )?;
-    }
+        conn.execute("DELETE FROM automation_rules WHERE device_id = ?1", [&id])?;
+        for rule in &input.automation_rules {
+            let rule_id = uuid::Uuid::new_v4().to_string();
+            let tc = serde_json::to_string(&rule.trigger_config).unwrap_or_else(|_| "{}".to_string());
+            let ac = serde_json::to_string(&rule.action_config).unwrap_or_else(|_| "{}".to_string());
+            conn.execute(
+                "INSERT INTO automation_rules (id, device_id, name, enabled, trigger_type, trigger_config, action_type, action_config, cooldown_secs)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                rusqlite::params![rule_id, id, rule.name, rule.enabled as i32, rule.trigger_type, tc, rule.action_type, ac, rule.cooldown_secs],
+            )?;
+        }
 
-    // Replace automation rules (create new IDs)
-    conn.execute("DELETE FROM automation_rules WHERE device_id = ?1", [&id])?;
-    for rule in &input.automation_rules {
-        let rule_id = uuid::Uuid::new_v4().to_string();
-        let tc = serde_json::to_string(&rule.trigger_config).unwrap_or_else(|_| "{}".to_string());
-        let ac = serde_json::to_string(&rule.action_config).unwrap_or_else(|_| "{}".to_string());
-        conn.execute(
-            "INSERT INTO automation_rules (id, device_id, name, enabled, trigger_type, trigger_config, action_type, action_config, cooldown_secs)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-            rusqlite::params![rule_id, id, rule.name, rule.enabled as i32, rule.trigger_type, tc, rule.action_type, ac, rule.cooldown_secs],
-        )?;
-    }
+        query_device_ip(&conn, &id).ok()
+    }; // conn dropped here
 
-    // Try to push servo config to live device
+    // Async work: push servo config to live device
     let servo_pushed = if let Some(ref servo_config) = input.servo_config {
-        let ip = query_device_ip(&conn, &id).ok();
-        drop(conn);
-        if let Some(ip) = ip {
+        if let Some(ip) = device_ip {
             proxy::forward_json(&format!("http://{}/servos/config", ip), servo_config)
                 .await
                 .is_ok()
