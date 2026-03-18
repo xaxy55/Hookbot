@@ -1,4 +1,4 @@
-.PHONY: help test server web up build build-testflight screenshots
+.PHONY: help test server web up build build-testflight screenshots gh-secrets
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -15,6 +15,20 @@ web: ## Start frontend dev server (port 5173)
 build: ## Build server and web for production
 	cd server && cargo build --release
 	cd web && npm run build
+
+gh-secrets: ## Set GitHub secrets for Docker Hub from .env (prompts if missing)
+	@if [ ! -f .env ]; then \
+		read -p "DOCKERHUB_USERNAME: " dhu; \
+		read -p "DOCKERHUB_TOKEN: " dht; \
+		echo "DOCKERHUB_USERNAME=$$dhu" > .env; \
+		echo "DOCKERHUB_TOKEN=$$dht" >> .env; \
+		echo "Saved to .env"; \
+	fi
+	@. ./.env && \
+		gh auth switch --user xaxy55 && \
+		gh secret set DOCKERHUB_USERNAME --body "$$DOCKERHUB_USERNAME" && \
+		gh secret set DOCKERHUB_TOKEN --body "$$DOCKERHUB_TOKEN" && \
+		echo "GitHub secrets set successfully"
 
 up: ## Start everything with Docker Compose
 	docker compose up --build
