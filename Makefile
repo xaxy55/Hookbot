@@ -31,11 +31,10 @@ gh-secrets: ## Set GitHub secrets for Docker Hub from .env (prompts if missing)
 		echo "GitHub secrets set successfully"
 
 cloud-secrets: ## Set GitHub secrets for GCE + Cloudflare deployment (interactive)
-	@echo "=== Google Cloud ==="
+	@echo "=== Google Cloud (Workload Identity Federation) ==="
 	@read -p "GCP Project ID: " gcp_proj; \
-	echo ""; \
-	echo "Paste the path to your GCP service account JSON key file:"; \
-	read -p "Path to SA key JSON: " gcp_key_path; \
+	read -p "WIF Provider (projects/PROJECT_NUM/locations/global/workloadIdentityPools/POOL/providers/PROVIDER): " wif_provider; \
+	read -p "Service Account Email (e.g. hookbot-deploy@PROJECT.iam.gserviceaccount.com): " sa_email; \
 	echo ""; \
 	echo "=== Cloudflare ==="; \
 	read -p "Cloudflare API Token: " cf_token; \
@@ -47,7 +46,8 @@ cloud-secrets: ## Set GitHub secrets for GCE + Cloudflare deployment (interactiv
 	echo ""; \
 	echo "Setting GitHub secrets..."; \
 	gh secret set GCP_PROJECT_ID --body "$$gcp_proj" && \
-	gh secret set GCP_SA_KEY < "$$gcp_key_path" && \
+	gh secret set GCP_WIF_PROVIDER --body "$$wif_provider" && \
+	gh secret set GCP_SA_EMAIL --body "$$sa_email" && \
 	gh secret set CLOUDFLARE_API_TOKEN --body "$$cf_token" && \
 	gh secret set CLOUDFLARE_ACCOUNT_ID --body "$$cf_account" && \
 	gh secret set API_BASE_URL --body "$$api_url" && \
