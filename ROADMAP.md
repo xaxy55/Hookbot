@@ -15,13 +15,13 @@
 > Finish what's started, fix rough edges, make it reliable for daily use.
 
 - [x] **Servo control UI** — Add a "Servos" tab to Device Detail with angle sliders, per-state map editor, and pin configuration form
-- [ ] **LED color editor** — Per-state RGB color picker in the personality tab, push to device
+- [x] **LED color editor** — Per-state RGB color picker in the personality tab, push to device
 - [ ] **Custom animation playback on device** — Firmware endpoint to receive and play keyframe animations from the animation editor
-- [ ] **Notification persistence** — Store notification sources/webhook configs in SQLite, not just in-memory
-- [ ] **Auto-discovery on startup** — Server scans mDNS on boot and registers new devices automatically
-- [ ] **Connection resilience** — Exponential backoff on poller failures, WiFi reconnect improvements on ESP32
+- [x] **Notification persistence** — Store notification sources/webhook configs in SQLite, not just in-memory
+- [x] **Auto-discovery on startup** — Server scans mDNS on boot and registers new devices automatically
+- [x] **Connection resilience** — Exponential backoff on poller failures, WiFi reconnect improvements on ESP32
 - [x] **Status log pruning** — Configurable retention period, auto-cleanup old entries
-- [ ] **Error toasts in frontend** — Show API errors as dismissable notifications instead of inline text
+- [x] **Error toasts in frontend** — Show API errors as dismissable notifications instead of inline text
 
 ## Phase 2: Gamification & Analytics
 
@@ -40,15 +40,15 @@
 
 > React to the physical world. User-configurable triggers and actions.
 
-- [ ] **Sensor framework** — GPIO input abstraction: digital (button, PIR motion), analog (light, temp, potentiometer), I2C (BME280, etc.)
-- [ ] **Sensor config UI** — Frontend page to add/configure sensors: pin, type, label, polling interval, threshold
-- [ ] **Trigger engine** — IF-THIS-THEN-THAT rules stored in SQLite:
+- [x] **Sensor framework** — GPIO input abstraction: digital (button, PIR motion), analog (light, temp, potentiometer), I2C (BME280, etc.)
+- [x] **Sensor config UI** — Frontend page to add/configure sensors: pin, type, label, polling interval, threshold
+- [x] **Trigger engine** — IF-THIS-THEN-THAT rules stored in SQLite:
   - Triggers: sensor threshold, time of day, device state change, webhook received, button press
   - Actions: change avatar state, play animation, move servo, send notification, call webhook, play sound
-- [ ] **Rule editor UI** — Visual drag-and-drop or form-based rule builder with live preview
+- [x] **Rule editor UI** — Visual drag-and-drop or form-based rule builder with live preview
 - [ ] **Sensor data logging** — Store readings in time-series table, display graphs on frontend
-- [ ] **Physical button support** — Configurable GPIO button: short press = cycle state, long press = custom action
-- [ ] **Presence detection** — PIR or ultrasonic sensor: sleep avatar when away, wake on return
+- [x] **Physical button support** — Configurable GPIO button: short press = cycle state, long press = custom action
+- [x] **Presence detection** — PIR or ultrasonic sensor: sleep avatar when away, wake on return
 - [ ] **Ambient light** — Auto-adjust LED brightness based on room light level
 
 ## Phase 4: Multi-Device & Collaboration
@@ -67,13 +67,13 @@
 
 > Make the hookbot smarter. Context-aware reactions, natural language control.
 
-- [ ] **Claude API integration** — Hookbot can ask Claude for status summaries, generate witty status messages
-- [ ] **Context-aware reactions** — Analyze tool patterns: lots of grep = "searching", many edits = "refactoring", test failures = escalating frustration
+- [x] **Claude API integration** — Hookbot can ask Claude for status summaries, generate witty status messages
+- [x] **Context-aware reactions** — Analyze tool patterns: lots of grep = "searching", many edits = "refactoring", test failures = escalating frustration
 - [ ] **Voice control** — I2S microphone + wake word detection, send commands to Claude
 - [ ] **Text-to-speech** — I2S DAC speaker, Claude speaks responses through the hookbot
-- [ ] **Smart notifications** — AI decides priority: suppress low-importance Teams messages during deep work, escalate urgent ones
+- [x] **Smart notifications** — AI decides priority: suppress low-importance Teams messages during deep work, escalate urgent ones
 - [ ] **Mood learning** — Track which states/animations the user responds to, adapt personality over time
-- [ ] **Meeting awareness** — Calendar integration: go quiet during meetings, show countdown to next meeting
+- [x] **Meeting awareness** — Calendar integration: go quiet during meetings, show countdown to next meeting
 
 ## Phase 6: Hardware V2
 

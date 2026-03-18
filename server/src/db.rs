@@ -145,4 +145,43 @@ CREATE TABLE IF NOT EXISTS store_purchases (
     UNIQUE(device_id, item_id)
 );
 CREATE INDEX IF NOT EXISTS idx_store_purchases_device ON store_purchases(device_id);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    source TEXT NOT NULL,
+    unread INTEGER NOT NULL DEFAULT 0,
+    message TEXT,
+    delivered INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    delivered_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_device ON notifications(device_id, created_at);
+
+CREATE TABLE IF NOT EXISTS sensor_configs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    channel INTEGER NOT NULL,
+    pin INTEGER NOT NULL,
+    sensor_type TEXT NOT NULL DEFAULT 'disabled',
+    label TEXT,
+    poll_interval_ms INTEGER NOT NULL DEFAULT 1000,
+    threshold INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(device_id, channel)
+);
+
+CREATE TABLE IF NOT EXISTS automation_rules (
+    id TEXT PRIMARY KEY,
+    device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    trigger_type TEXT NOT NULL,
+    trigger_config TEXT NOT NULL DEFAULT '{}',
+    action_type TEXT NOT NULL,
+    action_config TEXT NOT NULL DEFAULT '{}',
+    cooldown_secs INTEGER NOT NULL DEFAULT 60,
+    last_triggered_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_rules_device ON automation_rules(device_id);
 "#;

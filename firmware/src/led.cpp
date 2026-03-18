@@ -28,6 +28,73 @@ void update(uint32_t deltaMs) {
     stateTime += deltaMs;
     float phase = (float)stateTime / 1000.0f;
 
+    RuntimeConfig& cfg = HookbotServer::getConfig();
+
+    // Custom color mode: apply the same animation patterns using user-defined base colors
+    if (cfg.ledColorsCustom) {
+        const LedColorRGB& c = cfg.ledColors[(int)currentState];
+        switch (currentState) {
+            case AvatarState::IDLE: {
+                // Breathing
+                float breath = sinf(phase * 1.2f) * 0.5f + 0.5f;
+                float lo = 0.3f, hi = 1.0f;
+                float f = lo + (hi - lo) * breath;
+                leds[0] = CRGB((uint8_t)(c.r * f), (uint8_t)(c.g * f), (uint8_t)(c.b * f));
+                break;
+            }
+            case AvatarState::THINKING: {
+                // Pulsing
+                float pulse = sinf(phase * 3.0f) * 0.5f + 0.5f;
+                float lo = 0.4f, hi = 1.0f;
+                float f = lo + (hi - lo) * pulse;
+                leds[0] = CRGB((uint8_t)(c.r * f), (uint8_t)(c.g * f), (uint8_t)(c.b * f));
+                break;
+            }
+            case AvatarState::WAITING: {
+                // Slow pulse
+                float pulse = sinf(phase * 1.5f) * 0.5f + 0.5f;
+                float lo = 0.4f, hi = 1.0f;
+                float f = lo + (hi - lo) * pulse;
+                leds[0] = CRGB((uint8_t)(c.r * f), (uint8_t)(c.g * f), (uint8_t)(c.b * f));
+                break;
+            }
+            case AvatarState::SUCCESS: {
+                // Flash then fade
+                if (stateTime < 200) {
+                    leds[0] = CRGB(c.r, c.g, c.b);
+                } else {
+                    float fade = max(0.0f, 1.0f - (float)(stateTime - 200) / 2000.0f);
+                    leds[0] = CRGB((uint8_t)(c.r * fade), (uint8_t)(c.g * fade), (uint8_t)(c.b * fade));
+                }
+                break;
+            }
+            case AvatarState::TASKCHECK: {
+                // Fill then fade
+                if (stateTime < 300) {
+                    float f = (float)stateTime / 300.0f;
+                    leds[0] = CRGB((uint8_t)(c.r * f), (uint8_t)(c.g * f), (uint8_t)(c.b * f));
+                } else {
+                    float fade = max(0.0f, 1.0f - (float)(stateTime - 300) / 2000.0f);
+                    leds[0] = CRGB((uint8_t)(c.r * fade), (uint8_t)(c.g * fade), (uint8_t)(c.b * fade));
+                }
+                break;
+            }
+            case AvatarState::ERROR: {
+                // Double flash
+                bool flash = (stateTime % 400) < 200;
+                if (stateTime < 800 && flash) {
+                    leds[0] = CRGB(c.r, c.g, c.b);
+                } else if (stateTime >= 800) {
+                    float fade = max(0.0f, 1.0f - (float)(stateTime - 800) / 1500.0f);
+                    leds[0] = CRGB((uint8_t)(c.r * fade), (uint8_t)(c.g * fade), (uint8_t)(c.b * fade));
+                } else {
+                    leds[0] = CRGB::Black;
+                }
+                break;
+            }
+        }
+    } else {
+    // Default hardcoded colors
     switch (currentState) {
         case AvatarState::IDLE: {
             // Soft blue breathing
@@ -88,6 +155,7 @@ void update(uint32_t deltaMs) {
             break;
         }
     }
+    } // end default colors
 
     // Apply runtime brightness
     FastLED.setBrightness(HookbotServer::getConfig().ledBrightness);

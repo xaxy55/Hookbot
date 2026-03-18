@@ -291,3 +291,101 @@ pub struct LeaderboardEntry {
     pub current_streak: i64,
     pub achievements: i64,
 }
+
+// --- Notification types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Notification {
+    pub id: i64,
+    pub device_id: String,
+    pub source: String,
+    pub unread: i64,
+    pub message: Option<String>,
+    pub delivered: bool,
+    pub created_at: String,
+    pub delivered_at: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateNotification {
+    pub source: String,
+    pub unread: Option<i64>,
+    pub active: Option<bool>,
+    pub message: Option<String>,
+}
+
+// --- Sensor types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SensorConfig {
+    pub id: i64,
+    pub device_id: String,
+    pub channel: i32,
+    pub pin: i32,
+    pub sensor_type: String,
+    pub label: Option<String>,
+    pub poll_interval_ms: i32,
+    pub threshold: i32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateSensorConfig {
+    pub channels: Vec<SensorChannelUpdate>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SensorChannelUpdate {
+    pub channel: i32,
+    pub pin: i32,
+    pub sensor_type: String,
+    pub label: Option<String>,
+    pub poll_interval_ms: Option<i32>,
+    pub threshold: Option<i32>,
+}
+
+// --- Automation types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AutomationRule {
+    pub id: String,
+    pub device_id: String,
+    pub name: String,
+    pub enabled: bool,
+    pub trigger_type: String,
+    pub trigger_config: serde_json::Value,
+    pub action_type: String,
+    pub action_config: serde_json::Value,
+    pub cooldown_secs: i64,
+    pub last_triggered_at: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateRule {
+    pub name: String,
+    pub trigger_type: String,
+    pub trigger_config: serde_json::Value,
+    pub action_type: String,
+    pub action_config: serde_json::Value,
+    pub cooldown_secs: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateRule {
+    pub name: Option<String>,
+    pub enabled: Option<bool>,
+    pub trigger_type: Option<String>,
+    pub trigger_config: Option<serde_json::Value>,
+    pub action_type: Option<String>,
+    pub action_config: Option<serde_json::Value>,
+    pub cooldown_secs: Option<i64>,
+}
+
+// --- Context types ---
+
+#[derive(Debug, Serialize)]
+pub struct DeviceContext {
+    pub context: String,
+    pub confidence: f64,
+    pub recent_tools: Vec<String>,
+}

@@ -1,6 +1,7 @@
 #include "server.h"
 #include "config.h"
 #include "servo.h"
+#include "sensors.h"
 #include <WiFi.h>
 #include <WiFiMulti.h>
 #include <ESPmDNS.h>
@@ -76,6 +77,11 @@ void loadConfigFromNVS() {
     runtimeConfig.crown = prefs.getBool("accCrown", false);
     runtimeConfig.horns = prefs.getBool("accHorns", false);
     runtimeConfig.halo = prefs.getBool("accHalo", false);
+    // Custom LED colors
+    runtimeConfig.ledColorsCustom = prefs.getBool("ledCustom", false);
+    if (runtimeConfig.ledColorsCustom) {
+        prefs.getBytes("ledClrs", runtimeConfig.ledColors, sizeof(runtimeConfig.ledColors));
+    }
     prefs.end();
     Serial.printf("[Server] Config loaded: brightness=%d, sound=%s, vol=%d, host=%s\n",
         runtimeConfig.ledBrightness,
@@ -99,6 +105,9 @@ void saveConfigToNVS() {
     prefs.putBool("accCrown", runtimeConfig.crown);
     prefs.putBool("accHorns", runtimeConfig.horns);
     prefs.putBool("accHalo", runtimeConfig.halo);
+    // Custom LED colors
+    prefs.putBool("ledCustom", runtimeConfig.ledColorsCustom);
+    prefs.putBytes("ledClrs", runtimeConfig.ledColors, sizeof(runtimeConfig.ledColors));
     prefs.end();
     Serial.println("[Server] Config saved to NVS");
 }
@@ -274,6 +283,20 @@ void init(std::function<void(AvatarState)> onStateChange) {
         doc["device_type"] = "esp32_oled";
 #endif
 
+        // Sensor readings
+        SensorChannel* sCh = Sensors::getChannels();
+        JsonArray sensors = doc["sensors"].to<JsonArray>();
+        for (int i = 0; i < Sensors::getChannelCount(); i++) {
+            if (sCh[i].type != SensorType::DISABLED) {
+                JsonObject s = sensors.add<JsonObject>();
+                s["ch"] = i;
+                s["label"] = sCh[i].label;
+                s["value"] = sCh[i].lastValue;
+                s["triggered"] = sCh[i].triggered;
+            }
+        }
+        doc["presence_away"] = Sensors::isPresenceAway();
+
         String json;
         serializeJson(doc, json);
         req->send(200, "application/json", json);
@@ -406,6 +429,25 @@ void init(std::function<void(AvatarState)> onStateChange) {
                     Serial.printf("[Server] Accessories updated: hat=%d cigar=%d glasses=%d\n",
                         runtimeConfig.topHat, runtimeConfig.cigar, runtimeConfig.glasses);
                 }
+            }
+
+            // Custom LED colors per state
+            if (!body["led_colors"].isNull() && body["led_colors"].is<JsonObject>()) {
+                JsonObject colors = body["led_colors"];
+                const char* stateNames[] = {"idle", "thinking", "waiting", "success", "taskcheck", "error"};
+                for (int i = 0; i < 6; i++) {
+                    if (!colors[stateNames[i]].isNull()) {
+                        const char* hex = colors[stateNames[i]];
+                        if (hex && hex[0] == '#' && strlen(hex) == 7) {
+                            unsigned long val = strtoul(hex + 1, NULL, 16);
+                            runtimeConfig.ledColors[i].r = (val >> 16) & 0xFF;
+                            runtimeConfig.ledColors[i].g = (val >> 8) & 0xFF;
+                            runtimeConfig.ledColors[i].b = val & 0xFF;
+                        }
+                    }
+                }
+                runtimeConfig.ledColorsCustom = true;
+                Serial.println("[Server] Custom LED colors updated");
             }
 
             saveConfigToNVS();
@@ -781,6 +823,63 @@ void init(std::function<void(AvatarState)> onStateChange) {
         }
     );
     server.addHandler(servoConfigHandler);
+
+    // GET /sensors - read current sensor channels and values
+    server.on("/sensors", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument doc;
+        SensorChannel* sCh = Sensors::getChannels();
+        JsonArray arr = doc["channels"].to<JsonArray>();
+        for (int i = 0; i < Sensors::getChannelCount(); i++) {
+            JsonObject o = arr.add<JsonObject>();
+            o["pin"] = sCh[i].pin;
+            o["type"] = (int)sCh[i].type;
+            o["label"] = sCh[i].label;
+            o["pollIntervalMs"] = sCh[i].pollIntervalMs;
+            o["threshold"] = sCh[i].threshold;
+            o["lastValue"] = sCh[i].lastValue;
+            o["triggered"] = sCh[i].triggered;
+        }
+        doc["presence_away"] = Sensors::isPresenceAway();
+        doc["presence_timeout_ms"] = Sensors::getPresenceTimeoutMs();
+
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
+    });
+
+    // POST /sensors/config - configure sensor channels
+    AsyncCallbackJsonWebHandler* sensorConfigHandler = new AsyncCallbackJsonWebHandler(
+        "/sensors/config",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            if (!body["channels"].isNull()) {
+                JsonArray chArr = body["channels"];
+                for (size_t i = 0; i < chArr.size() && i < MAX_SENSOR_CHANNELS; i++) {
+                    JsonObject ch = chArr[i];
+                    int8_t pin = ch["pin"] | (int8_t)-1;
+                    SensorType type = (SensorType)(ch["type"] | 0);
+                    const char* label = ch["label"] | "sensor";
+                    uint16_t pollMs = ch["pollIntervalMs"] | 1000;
+                    int16_t threshold = ch["threshold"] | 0;
+                    Sensors::configureChannel(i, pin, type, label, pollMs, threshold);
+                }
+            }
+
+            if (!body["presence_timeout_ms"].isNull()) {
+                Sensors::setPresenceTimeoutMs(body["presence_timeout_ms"]);
+            }
+
+            Sensors::saveToNVS();
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(sensorConfigHandler);
 
     server.begin();
     Serial.println("[Server] HTTP server started on port 80");

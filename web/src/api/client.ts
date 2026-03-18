@@ -13,7 +13,9 @@ import type {
   LeaderboardEntry,
 } from '../types';
 
-const BASE = '/api';
+const BASE = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api`
+  : '/api';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -176,6 +178,93 @@ export const sendWebhookNotification = (data: {
     method: 'POST',
     body: JSON.stringify(data),
   });
+
+// Notifications (persistent)
+export interface NotificationEntry {
+  id: number;
+  device_id: string;
+  source: string;
+  unread: number;
+  message: string | null;
+  delivered: boolean;
+  created_at: string;
+  delivered_at: string | null;
+}
+
+export const getNotifications = (deviceId: string) =>
+  request<NotificationEntry[]>(`/devices/${deviceId}/notifications`);
+
+export const deleteNotification = (deviceId: string, notifId: number) =>
+  request<{ ok: boolean }>(`/devices/${deviceId}/notifications/${notifId}`, { method: 'DELETE' });
+
+// Sensors
+export interface SensorChannelConfig {
+  channel: number;
+  pin: number;
+  sensor_type: string;
+  label: string | null;
+  poll_interval_ms: number;
+  threshold: number;
+  last_value?: number;
+}
+
+export const getSensors = (deviceId: string) =>
+  request<SensorChannelConfig[]>(`/devices/${deviceId}/sensors`);
+
+export const updateSensors = (deviceId: string, channels: Partial<SensorChannelConfig>[]) =>
+  request<{ ok: boolean }>(`/devices/${deviceId}/sensors`, {
+    method: 'PUT',
+    body: JSON.stringify({ channels }),
+  });
+
+// Automation Rules
+export interface AutomationRule {
+  id: string;
+  device_id: string;
+  name: string;
+  enabled: boolean;
+  trigger_type: string;
+  trigger_config: Record<string, unknown>;
+  action_type: string;
+  action_config: Record<string, unknown>;
+  cooldown_secs: number;
+  last_triggered_at: string | null;
+  created_at: string;
+}
+
+export const getRules = (deviceId: string) =>
+  request<AutomationRule[]>(`/devices/${deviceId}/rules`);
+
+export const createRule = (deviceId: string, data: {
+  name: string;
+  trigger_type: string;
+  trigger_config: Record<string, unknown>;
+  action_type: string;
+  action_config: Record<string, unknown>;
+  cooldown_secs?: number;
+}) => request<AutomationRule>(`/devices/${deviceId}/rules`, { method: 'POST', body: JSON.stringify(data) });
+
+export const updateRule = (deviceId: string, ruleId: string, data: Partial<AutomationRule>) =>
+  request<AutomationRule>(`/devices/${deviceId}/rules/${ruleId}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteRule = (deviceId: string, ruleId: string) =>
+  request<{ ok: boolean }>(`/devices/${deviceId}/rules/${ruleId}`, { method: 'DELETE' });
+
+// Context
+export interface DeviceContext {
+  context: string;
+  confidence: number;
+  recent_tools: string[];
+}
+
+export const getContext = () => request<DeviceContext>('/context');
+
+// AI
+export interface AISummary {
+  summary: string;
+}
+
+export const getAISummary = () => request<AISummary>('/ai/summary');
 
 // Health
 export const getHealth = () => request<{ status: string }>('/health');

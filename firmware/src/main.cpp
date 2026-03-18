@@ -13,6 +13,7 @@
 #endif
 #include "server.h"
 #include "servo.h"
+#include "sensors.h"
 #include "ble_prov.h"
 #ifdef BOARD_ESP32_4848S040C
 #include "touch_ui.h"
@@ -105,6 +106,8 @@ void setup() {
 #endif
     Serial.println("[Main] Servo init...");
     Servos::init();
+    Serial.println("[Main] Sensors init...");
+    Sensors::init();
 
 #ifndef NO_DISPLAY
     Avatar::draw();
@@ -171,6 +174,7 @@ void loop() {
     Led::update(delta);
 #endif
     Servos::update(delta);
+    Sensors::update(delta);
 #ifndef NO_SOUND
     Sound::update(delta);
     // Escalating angry beeps when waiting for user input

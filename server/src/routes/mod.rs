@@ -1,4 +1,6 @@
+pub mod automation;
 pub mod build;
+pub mod context;
 pub mod devices;
 pub mod diagnostics;
 pub mod discovery;
@@ -8,5 +10,6 @@ pub mod github;
 pub mod hooks;
 pub mod notifications;
 pub mod ota;
+pub mod sensors;
 pub mod settings;
 pub mod store;

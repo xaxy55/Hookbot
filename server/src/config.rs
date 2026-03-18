@@ -10,6 +10,10 @@ pub struct AppConfig {
     pub log_retention_hours: u64,
     #[allow(dead_code)]
     pub mdns_prefix: String,
+    #[allow(dead_code)]
+    pub anthropic_api_key: Option<String>,
+    #[allow(dead_code)]
+    pub calendar_url: Option<String>,
 }
 
 impl AppConfig {
@@ -38,6 +42,9 @@ impl AppConfig {
         let mdns_prefix = env::var("MDNS_PREFIX")
             .unwrap_or_else(|_| "hookbot".to_string());
 
+        let anthropic_api_key = env::var("ANTHROPIC_API_KEY").ok();
+        let calendar_url = env::var("CALENDAR_URL").ok();
+
         Self {
             database_url,
             firmware_dir,
@@ -45,6 +52,8 @@ impl AppConfig {
             poll_interval_secs,
             log_retention_hours,
             mdns_prefix,
+            anthropic_api_key,
+            calendar_url,
         }
     }
 }

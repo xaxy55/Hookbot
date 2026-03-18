@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDevice, getDeviceConfig, getDeviceHistory, sendState, sendTasks, updateDevice, updateDeviceConfig, pushConfig, getOtaJobs, getFirmware, getServos, setServoAngle, restServos, configureServos } from '../api/client';
-import type { ServoChannel } from '../api/client';
+import { getDevice, getDeviceConfig, getDeviceHistory, sendState, sendTasks, updateDevice, updateDeviceConfig, pushConfig, getOtaJobs, getFirmware, getServos, setServoAngle, restServos, configureServos, getSensors, updateSensors, getRules, createRule, updateRule, deleteRule } from '../api/client';
+import type { ServoChannel, SensorChannelConfig, AutomationRule } from '../api/client';
 import StateIndicator from '../components/StateIndicator';
 import type { AvatarState } from '../types';
 
@@ -29,7 +29,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-type Tab = 'status' | 'identity' | 'hardware' | 'servos' | 'personality' | 'history';
+type Tab = 'status' | 'identity' | 'hardware' | 'servos' | 'personality' | 'sensors' | 'automation' | 'history';
 
 export default function DeviceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -78,6 +78,8 @@ export default function DeviceDetail() {
     { key: 'hardware', label: 'Hardware' },
     { key: 'servos', label: 'Servos' },
     { key: 'personality', label: 'Personality' },
+    { key: 'sensors', label: 'Sensors' },
+    { key: 'automation', label: 'Automation' },
     { key: 'history', label: 'History' },
   ];
 
@@ -207,6 +209,14 @@ export default function DeviceDetail() {
 
       {tab === 'personality' && config && (
         <PersonalityTab deviceId={id!} config={config} onSave={() => qc.invalidateQueries({ queryKey: ['config', id] })} />
+      )}
+
+      {tab === 'sensors' && (
+        <SensorsTab deviceId={id!} online={device.online} />
+      )}
+
+      {tab === 'automation' && (
+        <AutomationTab deviceId={id!} />
       )}
 
       {tab === 'history' && (
@@ -386,6 +396,11 @@ function HardwareTab({ deviceId, config, onSave }: {
 
 // --- Personality Tab ---
 
+const DEFAULT_LED_COLORS: Record<string, string> = {
+  idle: '#00003c', thinking: '#6600cc', waiting: '#b8860b',
+  success: '#006400', taskcheck: '#005555', error: '#cc0000',
+};
+
 function PersonalityTab({ deviceId, config, onSave }: {
   deviceId: string;
   config: { led_brightness: number; sound_volume: number; led_colors?: Record<string, string> | null; avatar_preset?: Record<string, unknown> | null };
@@ -393,12 +408,17 @@ function PersonalityTab({ deviceId, config, onSave }: {
 }) {
   const [brightness, setBrightness] = useState(config.led_brightness);
   const [volume, setVolume] = useState(config.sound_volume);
+  const [ledColors, setLedColors] = useState<Record<string, string>>({
+    ...DEFAULT_LED_COLORS,
+    ...(config.led_colors || {}),
+  });
   const avatarPreset = config.avatar_preset ? JSON.stringify(config.avatar_preset, null, 2) : '';
 
   const update = useMutation({
     mutationFn: () => updateDeviceConfig(deviceId, {
       led_brightness: brightness,
       sound_volume: volume,
+      led_colors: ledColors,
       avatar_preset: avatarPreset ? JSON.parse(avatarPreset) : undefined,
     }),
     onSuccess: onSave,
@@ -422,6 +442,29 @@ function PersonalityTab({ deviceId, config, onSave }: {
             onChange={e => setBrightness(Number(e.target.value))}
             className="w-full"
           />
+        </div>
+
+        <div>
+          <label className="text-xs text-subtle mb-2 block">Per-State Colors</label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {STATES.map(s => (
+              <div key={s} className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={ledColors[s] || DEFAULT_LED_COLORS[s]}
+                  onChange={e => setLedColors(prev => ({ ...prev, [s]: e.target.value }))}
+                  className="w-8 h-8 rounded border border-edge bg-inset cursor-pointer"
+                />
+                <span className="text-xs text-muted capitalize">{s}</span>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setLedColors({ ...DEFAULT_LED_COLORS })}
+            className="mt-2 text-[10px] text-subtle hover:text-fg-2"
+          >
+            Reset to defaults
+          </button>
         </div>
       </div>
 
@@ -866,6 +909,295 @@ function ServosTab({ deviceId, online }: { deviceId: string; online: boolean }) 
             </>
           );
         })()}
+      </div>
+    </div>
+  );
+}
+
+// --- Sensors Tab ---
+
+const SENSOR_TYPES = ['disabled', 'digital', 'analog'];
+
+function SensorsTab({ deviceId, online }: { deviceId: string; online: boolean }) {
+  const qc = useQueryClient();
+  const { data: sensors, isLoading } = useQuery({
+    queryKey: ['sensors', deviceId],
+    queryFn: () => getSensors(deviceId),
+    enabled: online,
+    refetchInterval: 3000,
+  });
+
+  const [editing, setEditing] = useState<Partial<SensorChannelConfig>[] | null>(null);
+
+  const saveMut = useMutation({
+    mutationFn: (channels: Partial<SensorChannelConfig>[]) => updateSensors(deviceId, channels),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sensors', deviceId] });
+      setEditing(null);
+    },
+  });
+
+  if (!online) {
+    return (
+      <div className="text-center py-12 rounded-lg border border-edge bg-surface">
+        <p className="text-subtle text-sm">Device is offline</p>
+        <p className="text-dim text-xs mt-1">Sensor configuration is read directly from the device</p>
+      </div>
+    );
+  }
+
+  if (isLoading) return <p className="text-subtle text-sm">Loading sensors...</p>;
+
+  const channels = editing ?? (sensors || Array.from({ length: 8 }, (_, i) => ({
+    channel: i, pin: -1, sensor_type: 'disabled', label: '', poll_interval_ms: 1000, threshold: 0,
+  })));
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-fg-2">Sensor Channels</h2>
+        <p className="text-[11px] text-dim">Configure GPIO sensors. Digital for buttons/PIR, Analog for light/temp sensors.</p>
+
+        <div className="space-y-3">
+          {channels.map((ch, i) => (
+            <div key={i} className="rounded-md border border-edge bg-inset/50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-fg-2">Channel {i}</span>
+                {sensors?.[i]?.last_value !== undefined && ch.sensor_type !== 'disabled' && (
+                  <span className="text-xs font-mono text-green-400">
+                    Value: {sensors[i].last_value}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <div>
+                  <label className="block text-[10px] text-dim mb-0.5">Type</label>
+                  <select
+                    value={ch.sensor_type || 'disabled'}
+                    onChange={e => {
+                      const next = [...channels];
+                      next[i] = { ...next[i], sensor_type: e.target.value, channel: i };
+                      setEditing(next);
+                    }}
+                    className="w-full px-2 py-1 text-xs bg-inset border border-edge rounded text-fg"
+                  >
+                    {SENSOR_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] text-dim mb-0.5">Pin</label>
+                  <input
+                    type="number" value={ch.pin ?? -1}
+                    onChange={e => {
+                      const next = [...channels];
+                      next[i] = { ...next[i], pin: Number(e.target.value), channel: i };
+                      setEditing(next);
+                    }}
+                    className="w-full px-2 py-1 text-xs bg-inset border border-edge rounded text-fg font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-dim mb-0.5">Label</label>
+                  <input
+                    type="text" value={ch.label || ''}
+                    onChange={e => {
+                      const next = [...channels];
+                      next[i] = { ...next[i], label: e.target.value, channel: i };
+                      setEditing(next);
+                    }}
+                    className="w-full px-2 py-1 text-xs bg-inset border border-edge rounded text-fg"
+                    maxLength={15}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-dim mb-0.5">Poll (ms)</label>
+                  <input
+                    type="number" value={ch.poll_interval_ms ?? 1000}
+                    onChange={e => {
+                      const next = [...channels];
+                      next[i] = { ...next[i], poll_interval_ms: Number(e.target.value), channel: i };
+                      setEditing(next);
+                    }}
+                    className="w-full px-2 py-1 text-xs bg-inset border border-edge rounded text-fg font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-dim mb-0.5">Threshold</label>
+                  <input
+                    type="number" value={ch.threshold ?? 0}
+                    onChange={e => {
+                      const next = [...channels];
+                      next[i] = { ...next[i], threshold: Number(e.target.value), channel: i };
+                      setEditing(next);
+                    }}
+                    className="w-full px-2 py-1 text-xs bg-inset border border-edge rounded text-fg font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => saveMut.mutate(channels as Partial<SensorChannelConfig>[])}
+            disabled={saveMut.isPending}
+            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+          >
+            {saveMut.isPending ? 'Saving...' : 'Save & Push to Device'}
+          </button>
+          {editing && (
+            <button onClick={() => setEditing(null)} className="text-xs text-subtle hover:text-fg-2">Cancel</button>
+          )}
+          {saveMut.isSuccess && !editing && <span className="text-xs text-green-400">Saved</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Automation Tab ---
+
+const TRIGGER_TYPES = ['sensor_threshold', 'state_change', 'time_of_day', 'button_press', 'webhook'];
+const ACTION_TYPES = ['change_state', 'move_servo', 'send_notification', 'call_webhook', 'play_sound'];
+
+function AutomationTab({ deviceId }: { deviceId: string }) {
+  const qc = useQueryClient();
+  const { data: rules, isLoading } = useQuery({
+    queryKey: ['rules', deviceId],
+    queryFn: () => getRules(deviceId),
+  });
+
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState('');
+  const [triggerType, setTriggerType] = useState('sensor_threshold');
+  const [triggerConfig, setTriggerConfig] = useState('{}');
+  const [actionType, setActionType] = useState('change_state');
+  const [actionConfig, setActionConfig] = useState('{}');
+  const [cooldown, setCooldown] = useState(60);
+
+  const createMut = useMutation({
+    mutationFn: () => createRule(deviceId, {
+      name,
+      trigger_type: triggerType,
+      trigger_config: JSON.parse(triggerConfig || '{}'),
+      action_type: actionType,
+      action_config: JSON.parse(actionConfig || '{}'),
+      cooldown_secs: cooldown,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rules', deviceId] });
+      setShowForm(false);
+      setName('');
+      setTriggerConfig('{}');
+      setActionConfig('{}');
+    },
+  });
+
+  const toggleMut = useMutation({
+    mutationFn: ({ ruleId, enabled }: { ruleId: string; enabled: boolean }) =>
+      updateRule(deviceId, ruleId, { enabled }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['rules', deviceId] }),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (ruleId: string) => deleteRule(deviceId, ruleId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['rules', deviceId] }),
+  });
+
+  if (isLoading) return <p className="text-subtle text-sm">Loading rules...</p>;
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-fg-2">Automation Rules</h2>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 rounded-md"
+          >
+            {showForm ? 'Cancel' : '+ New Rule'}
+          </button>
+        </div>
+
+        {showForm && (
+          <div className="rounded-md border border-edge bg-inset/50 p-4 space-y-3">
+            <Field label="Rule Name" value={name} onChange={setName} placeholder="e.g. Motion → Wake" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-subtle mb-1">Trigger Type</label>
+                <select value={triggerType} onChange={e => setTriggerType(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg">
+                  {TRIGGER_TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-subtle mb-1">Action Type</label>
+                <select value={actionType} onChange={e => setActionType(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg">
+                  {ACTION_TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-subtle mb-1">Trigger Config (JSON)</label>
+                <textarea value={triggerConfig} onChange={e => setTriggerConfig(e.target.value)}
+                  rows={2} className="w-full px-3 py-2 text-xs bg-inset border border-edge rounded-md text-fg font-mono resize-none" />
+              </div>
+              <div>
+                <label className="block text-xs text-subtle mb-1">Action Config (JSON)</label>
+                <textarea value={actionConfig} onChange={e => setActionConfig(e.target.value)}
+                  rows={2} className="w-full px-3 py-2 text-xs bg-inset border border-edge rounded-md text-fg font-mono resize-none" />
+              </div>
+            </div>
+            <Field label="Cooldown (seconds)" value={String(cooldown)} onChange={v => setCooldown(Number(v))} type="number" />
+            <button
+              onClick={() => createMut.mutate()}
+              disabled={createMut.isPending || !name}
+              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+            >
+              {createMut.isPending ? 'Creating...' : 'Create Rule'}
+            </button>
+          </div>
+        )}
+
+        {rules && rules.length > 0 ? (
+          <div className="space-y-2">
+            {rules.map(rule => (
+              <div key={rule.id} className="rounded-md border border-edge bg-inset/50 p-3 flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${rule.enabled ? 'bg-green-500' : 'bg-dim'}`} />
+                    <span className="text-sm font-medium text-fg truncate">{rule.name}</span>
+                  </div>
+                  <div className="text-[10px] text-muted mt-0.5 font-mono">
+                    {rule.trigger_type.replace(/_/g, ' ')} → {rule.action_type.replace(/_/g, ' ')}
+                    {rule.cooldown_secs > 0 && <span className="ml-2 text-dim">({rule.cooldown_secs}s cooldown)</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => toggleMut.mutate({ ruleId: rule.id, enabled: !rule.enabled })}
+                    className={`px-2 py-1 text-[10px] rounded ${rule.enabled ? 'bg-green-600/20 text-green-400' : 'bg-raised text-subtle'}`}
+                  >
+                    {rule.enabled ? 'On' : 'Off'}
+                  </button>
+                  <button
+                    onClick={() => deleteMut.mutate(rule.id)}
+                    className="text-dim hover:text-red-400 text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-6 text-dim text-sm">
+            No automation rules yet. Create one to automate device behavior.
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ mod models;
 mod routes;
 mod services;
 
-use axum::routing::{delete, get, post};
+use axum::routing::{delete, get, post, put};
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
@@ -25,6 +25,13 @@ async fn main() {
     // Start background services
     services::device_poller::start(pool.clone(), config.poll_interval_secs, config.log_retention_hours);
 
+    // Auto-discover devices on startup
+    let discover_db = pool.clone();
+    let mdns_prefix = config.mdns_prefix.clone();
+    tokio::spawn(async move {
+        routes::discovery::discover_and_register(&discover_db, &mdns_prefix).await;
+    });
+
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
@@ -42,7 +49,12 @@ async fn main() {
         .route("/api/devices/{id}/history", get(routes::devices::get_device_history))
         .route("/api/devices/{id}/config", get(routes::devices::get_config).put(routes::devices::update_config))
         .route("/api/devices/{id}/config/push", post(routes::devices::push_config))
-        .route("/api/devices/{id}/notifications", post(routes::notifications::forward_notification))
+        .route("/api/devices/{id}/notifications", get(routes::notifications::get_notifications).post(routes::notifications::forward_notification))
+        .route("/api/devices/{id}/notifications/{nid}", delete(routes::notifications::delete_notification))
+        .route("/api/devices/{id}/sensors", get(routes::sensors::get_sensors).put(routes::sensors::update_sensors))
+        .route("/api/devices/{id}/rules", get(routes::automation::list_rules).post(routes::automation::create_rule))
+        .route("/api/devices/{id}/rules/{rule_id}", put(routes::automation::update_rule).delete(routes::automation::delete_rule))
+        .route("/api/context", get(routes::context::get_context))
         .route("/api/notifications/webhook", post(routes::notifications::webhook_notification))
         .route("/api/discovery", get(routes::discovery::scan))
         .route("/api/diagnostics", get(routes::diagnostics::run_diagnostics))

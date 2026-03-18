@@ -42,6 +42,9 @@ struct XpData {
     char title[24];
 };
 
+// LED color override per avatar state
+struct LedColorRGB { uint8_t r, g, b; };
+
 // Runtime configuration stored in NVS
 struct RuntimeConfig {
     int ledBrightness;
@@ -58,6 +61,9 @@ struct RuntimeConfig {
     bool crown;
     bool horns;
     bool halo;
+    // Custom LED colors (one per AvatarState: IDLE=0 through ERROR=5)
+    LedColorRGB ledColors[6];
+    bool ledColorsCustom;
 };
 
 // WiFi + HTTP API + mDNS subsystem
