@@ -16,7 +16,20 @@ pub fn init(path: &Path) -> DbPool {
 
     conn.execute_batch(SCHEMA).expect("Failed to create schema");
 
+    run_migrations(&conn);
+
     Arc::new(Mutex::new(conn))
+}
+
+fn run_migrations(conn: &Connection) {
+    let migrations: &[&str] = &[
+        "ALTER TABLE devices ADD COLUMN device_type TEXT",
+    ];
+
+    for sql in migrations {
+        // Ignore errors (column already exists)
+        let _ = conn.execute_batch(sql);
+    }
 }
 
 const SCHEMA: &str = r#"
