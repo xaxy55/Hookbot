@@ -10,6 +10,8 @@ pub struct AppConfig {
     pub log_retention_hours: u64,
     #[allow(dead_code)]
     pub mdns_prefix: String,
+    pub tls_cert_path: Option<String>,
+    pub tls_key_path: Option<String>,
     #[allow(dead_code)]
     pub anthropic_api_key: Option<String>,
     #[allow(dead_code)]
@@ -42,6 +44,8 @@ impl AppConfig {
         let mdns_prefix = env::var("MDNS_PREFIX")
             .unwrap_or_else(|_| "hookbot".to_string());
 
+        let tls_cert_path = env::var("TLS_CERT_PATH").ok();
+        let tls_key_path = env::var("TLS_KEY_PATH").ok();
         let anthropic_api_key = env::var("ANTHROPIC_API_KEY").ok();
         let calendar_url = env::var("CALENDAR_URL").ok();
 
@@ -52,6 +56,8 @@ impl AppConfig {
             poll_interval_secs,
             log_retention_hours,
             mdns_prefix,
+            tls_cert_path,
+            tls_key_path,
             anthropic_api_key,
             calendar_url,
         }

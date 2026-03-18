@@ -7,8 +7,10 @@ mod services;
 
 use axum::routing::{delete, get, post, put};
 use axum::Router;
+use axum::response::Redirect;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
+use std::net::SocketAddr;
 
 use config::AppConfig;
 
@@ -51,9 +53,13 @@ async fn main() {
         .route("/api/devices/{id}/config/push", post(routes::devices::push_config))
         .route("/api/devices/{id}/config/export", get(routes::devices::export_config))
         .route("/api/devices/{id}/config/import", post(routes::devices::import_config))
+        .route("/api/devices/{id}/animation", post(routes::devices::forward_animation))
+        .route("/api/devices/{id}/animation/stop", post(routes::devices::stop_animation))
         .route("/api/devices/{id}/notifications", get(routes::notifications::get_notifications).post(routes::notifications::forward_notification))
         .route("/api/devices/{id}/notifications/{nid}", delete(routes::notifications::delete_notification))
         .route("/api/devices/{id}/sensors", get(routes::sensors::get_sensors).put(routes::sensors::update_sensors))
+        .route("/api/devices/{id}/sensors/readings", get(routes::sensors::get_sensor_readings).delete(routes::sensors::delete_sensor_readings))
+        .route("/api/devices/{id}/sensors/readings/latest", get(routes::sensors::get_latest_readings))
         .route("/api/devices/{id}/rules", get(routes::automation::list_rules).post(routes::automation::create_rule))
         .route("/api/devices/{id}/rules/{rule_id}", put(routes::automation::update_rule).delete(routes::automation::delete_rule))
         .route("/api/context", get(routes::context::get_context))
@@ -101,6 +107,24 @@ async fn main() {
         .route("/api/community/assets", get(routes::shared_assets::list_assets).post(routes::shared_assets::publish_asset))
         .route("/api/community/assets/{id}/install", post(routes::shared_assets::install_asset).delete(routes::shared_assets::uninstall_asset))
         .route("/api/community/assets/{id}/rate", post(routes::shared_assets::rate_asset))
+        .route("/api/community/publishers", get(routes::community_store::list_publishers).post(routes::community_store::add_publisher))
+        .route("/api/community/publishers/{id}", delete(routes::community_store::remove_publisher))
+        .with_state(pool.clone());
+
+    // Project routing routes
+    let project_route_routes = Router::new()
+        .route("/api/routes", get(routes::project_routes::list_routes).post(routes::project_routes::create_route))
+        .route("/api/routes/{id}", put(routes::project_routes::update_route).delete(routes::project_routes::delete_route))
+        .with_state(pool.clone());
+
+    // Device group routes
+    let group_routes = Router::new()
+        .route("/api/groups", get(routes::groups::list_groups).post(routes::groups::create_group))
+        .route("/api/groups/{id}", put(routes::groups::update_group).delete(routes::groups::delete_group))
+        .route("/api/groups/{id}/members", post(routes::groups::add_member))
+        .route("/api/groups/{id}/members/{device_id}", delete(routes::groups::remove_member))
+        .route("/api/groups/{id}/state", post(routes::groups::send_group_state))
+        .route("/api/groups/{id}/command", post(routes::groups::send_group_command))
         .with_state(pool.clone());
 
     let app = Router::new()
@@ -118,9 +142,49 @@ async fn main() {
         .merge(settings_routes)
         .merge(store_routes)
         .merge(community_routes)
+        .merge(project_route_routes)
+        .merge(group_routes)
         .layer(cors);
 
-    let listener = tokio::net::TcpListener::bind(&config.bind_addr).await.unwrap();
-    info!("Server listening on {}", config.bind_addr);
-    axum::serve(listener, app).await.unwrap();
+    // If TLS cert and key are provided, serve HTTPS on 443 + HTTP redirect on 80
+    if let (Some(cert_path), Some(key_path)) = (&config.tls_cert_path, &config.tls_key_path) {
+        info!("TLS enabled: cert={}, key={}", cert_path, key_path);
+
+        let tls_config = axum_server::tls_rustls::RustlsConfig::from_pem_file(cert_path, key_path)
+            .await
+            .expect("Failed to load TLS cert/key");
+
+        // Spawn HTTP→HTTPS redirect on port 80
+        let redirect_app = Router::new().fallback(|req: axum::extract::Request| async move {
+            let host = req.headers()
+                .get("host")
+                .and_then(|h| h.to_str().ok())
+                .unwrap_or("localhost")
+                .split(':')
+                .next()
+                .unwrap_or("localhost");
+            let uri = req.uri();
+            let redirect_url = format!("https://{}{}", host, uri);
+            Redirect::permanent(&redirect_url)
+        });
+        tokio::spawn(async move {
+            let addr = SocketAddr::from(([0, 0, 0, 0], 80));
+            info!("HTTP redirect listening on {}", addr);
+            let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+            axum::serve(listener, redirect_app).await.unwrap();
+        });
+
+        // Serve HTTPS on 443
+        let addr = SocketAddr::from(([0, 0, 0, 0], 443));
+        info!("HTTPS server listening on {}", addr);
+        axum_server::bind_rustls(addr, tls_config)
+            .serve(app.into_make_service())
+            .await
+            .unwrap();
+    } else {
+        // Plain HTTP
+        let listener = tokio::net::TcpListener::bind(&config.bind_addr).await.unwrap();
+        info!("Server listening on {}", config.bind_addr);
+        axum::serve(listener, app).await.unwrap();
+    }
 }

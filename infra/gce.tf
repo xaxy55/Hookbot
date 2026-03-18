@@ -8,7 +8,7 @@ resource "google_compute_firewall" "hookbot_http" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "3000"]
+    ports    = ["80", "443"]
   }
 
   source_ranges = ["0.0.0.0/0"]
@@ -66,7 +66,8 @@ resource "google_compute_instance" "hookbot" {
           env = [
             { name = "DATABASE_URL", value = "/app/data/hookbot.db" },
             { name = "FIRMWARE_DIR", value = "/app/data/firmware" },
-            { name = "BIND_ADDR", value = "0.0.0.0:3000" },
+            { name = "TLS_CERT_PATH", value = "/app/certs/origin.pem" },
+            { name = "TLS_KEY_PATH", value = "/app/certs/origin-key.pem" },
           ]
           volumeMounts = [{
             name      = "hookbot-data"
