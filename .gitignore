@@ -56,3 +56,6 @@ ios/screenshots/
 
 # Claude Code
 .claude/
+
+# GCP service account key (never commit)
+gcp-sa-key.json
