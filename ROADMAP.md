@@ -108,12 +108,12 @@
 
 ## Quick Wins (anytime)
 
-- [ ] Dark/light theme actually works (CSS variables for light mode)
-- [ ] Firmware version shown on OLED idle screen
-- [ ] Device uptime display in human-readable format on OLED
-- [ ] Keyboard shortcut to trigger states from web UI
-- [ ] Export/import device config as JSON backup
-- [ ] Bulk OTA deploy with progress bar
-- [ ] Webhook templates for common integrations (Slack, Discord, GitHub Actions)
-- [ ] Sound pack system — upload custom melodies per state
-- [ ] OLED screen saver — random animations after extended idle
+- [x] Dark/light theme actually works (CSS variables for light mode)
+- [x] Firmware version shown on OLED idle screen
+- [x] Device uptime display in human-readable format on OLED
+- [x] Keyboard shortcut to trigger states from web UI
+- [x] Export/import device config as JSON backup
+- [x] Bulk OTA deploy with progress bar
+- [x] Webhook templates for common integrations (Slack, Discord, GitHub Actions)
+- [x] Sound pack system — upload custom melodies per state
+- [x] OLED screen saver — random animations after extended idle

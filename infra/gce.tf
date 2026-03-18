@@ -76,7 +76,7 @@ resource "google_compute_instance" "hookbot" {
         volumes = [{
           name = "hookbot-data"
           hostPath = {
-            path = "/mnt/disks/hookbot-data"
+            path = "/home/hookbot-data"
           }
         }]
         restartPolicy = "Always"
@@ -85,7 +85,7 @@ resource "google_compute_instance" "hookbot" {
 
     startup-script = <<-EOF
       #!/bin/bash
-      mkdir -p /mnt/disks/hookbot-data/firmware
+      mkdir -p /home/hookbot-data/firmware
     EOF
   }
 }

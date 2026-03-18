@@ -26,14 +26,14 @@ export default function OtaUpload() {
   });
 
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-white">Upload Firmware</h3>
+    <div className="rounded-lg border border-edge bg-surface p-4 space-y-3">
+      <h3 className="text-sm font-semibold text-fg">Upload Firmware</h3>
 
       <input
         ref={fileRef}
         type="file"
         accept=".bin"
-        className="block w-full text-sm text-gray-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:bg-gray-800 file:text-gray-300 hover:file:bg-gray-700"
+        className="block w-full text-sm text-muted file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:bg-inset file:text-fg-2 hover:file:bg-raised"
       />
 
       <div className="grid grid-cols-2 gap-3">
@@ -42,13 +42,13 @@ export default function OtaUpload() {
           placeholder="Version (e.g. 1.0.0)"
           value={version}
           onChange={(e) => setVersion(e.target.value)}
-          className="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500"
+          className="w-full px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg placeholder-subtle"
         />
 
         <select
           value={deviceType}
           onChange={(e) => setDeviceType(e.target.value)}
-          className="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white"
+          className="w-full px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
         >
           <option value="">Device type (optional)</option>
           <option value="esp32_oled">ESP32 OLED</option>
@@ -61,7 +61,7 @@ export default function OtaUpload() {
         placeholder="Notes (optional)"
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        className="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500"
+        className="w-full px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg placeholder-subtle"
       />
 
       <button

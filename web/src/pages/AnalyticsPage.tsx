@@ -37,12 +37,12 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Analytics</h1>
+        <h1 className="text-xl font-bold text-fg">Analytics</h1>
         <div className="flex items-center gap-3">
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300"
+            className="bg-inset border border-edge rounded-lg px-3 py-1.5 text-sm text-fg-2"
           >
             <option value={7}>7 days</option>
             <option value={14}>14 days</option>
@@ -53,7 +53,7 @@ export default function AnalyticsPage() {
             <select
               value={deviceFilter}
               onChange={(e) => setDeviceFilter(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300"
+              className="bg-inset border border-edge rounded-lg px-3 py-1.5 text-sm text-fg-2"
             >
               <option value="">All devices</option>
               {devices.map((d) => (
@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
       )}
 
       {isLoading ? (
-        <div className="text-gray-500 text-sm">Loading analytics...</div>
+        <div className="text-subtle text-sm">Loading analytics...</div>
       ) : analytics ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Tools per day - bar chart */}
@@ -168,7 +168,7 @@ function StatCard({ label, value, color }: { label: string; value: string; color
   };
   return (
     <div className={`rounded-lg border p-4 ${bg[color]}`}>
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className="text-xs text-subtle mb-1">{label}</p>
       <p className={`text-xl font-bold ${text[color]}`}>{value}</p>
     </div>
   );
@@ -176,15 +176,15 @@ function StatCard({ label, value, color }: { label: string; value: string; color
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4">
-      <h3 className="text-sm font-medium text-gray-300 mb-4">{title}</h3>
+    <div className="rounded-lg border border-edge bg-surface p-4">
+      <h3 className="text-sm font-medium text-fg-2 mb-4">{title}</h3>
       {children}
     </div>
   );
 }
 
 function EmptyChart() {
-  return <div className="h-32 flex items-center justify-center text-gray-600 text-sm">No data yet</div>;
+  return <div className="h-32 flex items-center justify-center text-dim text-sm">No data yet</div>;
 }
 
 function BarChart({ data, color }: { data: { label: string; value: number }[]; color: string }) {
@@ -195,12 +195,12 @@ function BarChart({ data, color }: { data: { label: string; value: number }[]; c
     <div className="flex items-end gap-1 h-32">
       {visible.map((d, i) => (
         <div key={i} className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-[10px] text-gray-500">{d.value}</span>
+          <span className="text-[10px] text-subtle">{d.value}</span>
           <div
             className={`w-full rounded-t ${color} min-h-[2px] transition-all`}
             style={{ height: `${(d.value / max) * 100}%` }}
           />
-          <span className="text-[9px] text-gray-600 truncate w-full text-center">{d.label}</span>
+          <span className="text-[9px] text-dim truncate w-full text-center">{d.label}</span>
         </div>
       ))}
     </div>
@@ -220,7 +220,7 @@ function HourlyChart({ data }: { data: { hour: number; count: number }[] }) {
       <div className="flex gap-0.5 h-20">
         {hours.map((h) => {
           const intensity = h.count / max;
-          const bg = intensity === 0 ? 'bg-gray-800' :
+          const bg = intensity === 0 ? 'bg-inset' :
             intensity < 0.25 ? 'bg-green-900' :
             intensity < 0.5 ? 'bg-green-700' :
             intensity < 0.75 ? 'bg-green-500' : 'bg-green-400';
@@ -233,7 +233,7 @@ function HourlyChart({ data }: { data: { hour: number; count: number }[] }) {
       </div>
       <div className="flex gap-0.5">
         {hours.map((h) => (
-          <div key={h.hour} className="flex-1 text-center text-[8px] text-gray-600">
+          <div key={h.hour} className="flex-1 text-center text-[8px] text-dim">
             {h.hour % 4 === 0 ? `${h.hour}` : ''}
           </div>
         ))}
@@ -248,14 +248,14 @@ function HorizontalBarChart({ data }: { data: { label: string; value: number; co
     <div className="space-y-2">
       {data.slice(0, 10).map((d, i) => (
         <div key={i} className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 w-24 truncate text-right">{d.label}</span>
-          <div className="flex-1 h-4 bg-gray-800 rounded overflow-hidden">
+          <span className="text-xs text-muted w-24 truncate text-right">{d.label}</span>
+          <div className="flex-1 h-4 bg-inset rounded overflow-hidden">
             <div
               className={`h-full ${d.color} rounded transition-all`}
               style={{ width: `${(d.value / max) * 100}%` }}
             />
           </div>
-          <span className="text-xs text-gray-500 w-10">{d.value}</span>
+          <span className="text-xs text-subtle w-10">{d.value}</span>
         </div>
       ))}
     </div>
@@ -282,8 +282,8 @@ function StateBar({ data }: { data: { state: string; count: number }[] }) {
         {data.map((d, i) => (
           <div key={i} className="flex items-center gap-1.5">
             <div className={`w-2.5 h-2.5 rounded-sm ${STATE_COLORS[d.state] || 'bg-gray-600'}`} />
-            <span className="text-xs text-gray-400">{d.state}</span>
-            <span className="text-xs text-gray-600">{Math.round((d.count / total) * 100)}%</span>
+            <span className="text-xs text-muted">{d.state}</span>
+            <span className="text-xs text-dim">{Math.round((d.count / total) * 100)}%</span>
           </div>
         ))}
       </div>

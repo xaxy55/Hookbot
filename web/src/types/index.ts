@@ -30,6 +30,7 @@ export interface DeviceConfig {
   sound_volume: number;
   avatar_preset?: Record<string, unknown>;
   custom_data?: Record<string, unknown>;
+  sound_pack?: string;
 }
 
 export interface Firmware {

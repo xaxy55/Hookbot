@@ -37,6 +37,10 @@ static void setState(AvatarState state) {
     currentState = state;
     stateEnteredAt = millis();
 #ifndef NO_DISPLAY
+    if (screensaverActive) {
+        screensaverActive = false;
+        Serial.println("[Main] Screensaver deactivated");
+    }
     Avatar::setState(state);
 #endif
 #ifndef NO_LED
@@ -119,6 +123,7 @@ void setup() {
     Sensors::init();
 
 #ifndef NO_DISPLAY
+    Screensaver::init();
     Avatar::draw();
     Display::flush();
 #endif
@@ -200,7 +205,22 @@ void loop() {
 #endif
 
 #ifndef NO_DISPLAY
-    Avatar::draw();
+    // Screensaver: activate after extended idle, prevent OLED burn-in
+    if (currentState == AvatarState::IDLE
+        && (now - stateEnteredAt >= SCREENSAVER_TIMEOUT_MS)
+        && !screensaverActive) {
+        screensaverActive = true;
+        Screensaver::randomize();
+        Serial.println("[Main] Screensaver activated");
+    }
+
+    if (screensaverActive) {
+        Display::clear();
+        Screensaver::update(delta);
+        Screensaver::draw();
+    } else {
+        Avatar::draw();
+    }
 #ifdef BOARD_ESP32_4848S040C
     TouchUI::draw();  // Draw touch overlay on top of avatar
 #endif

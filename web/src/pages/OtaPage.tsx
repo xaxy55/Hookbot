@@ -109,6 +109,8 @@ export default function OtaPage() {
     failed: 'text-red-400',
   };
 
+  const batches = useMemo(() => groupIntoBatches(jobs ?? []), [jobs]);
+
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-fg">OTA Updates</h1>
@@ -270,23 +272,110 @@ export default function OtaPage() {
         )}
       </div>
 
-      {/* Job History */}
-      {jobs && jobs.length > 0 && (
-        <div className="rounded-lg border border-edge bg-surface p-4">
-          <h3 className="text-sm font-semibold text-fg mb-3">OTA Jobs</h3>
-          <div className="space-y-2">
-            {jobs.map((job) => (
-              <div key={job.id} className="flex items-center justify-between text-sm">
-                <span className="text-muted">
-                  {job.device_id.slice(0, 8)}... &rarr; {job.firmware_id.slice(0, 8)}...
-                </span>
-                <span className={statusColor[job.status] || 'text-muted'}>
-                  {job.status}
-                  {job.error_msg && ` - ${job.error_msg}`}
-                </span>
+      {/* Job History – grouped by deployment batch */}
+      {batches.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-fg">OTA Jobs</h3>
+          {batches.map((batch, idx) => {
+            const completed = batch.filter(j => j.status === 'success' || j.status === 'failed').length;
+            const total = batch.length;
+            const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+            const hasActive = batch.some(j => j.status === 'pending' || j.status === 'in_progress');
+            const allSuccess = batch.every(j => j.status === 'success');
+            const hasFailed = batch.some(j => j.status === 'failed');
+            const batchTime = new Date(batch[0].created_at).toLocaleString();
+
+            return (
+              <div key={idx} className="rounded-lg border border-edge bg-surface p-4 space-y-3">
+                {/* Batch header */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted">{batchTime}</span>
+                  <span className="text-xs text-subtle">{total} device{total !== 1 ? 's' : ''}</span>
+                </div>
+
+                {/* Overall batch progress bar */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-fg-2">
+                      {hasActive
+                        ? `Deploying: ${completed}/${total} devices complete`
+                        : allSuccess
+                          ? 'Deployment complete'
+                          : hasFailed
+                            ? `Done: ${batch.filter(j => j.status === 'success').length} succeeded, ${batch.filter(j => j.status === 'failed').length} failed`
+                            : `${completed}/${total} complete`}
+                    </span>
+                    <span className="text-xs text-subtle">{pct}%</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-inset overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        allSuccess ? 'bg-green-500' : hasFailed && !hasActive ? 'bg-red-500' : 'bg-brand'
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Per-device job rows */}
+                <div className="space-y-1.5">
+                  {batch.map((job) => {
+                    const deviceName = devices?.find(d => d.id === job.device_id)?.name;
+                    return (
+                      <div key={job.id} className="flex items-center gap-3 text-sm">
+                        {/* Status icon */}
+                        <span className="w-4 flex-shrink-0 text-center">
+                          {job.status === 'success' && <span className="text-green-400">&#10003;</span>}
+                          {job.status === 'failed' && <span className="text-red-400">&#10005;</span>}
+                          {job.status === 'pending' && <span className="text-subtle">&#8226;</span>}
+                          {job.status === 'in_progress' && <span className="text-blue-400">&#9654;</span>}
+                        </span>
+
+                        {/* Device info */}
+                        <span className="text-muted min-w-[120px] truncate">
+                          {deviceName || `${job.device_id.slice(0, 8)}...`}
+                        </span>
+
+                        {/* Per-device progress bar */}
+                        <div className="flex-1 h-1.5 rounded-full bg-inset overflow-hidden">
+                          {job.status === 'pending' && (
+                            <div className="h-full w-full rounded-full bg-dim/50 animate-pulse" />
+                          )}
+                          {job.status === 'in_progress' && (
+                            <div
+                              className="h-full rounded-full bg-blue-500"
+                              style={{
+                                width: '100%',
+                                animation: 'ota-indeterminate 1.5s ease-in-out infinite',
+                              }}
+                            />
+                          )}
+                          {job.status === 'success' && (
+                            <div className="h-full w-full rounded-full bg-green-500" />
+                          )}
+                          {job.status === 'failed' && (
+                            <div className="h-full w-full rounded-full bg-red-500" />
+                          )}
+                        </div>
+
+                        {/* Status label */}
+                        <span className={`text-xs min-w-[80px] text-right ${statusColor[job.status] || 'text-muted'}`}>
+                          {job.status.replace('_', ' ')}
+                        </span>
+
+                        {/* Error message */}
+                        {job.error_msg && (
+                          <span className="text-xs text-red-400 truncate max-w-[200px]" title={job.error_msg}>
+                            {job.error_msg}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       )}
     </div>

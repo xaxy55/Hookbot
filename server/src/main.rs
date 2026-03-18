@@ -49,6 +49,8 @@ async fn main() {
         .route("/api/devices/{id}/history", get(routes::devices::get_device_history))
         .route("/api/devices/{id}/config", get(routes::devices::get_config).put(routes::devices::update_config))
         .route("/api/devices/{id}/config/push", post(routes::devices::push_config))
+        .route("/api/devices/{id}/config/export", get(routes::devices::export_config))
+        .route("/api/devices/{id}/config/import", post(routes::devices::import_config))
         .route("/api/devices/{id}/notifications", get(routes::notifications::get_notifications).post(routes::notifications::forward_notification))
         .route("/api/devices/{id}/notifications/{nid}", delete(routes::notifications::delete_notification))
         .route("/api/devices/{id}/sensors", get(routes::sensors::get_sensors).put(routes::sensors::update_sensors))

@@ -22,6 +22,7 @@ pub struct DeviceConfig {
     pub sound_volume: i32,
     pub avatar_preset: Option<serde_json::Value>,
     pub custom_data: Option<serde_json::Value>,
+    pub sound_pack: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,6 +87,7 @@ pub struct UpdateConfig {
     pub sound_volume: Option<i32>,
     pub avatar_preset: Option<serde_json::Value>,
     pub custom_data: Option<serde_json::Value>,
+    pub sound_pack: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

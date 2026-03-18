@@ -144,8 +144,8 @@ export default function FirmwareFlasher() {
   const selectedFirmware = firmwares?.find(f => f.id === selectedFw);
 
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-4">
-      <h3 className="text-sm font-semibold text-white">USB Firmware Flasher</h3>
+    <div className="rounded-lg border border-edge bg-surface p-4 space-y-4">
+      <h3 className="text-sm font-semibold text-fg">USB Firmware Flasher</h3>
 
       {!hasWebSerial && (
         <p className="text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded">
@@ -154,11 +154,11 @@ export default function FirmwareFlasher() {
       )}
 
       <div>
-        <label className="block text-sm text-gray-400 mb-1">Firmware</label>
+        <label className="block text-sm text-muted mb-1">Firmware</label>
         <select
           value={selectedFw}
           onChange={(e) => setSelectedFw(e.target.value)}
-          className="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white"
+          className="w-full px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
         >
           <option value="">Select firmware...</option>
           {firmwares?.map((fw) => (
@@ -188,7 +188,7 @@ export default function FirmwareFlasher() {
         <button
           onClick={downloadFirmware}
           disabled={!selectedFw}
-          className="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md disabled:opacity-50"
+          className="px-4 py-2 text-sm bg-raised hover:bg-raised rounded-md disabled:opacity-50"
         >
           Download .bin
         </button>
@@ -198,7 +198,7 @@ export default function FirmwareFlasher() {
         <div className="text-xs text-blue-400 bg-blue-900/20 p-2 rounded">
           {status}
           {progress > 0 && progress < 100 && (
-            <div className="mt-1 h-1 bg-gray-700 rounded-full overflow-hidden">
+            <div className="mt-1 h-1 bg-raised rounded-full overflow-hidden">
               <div className="h-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
             </div>
           )}
@@ -209,9 +209,9 @@ export default function FirmwareFlasher() {
         <p className="text-xs text-red-400 bg-red-900/20 p-2 rounded">{error}</p>
       )}
 
-      <p className="text-[10px] text-gray-600">
-        For reliable USB flashing, use: <code className="text-gray-500">pio run -e esp32 -t upload</code> or{' '}
-        <code className="text-gray-500">esptool.py write_flash 0x0 firmware.bin</code>
+      <p className="text-[10px] text-dim">
+        For reliable USB flashing, use: <code className="text-subtle">pio run -e esp32 -t upload</code> or{' '}
+        <code className="text-subtle">esptool.py write_flash 0x0 firmware.bin</code>
       </p>
     </div>
   );

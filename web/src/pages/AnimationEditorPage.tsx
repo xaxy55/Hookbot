@@ -295,12 +295,12 @@ export default function AnimationEditorPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Animation Editor</h1>
+        <h1 className="text-xl font-bold text-fg">Animation Editor</h1>
         <div className="flex items-center gap-2">
           <select
             value={selectedDevice}
             onChange={e => setSelectedDevice(e.target.value)}
-            className="px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white"
+            className="px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
           >
             <option value="">Select device...</option>
             {devices?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -320,12 +320,12 @@ export default function AnimationEditorPage() {
         {/* Left column */}
         <div className="space-y-4">
           {/* Preview */}
-          <div className="rounded-xl border border-gray-800 bg-black p-4 flex flex-col items-center">
+          <div className="rounded-xl border border-edge bg-black p-4 flex flex-col items-center">
             <canvas
               ref={canvasRef}
               width={384}
               height={192}
-              className="rounded-lg border border-gray-800"
+              className="rounded-lg border border-edge"
               style={{ imageRendering: 'pixelated', width: '100%', maxWidth: 480 }}
             />
           </div>
@@ -334,7 +334,7 @@ export default function AnimationEditorPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => { setPlayTime(0); setPlaying(false); }}
-              className="p-2 rounded-md bg-gray-800 text-gray-400 hover:text-white"
+              className="p-2 rounded-md bg-inset text-muted hover:text-fg"
               title="Rewind"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h2v10H2V3zm4 5l6-5v10L6 8z"/></svg>
@@ -349,28 +349,28 @@ export default function AnimationEditorPage() {
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>
               )}
             </button>
-            <div className="flex-1 text-xs font-mono text-gray-500">
+            <div className="flex-1 text-xs font-mono text-subtle">
               {Math.round(playTime)}ms / {animation.duration}ms
             </div>
-            <label className="flex items-center gap-1.5 text-xs text-gray-500">
+            <label className="flex items-center gap-1.5 text-xs text-subtle">
               <input
                 type="checkbox"
                 checked={animation.loop}
                 onChange={e => setAnimation(prev => ({ ...prev, loop: e.target.checked }))}
-                className="rounded border-gray-600"
+                className="rounded border-edge"
               />
               Loop
             </label>
           </div>
 
           {/* Timeline */}
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-3">
+          <div className="rounded-lg border border-edge bg-surface p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Timeline</span>
+              <span className="text-xs text-subtle font-medium uppercase tracking-wider">Timeline</span>
               <div className="flex gap-1">
                 <button onClick={addKeyframe} className="px-2 py-1 text-[10px] bg-blue-600 hover:bg-blue-700 rounded text-white">+ Keyframe</button>
-                <button onClick={duplicateKeyframe} className="px-2 py-1 text-[10px] bg-gray-700 hover:bg-gray-600 rounded text-gray-300">Duplicate</button>
-                <button onClick={deleteKeyframe} disabled={animation.keyframes.length <= 2} className="px-2 py-1 text-[10px] bg-gray-700 hover:bg-gray-600 rounded text-gray-300 disabled:opacity-30">Delete</button>
+                <button onClick={duplicateKeyframe} className="px-2 py-1 text-[10px] bg-raised hover:bg-raised rounded text-fg-2">Duplicate</button>
+                <button onClick={deleteKeyframe} disabled={animation.keyframes.length <= 2} className="px-2 py-1 text-[10px] bg-raised hover:bg-raised rounded text-fg-2 disabled:opacity-30">Delete</button>
               </div>
             </div>
 
@@ -378,7 +378,7 @@ export default function AnimationEditorPage() {
             <div
               ref={timelineRef}
               onClick={handleTimelineClick}
-              className="relative h-12 bg-gray-800 rounded-lg cursor-pointer overflow-hidden"
+              className="relative h-12 bg-inset rounded-lg cursor-pointer overflow-hidden"
             >
               {/* Playhead */}
               <div
@@ -397,9 +397,9 @@ export default function AnimationEditorPage() {
                   <div className={`w-3 h-3 rounded-full border-2 transition-all ${
                     i === selectedKf
                       ? 'bg-amber-400 border-amber-300 scale-125 shadow-lg shadow-amber-400/30'
-                      : 'bg-gray-600 border-gray-500 hover:bg-gray-400'
+                      : 'bg-raised border-edge hover:bg-raised'
                   }`} />
-                  <span className="text-[8px] text-gray-600 mt-0.5 font-mono">{kf.time}</span>
+                  <span className="text-[8px] text-dim mt-0.5 font-mono">{kf.time}</span>
                 </button>
               ))}
 
@@ -422,22 +422,22 @@ export default function AnimationEditorPage() {
 
             {/* Duration control */}
             <div className="flex items-center gap-3">
-              <label className="text-xs text-gray-500">Duration</label>
+              <label className="text-xs text-subtle">Duration</label>
               <input
                 type="number"
                 value={animation.duration}
                 onChange={e => setAnimation(prev => ({ ...prev, duration: Math.max(100, Number(e.target.value)) }))}
-                className="w-24 px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded text-white font-mono"
+                className="w-24 px-2 py-1 text-xs bg-inset border border-edge rounded text-fg font-mono"
                 step={100}
                 min={100}
               />
-              <span className="text-[10px] text-gray-600">ms</span>
+              <span className="text-[10px] text-dim">ms</span>
             </div>
           </div>
 
           {/* Preset animations */}
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4">
-            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Presets</span>
+          <div className="rounded-lg border border-edge bg-surface p-4">
+            <span className="text-xs text-subtle font-medium uppercase tracking-wider">Presets</span>
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2 mt-3">
               {PRESET_ANIMATIONS.map(preset => (
                 <button
@@ -446,7 +446,7 @@ export default function AnimationEditorPage() {
                   className={`px-3 py-2 text-xs rounded-lg border transition-all ${
                     animation.name === preset.name
                       ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                      : 'bg-gray-800/80 text-gray-400 border-gray-700 hover:border-gray-500'
+                      : 'bg-inset/80 text-muted border-edge hover:border-edge'
                   }`}
                 >
                   {preset.name}
@@ -457,37 +457,37 @@ export default function AnimationEditorPage() {
 
           {/* Animation name */}
           <div className="flex items-center gap-3">
-            <label className="text-xs text-gray-500">Name</label>
+            <label className="text-xs text-subtle">Name</label>
             <input
               type="text"
               value={animation.name}
               onChange={e => setAnimation(prev => ({ ...prev, name: e.target.value }))}
-              className="flex-1 px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white"
+              className="flex-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
             />
           </div>
         </div>
 
         {/* Right column: Keyframe editor */}
         <div className="space-y-4">
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-3">
+          <div className="rounded-lg border border-edge bg-surface p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+              <span className="text-xs text-subtle font-medium uppercase tracking-wider">
                 Keyframe {selectedKf + 1}/{animation.keyframes.length}
               </span>
-              <span className="text-[10px] font-mono text-gray-600">
+              <span className="text-[10px] font-mono text-dim">
                 {animation.keyframes[selectedKf]?.time ?? 0}ms
               </span>
             </div>
 
             {/* Time */}
             <div>
-              <label className="text-[10px] text-gray-600">Time (ms)</label>
+              <label className="text-[10px] text-dim">Time (ms)</label>
               <input
                 type="range"
                 min={0} max={animation.duration} step={10}
                 value={animation.keyframes[selectedKf]?.time ?? 0}
                 onChange={e => updateKfTime(Number(e.target.value))}
-                className="w-full h-1 bg-gray-700 rounded-full appearance-none cursor-pointer
+                className="w-full h-1 bg-raised rounded-full appearance-none cursor-pointer
                   [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
                   [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:cursor-pointer"
               />
@@ -495,7 +495,7 @@ export default function AnimationEditorPage() {
 
             {/* Easing */}
             <div>
-              <label className="text-[10px] text-gray-600 mb-1 block">Easing</label>
+              <label className="text-[10px] text-dim mb-1 block">Easing</label>
               <div className="flex flex-wrap gap-1">
                 {EASINGS.map(e => (
                   <button
@@ -504,7 +504,7 @@ export default function AnimationEditorPage() {
                     className={`px-2 py-1 text-[10px] rounded transition-colors ${
                       animation.keyframes[selectedKf]?.easing === e
                         ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        : 'bg-gray-800 text-gray-500 border border-gray-700'
+                        : 'bg-inset text-subtle border border-edge'
                     }`}
                   >
                     {e}
@@ -515,23 +515,23 @@ export default function AnimationEditorPage() {
           </div>
 
           {/* Param sliders */}
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-2.5">
-            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Parameters</span>
+          <div className="rounded-lg border border-edge bg-surface p-4 space-y-2.5">
+            <span className="text-xs text-subtle font-medium uppercase tracking-wider">Parameters</span>
             {PARAM_KEYS.map(key => {
               const [min, max] = PARAM_RANGES[key];
               const val = animation.keyframes[selectedKf]?.params[key] ?? 0;
               return (
                 <div key={key}>
                   <div className="flex items-center justify-between mb-0.5">
-                    <label className="text-[10px] text-gray-500">{PARAM_LABELS[key]}</label>
-                    <span className="text-[10px] font-mono text-gray-600 tabular-nums">{val.toFixed(2)}</span>
+                    <label className="text-[10px] text-subtle">{PARAM_LABELS[key]}</label>
+                    <span className="text-[10px] font-mono text-dim tabular-nums">{val.toFixed(2)}</span>
                   </div>
                   <input
                     type="range"
                     min={min} max={max} step={0.05}
                     value={val}
                     onChange={e => updateKfParam(key, parseFloat(e.target.value))}
-                    className="w-full h-1 bg-gray-700 rounded-full appearance-none cursor-pointer
+                    className="w-full h-1 bg-raised rounded-full appearance-none cursor-pointer
                       [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5
                       [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-red-500 [&::-webkit-slider-thumb]:cursor-pointer"
                   />
@@ -541,8 +541,8 @@ export default function AnimationEditorPage() {
           </div>
 
           {/* Quick param buttons */}
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-2">
-            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Quick Set</span>
+          <div className="rounded-lg border border-edge bg-surface p-4 space-y-2">
+            <span className="text-xs text-subtle font-medium uppercase tracking-wider">Quick Set</span>
             <div className="grid grid-cols-2 gap-1.5">
               {[
                 { label: 'Neutral', p: DEFAULT_PARAMS },
@@ -559,7 +559,7 @@ export default function AnimationEditorPage() {
                     kfs[selectedKf] = { ...kfs[selectedKf], params: p };
                     return { ...prev, keyframes: kfs };
                   })}
-                  className="px-2 py-1.5 text-[10px] bg-gray-800 hover:bg-gray-700 rounded text-gray-400 border border-gray-700"
+                  className="px-2 py-1.5 text-[10px] bg-inset hover:bg-raised rounded text-muted border border-edge"
                 >
                   {label}
                 </button>

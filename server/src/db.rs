@@ -24,6 +24,7 @@ pub fn init(path: &Path) -> DbPool {
 fn run_migrations(conn: &Connection) {
     let migrations: &[&str] = &[
         "ALTER TABLE devices ADD COLUMN device_type TEXT",
+        "ALTER TABLE device_config ADD COLUMN sound_pack TEXT DEFAULT 'default'",
     ];
 
     for sql in migrations {

@@ -3,6 +3,7 @@
 #include "sound.h"
 #include "config.h"
 #include <Arduino.h>
+#include <Preferences.h>
 
 namespace Sound {
 
@@ -18,13 +19,55 @@ static int queuePos = 0;
 static uint32_t noteStart = 0;
 static bool playing = false;
 
+// Custom melodies per state (6 states: idle=0 through error=5)
+static Melody customMelodies[6] = {};
+static bool customEnabled = false;
+
 // LEDC channel for tone
 static const uint8_t LEDC_CHANNEL = 0;
+
+void setCustomMelodies(bool enabled) {
+    customEnabled = enabled;
+    if (!enabled) {
+        // Clear all custom melodies
+        for (int i = 0; i < 6; i++) {
+            customMelodies[i].count = 0;
+        }
+    }
+    Serial.printf("[Sound] Custom melodies %s\n", enabled ? "enabled" : "disabled");
+}
+
+void setMelody(int stateIndex, const Melody& melody) {
+    if (stateIndex < 0 || stateIndex > 5) return;
+    customMelodies[stateIndex] = melody;
+    Serial.printf("[Sound] Custom melody set for state %d (%d notes)\n", stateIndex, melody.count);
+}
+
+void saveMelodiesToNVS() {
+    Preferences prefs;
+    prefs.begin("sndpack", false);
+    prefs.putBool("enabled", customEnabled);
+    prefs.putBytes("melodies", customMelodies, sizeof(customMelodies));
+    prefs.end();
+    Serial.println("[Sound] Melodies saved to NVS");
+}
+
+void loadMelodiesFromNVS() {
+    Preferences prefs;
+    prefs.begin("sndpack", true);
+    customEnabled = prefs.getBool("enabled", false);
+    if (customEnabled) {
+        prefs.getBytes("melodies", customMelodies, sizeof(customMelodies));
+    }
+    prefs.end();
+    Serial.printf("[Sound] Melodies loaded from NVS, custom=%s\n", customEnabled ? "on" : "off");
+}
 
 void init() {
     ledcSetup(LEDC_CHANNEL, 1000, 8);
     ledcAttachPin(BUZZER_PIN, LEDC_CHANNEL);
     ledcWrite(LEDC_CHANNEL, 0);
+    loadMelodiesFromNVS();
     Serial.println("[Sound] Initialized");
 }
 
@@ -52,56 +95,67 @@ void playStateSound(AvatarState state) {
     playing = false;
     ledcWrite(LEDC_CHANNEL, 0);
 
-    switch (state) {
-        case AvatarState::IDLE:
-            // Deep ominous power hum
-            enqueue(110, 120);
-            enqueue(0, 30);
-            enqueue(110, 80);
-            break;
+    int stateIdx = (int)state;
 
-        case AvatarState::THINKING:
-            // Rapid impatient tapping - the CEO is scheming
-            enqueue(330, 50);
-            enqueue(0, 20);
-            enqueue(370, 50);
-            enqueue(0, 20);
-            enqueue(415, 60);
-            break;
+    // Use custom melody if enabled and defined for this state
+    if (customEnabled && stateIdx >= 0 && stateIdx < 6 && customMelodies[stateIdx].count > 0) {
+        const Melody& m = customMelodies[stateIdx];
+        for (int i = 0; i < m.count && i < MAX_MELODY_NOTES; i++) {
+            enqueue(m.freqs[i], m.durations[i]);
+        }
+    } else {
+        // Default hardcoded melodies
+        switch (state) {
+            case AvatarState::IDLE:
+                // Deep ominous power hum
+                enqueue(110, 120);
+                enqueue(0, 30);
+                enqueue(110, 80);
+                break;
 
-        case AvatarState::WAITING:
-            // Ominous low drone - displeasure
-            enqueue(100, 200);
-            break;
+            case AvatarState::THINKING:
+                // Rapid impatient tapping - the CEO is scheming
+                enqueue(330, 50);
+                enqueue(0, 20);
+                enqueue(370, 50);
+                enqueue(0, 20);
+                enqueue(415, 60);
+                break;
 
-        case AvatarState::SUCCESS:
-            // Triumphant fanfare - world conquered
-            enqueue(440, 80);
-            enqueue(0, 20);
-            enqueue(554, 80);
-            enqueue(0, 20);
-            enqueue(659, 80);
-            enqueue(0, 20);
-            enqueue(880, 200);
-            break;
+            case AvatarState::WAITING:
+                // Ominous low drone - displeasure
+                enqueue(100, 200);
+                break;
 
-        case AvatarState::TASKCHECK:
-            // Authoritative double gavel strike
-            enqueue(660, 60);
-            enqueue(0, 60);
-            enqueue(880, 80);
-            break;
+            case AvatarState::SUCCESS:
+                // Triumphant fanfare - world conquered
+                enqueue(440, 80);
+                enqueue(0, 20);
+                enqueue(554, 80);
+                enqueue(0, 20);
+                enqueue(659, 80);
+                enqueue(0, 20);
+                enqueue(880, 200);
+                break;
 
-        case AvatarState::ERROR:
-            // Rage descending - doom chord
-            enqueue(880, 80);
-            enqueue(0, 20);
-            enqueue(440, 80);
-            enqueue(0, 20);
-            enqueue(220, 120);
-            enqueue(0, 20);
-            enqueue(110, 200);
-            break;
+            case AvatarState::TASKCHECK:
+                // Authoritative double gavel strike
+                enqueue(660, 60);
+                enqueue(0, 60);
+                enqueue(880, 80);
+                break;
+
+            case AvatarState::ERROR:
+                // Rage descending - doom chord
+                enqueue(880, 80);
+                enqueue(0, 20);
+                enqueue(440, 80);
+                enqueue(0, 20);
+                enqueue(220, 120);
+                enqueue(0, 20);
+                enqueue(110, 200);
+                break;
+        }
     }
 
     // Start first note

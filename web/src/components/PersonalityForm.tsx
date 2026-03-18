@@ -29,7 +29,7 @@ export default function PersonalityForm({ config }: { config: DeviceConfig }) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm text-gray-400 mb-1">LED Brightness</label>
+        <label className="block text-sm text-muted mb-1">LED Brightness</label>
         <input
           type="range"
           min={0}
@@ -38,15 +38,15 @@ export default function PersonalityForm({ config }: { config: DeviceConfig }) {
           onChange={(e) => setBrightness(Number(e.target.value))}
           className="w-full"
         />
-        <span className="text-xs text-gray-500">{brightness}</span>
+        <span className="text-xs text-subtle">{brightness}</span>
       </div>
 
       <div className="flex items-center gap-3">
-        <label className="text-sm text-gray-400">Sound</label>
+        <label className="text-sm text-muted">Sound</label>
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className={`px-3 py-1 text-xs rounded-full ${
-            soundEnabled ? 'bg-green-900/50 text-green-400' : 'bg-gray-800 text-gray-500'
+            soundEnabled ? 'bg-green-900/50 text-green-400' : 'bg-inset text-subtle'
           }`}
         >
           {soundEnabled ? 'On' : 'Off'}
@@ -55,7 +55,7 @@ export default function PersonalityForm({ config }: { config: DeviceConfig }) {
 
       {soundEnabled && (
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Volume</label>
+          <label className="block text-sm text-muted mb-1">Volume</label>
           <input
             type="range"
             min={0}
@@ -64,7 +64,7 @@ export default function PersonalityForm({ config }: { config: DeviceConfig }) {
             onChange={(e) => setVolume(Number(e.target.value))}
             className="w-full"
           />
-          <span className="text-xs text-gray-500">{volume}%</span>
+          <span className="text-xs text-subtle">{volume}%</span>
         </div>
       )}
 
@@ -79,7 +79,7 @@ export default function PersonalityForm({ config }: { config: DeviceConfig }) {
         <button
           onClick={() => pushMut.mutate()}
           disabled={pushMut.isPending}
-          className="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md disabled:opacity-50"
+          className="px-4 py-2 text-sm bg-raised hover:bg-raised rounded-md disabled:opacity-50"
         >
           {pushMut.isPending ? 'Pushing...' : 'Push to Device'}
         </button>

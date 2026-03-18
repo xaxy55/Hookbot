@@ -27,7 +27,7 @@ export default function LogsPage() {
         <select
           value={selectedDevice}
           onChange={(e) => setSelectedDevice(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg"
+          className="px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
         >
           <option value="">All devices</option>
           {devices?.map((d) => (
@@ -37,10 +37,10 @@ export default function LogsPage() {
       </div>
 
       {history && history.length > 0 ? (
-        <div className="rounded-lg border border-gray-800 bg-gray-900/50 overflow-hidden">
+        <div className="rounded-lg border border-edge bg-surface overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800 text-gray-500 text-left">
+              <tr className="border-b border-edge text-subtle text-left">
                 <th className="px-4 py-3 font-medium">Time</th>
                 <th className="px-4 py-3 font-medium">State</th>
                 <th className="px-4 py-3 font-medium text-right">Uptime</th>
@@ -49,20 +49,20 @@ export default function LogsPage() {
             </thead>
             <tbody>
               {history.map((s, i) => (
-                <tr key={i} className="border-b border-gray-800/50 last:border-0">
-                  <td className="px-4 py-2.5 text-gray-400 font-mono text-xs">{s.recorded_at}</td>
+                <tr key={i} className="border-b border-edge/50 last:border-0">
+                  <td className="px-4 py-2.5 text-muted font-mono text-xs">{s.recorded_at}</td>
                   <td className="px-4 py-2.5"><StateIndicator state={s.state} /></td>
-                  <td className="px-4 py-2.5 text-gray-400 text-right font-mono text-xs">{Math.floor(s.uptime_ms / 1000)}s</td>
-                  <td className="px-4 py-2.5 text-gray-400 text-right font-mono text-xs">{(s.free_heap / 1024).toFixed(1)} KB</td>
+                  <td className="px-4 py-2.5 text-muted text-right font-mono text-xs">{Math.floor(s.uptime_ms / 1000)}s</td>
+                  <td className="px-4 py-2.5 text-muted text-right font-mono text-xs">{(s.free_heap / 1024).toFixed(1)} KB</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : (
-        <div className="text-center py-12 rounded-lg border border-gray-800 bg-gray-900/50">
-          <p className="text-gray-500">No status logs yet</p>
-          <p className="text-gray-600 text-xs mt-1">Logs are recorded when the poller reaches a device</p>
+        <div className="text-center py-12 rounded-lg border border-edge bg-surface">
+          <p className="text-subtle">No status logs yet</p>
+          <p className="text-dim text-xs mt-1">Logs are recorded when the poller reaches a device</p>
         </div>
       )}
     </div>

@@ -71,7 +71,7 @@ export default function CommunityStorePage() {
           <select
             value={selectedDevice}
             onChange={(e) => setSelectedDevice(e.target.value)}
-            className="px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg"
+            className="px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
           >
             <option value="">Default device</option>
             {devices?.map((d) => (
@@ -117,12 +117,12 @@ export default function CommunityStorePage() {
           placeholder="Search plugins..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg placeholder:text-dim"
+          className="flex-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg placeholder:text-dim"
         />
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg"
+          className="px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
         >
           {SORT_OPTIONS.map(s => (
             <option key={s.key} value={s.key}>{s.label}</option>
@@ -188,7 +188,7 @@ function PluginCard({ plugin, onInstall, onUninstall, onRate, installing }: {
     <div className={`rounded-lg border p-4 space-y-3 transition-all ${
       plugin.installed
         ? 'border-green-700/40 bg-green-900/10'
-        : 'border-edge bg-surface hover:border-gray-600'
+        : 'border-edge bg-surface hover:border-edge'
     }`}>
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -296,26 +296,26 @@ function PublishForm({ onPublish, onCancel }: { onPublish: () => void; onCancel:
         <div>
           <label className="text-[11px] text-subtle uppercase tracking-wider">Name *</label>
           <input value={name} onChange={e => setName(e.target.value)}
-            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg" />
+            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg" />
         </div>
         <div>
           <label className="text-[11px] text-subtle uppercase tracking-wider">Author</label>
           <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="anonymous"
-            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg placeholder:text-dim" />
+            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg placeholder:text-dim" />
         </div>
       </div>
 
       <div>
         <label className="text-[11px] text-subtle uppercase tracking-wider">Description *</label>
         <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}
-          className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg resize-none" />
+          className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg resize-none" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-[11px] text-subtle uppercase tracking-wider">Category</label>
           <select value={category} onChange={e => setCategory(e.target.value)}
-            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg">
+            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg">
             <option value="utility">Utility</option>
             <option value="integration">Integration</option>
             <option value="theme">Theme</option>
@@ -325,7 +325,7 @@ function PublishForm({ onPublish, onCancel }: { onPublish: () => void; onCancel:
         <div>
           <label className="text-[11px] text-subtle uppercase tracking-wider">Tags (comma-separated)</label>
           <input value={tags} onChange={e => setTags(e.target.value)} placeholder="slack, webhook"
-            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg placeholder:text-dim" />
+            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg placeholder:text-dim" />
         </div>
       </div>
 

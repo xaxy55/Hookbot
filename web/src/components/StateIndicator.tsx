@@ -26,7 +26,7 @@ export default function StateIndicator({ state, size = 'sm' }: { state: string; 
   return (
     <div className="flex items-center gap-1.5">
       <span className={`${dotSize} rounded-full ${STATE_COLORS[s] || 'bg-gray-500'} ${s !== 'idle' ? 'animate-pulse' : ''}`} />
-      <span className={`${textSize} text-gray-400`}>{STATE_LABELS[s] || state}</span>
+      <span className={`${textSize} text-muted`}>{STATE_LABELS[s] || state}</span>
     </div>
   );
 }

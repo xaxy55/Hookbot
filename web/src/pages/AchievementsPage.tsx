@@ -47,12 +47,12 @@ export default function AchievementsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Achievements</h1>
+        <h1 className="text-xl font-bold text-fg">Achievements</h1>
         {devices && devices.length > 1 && (
           <select
             value={deviceFilter}
             onChange={(e) => setDeviceFilter(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300"
+            className="bg-inset border border-edge rounded-lg px-3 py-1.5 text-sm text-fg-2"
           >
             <option value="">All devices</option>
             {devices.map((d) => (
@@ -67,22 +67,22 @@ export default function AchievementsPage() {
         <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xs text-gray-500 mb-1">Level {stats.level}</p>
+              <p className="text-xs text-subtle mb-1">Level {stats.level}</p>
               <p className="text-2xl font-bold text-amber-400">{stats.title}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-500">Total XP</p>
+              <p className="text-xs text-subtle">Total XP</p>
               <p className="text-2xl font-bold text-amber-400">{stats.total_xp.toLocaleString()}</p>
             </div>
           </div>
           {/* XP progress bar */}
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-xs text-subtle">
               <span>Level {stats.level}</span>
               <span>{stats.total_xp - stats.xp_for_current_level} / {stats.xp_for_next_level - stats.xp_for_current_level} XP</span>
               <span>Level {stats.level + 1}</span>
             </div>
-            <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+            <div className="h-3 bg-inset rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all"
                 style={{
@@ -97,15 +97,15 @@ export default function AchievementsPage() {
           <div className="flex items-center gap-6 mt-4">
             <div className="flex items-center gap-2">
               <FireIcon className="text-orange-400" />
-              <span className="text-sm text-gray-300">{stats.current_streak} day streak</span>
+              <span className="text-sm text-fg-2">{stats.current_streak} day streak</span>
             </div>
             <div className="flex items-center gap-2">
               <TrophyIcon className="text-yellow-400" />
-              <span className="text-sm text-gray-300">Best: {stats.longest_streak} days</span>
+              <span className="text-sm text-fg-2">Best: {stats.longest_streak} days</span>
             </div>
             <div className="flex items-center gap-2">
               <StarIcon className="text-purple-400" />
-              <span className="text-sm text-gray-300">{earnedCount}/{totalBadges} badges</span>
+              <span className="text-sm text-fg-2">{earnedCount}/{totalBadges} badges</span>
             </div>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function AchievementsPage() {
       {/* Badges grid */}
       {badges && (
         <div>
-          <h2 className="text-sm font-medium text-gray-400 mb-3">Badges</h2>
+          <h2 className="text-sm font-medium text-muted mb-3">Badges</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
             {badges.map((badge) => {
               const IconComponent = BADGE_ICONS[badge.icon] || ZapIcon;
@@ -124,16 +124,16 @@ export default function AchievementsPage() {
                   className={`rounded-lg border p-4 text-center transition-all ${
                     badge.earned
                       ? 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10'
-                      : 'border-gray-800 bg-gray-900/30 opacity-40'
+                      : 'border-edge bg-surface/30 opacity-40'
                   }`}
                 >
                   <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full mb-2 ${
-                    badge.earned ? 'bg-amber-500/20' : 'bg-gray-800'
+                    badge.earned ? 'bg-amber-500/20' : 'bg-inset'
                   }`}>
-                    <IconComponent className={badge.earned ? 'text-amber-400' : 'text-gray-600'} />
+                    <IconComponent className={badge.earned ? 'text-amber-400' : 'text-dim'} />
                   </div>
-                  <p className={`text-xs font-medium ${badge.earned ? 'text-white' : 'text-gray-600'}`}>{badge.name}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">{badge.description}</p>
+                  <p className={`text-xs font-medium ${badge.earned ? 'text-fg' : 'text-dim'}`}>{badge.name}</p>
+                  <p className="text-[10px] text-subtle mt-0.5">{badge.description}</p>
                   {badge.earned && badge.earned_at && (
                     <p className="text-[9px] text-amber-600 mt-1">
                       {new Date(badge.earned_at + 'Z').toLocaleDateString()}
@@ -149,11 +149,11 @@ export default function AchievementsPage() {
       {/* Leaderboard */}
       {leaderboard && leaderboard.length > 1 && (
         <div>
-          <h2 className="text-sm font-medium text-gray-400 mb-3">Leaderboard</h2>
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 overflow-hidden">
+          <h2 className="text-sm font-medium text-muted mb-3">Leaderboard</h2>
+          <div className="rounded-lg border border-edge bg-surface overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-800 text-gray-500 text-xs">
+                <tr className="border-b border-edge text-subtle text-xs">
                   <th className="px-4 py-2 text-left">#</th>
                   <th className="px-4 py-2 text-left">Device</th>
                   <th className="px-4 py-2 text-right">Level</th>
@@ -164,14 +164,14 @@ export default function AchievementsPage() {
               </thead>
               <tbody>
                 {leaderboard.map((entry, i) => (
-                  <tr key={entry.device_id} className="border-b border-gray-800/50 last:border-0">
+                  <tr key={entry.device_id} className="border-b border-edge/50 last:border-0">
                     <td className="px-4 py-2">
-                      <span className={`font-bold ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-orange-600' : 'text-gray-500'}`}>
+                      <span className={`font-bold ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-fg-2' : i === 2 ? 'text-orange-600' : 'text-subtle'}`}>
                         {i + 1}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-white font-medium">{entry.device_name}</td>
-                    <td className="px-4 py-2 text-right text-gray-300">{entry.level}</td>
+                    <td className="px-4 py-2 text-fg font-medium">{entry.device_name}</td>
+                    <td className="px-4 py-2 text-right text-fg-2">{entry.level}</td>
                     <td className="px-4 py-2 text-right text-amber-400 font-mono">{entry.total_xp.toLocaleString()}</td>
                     <td className="px-4 py-2 text-right text-orange-400">{entry.current_streak}d</td>
                     <td className="px-4 py-2 text-right text-purple-400">{entry.achievements}</td>

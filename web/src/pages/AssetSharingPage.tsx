@@ -84,7 +84,7 @@ export default function AssetSharingPage() {
           <select
             value={selectedDevice}
             onChange={(e) => setSelectedDevice(e.target.value)}
-            className="px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg"
+            className="px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
           >
             <option value="">Default device</option>
             {devices?.map((d) => (
@@ -132,12 +132,12 @@ export default function AssetSharingPage() {
           placeholder="Search assets..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg placeholder:text-dim"
+          className="flex-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg placeholder:text-dim"
         />
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg"
+          className="px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
         >
           {SORT_OPTIONS.map(s => (
             <option key={s.key} value={s.key}>{s.label}</option>
@@ -226,7 +226,7 @@ function AssetCard({ asset, onInstall, onUninstall, onRate, installing }: {
 
       {/* Payload preview */}
       {asset.payload && Object.keys(asset.payload).length > 0 && (
-        <div className="px-2 py-1.5 rounded bg-black/20 border border-gray-800">
+        <div className="px-2 py-1.5 rounded bg-black/20 border border-edge">
           <p className="text-[10px] text-dim font-mono truncate">
             {JSON.stringify(asset.payload).slice(0, 80)}...
           </p>
@@ -320,17 +320,17 @@ function PublishAssetForm({ onPublish, onCancel }: { onPublish: () => void; onCa
         <div>
           <label className="text-[11px] text-subtle uppercase tracking-wider">Name *</label>
           <input value={name} onChange={e => setName(e.target.value)}
-            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg" />
+            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg" />
         </div>
         <div>
           <label className="text-[11px] text-subtle uppercase tracking-wider">Author</label>
           <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="anonymous"
-            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg placeholder:text-dim" />
+            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg placeholder:text-dim" />
         </div>
         <div>
           <label className="text-[11px] text-subtle uppercase tracking-wider">Type *</label>
           <select value={assetType} onChange={e => setAssetType(e.target.value)}
-            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg">
+            className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg">
             <option value="avatar">Avatar</option>
             <option value="animation">Animation</option>
             <option value="screensaver">Screensaver</option>
@@ -341,7 +341,7 @@ function PublishAssetForm({ onPublish, onCancel }: { onPublish: () => void; onCa
       <div>
         <label className="text-[11px] text-subtle uppercase tracking-wider">Description</label>
         <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}
-          className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg resize-none" />
+          className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg resize-none" />
       </div>
 
       <div>
@@ -349,7 +349,7 @@ function PublishAssetForm({ onPublish, onCancel }: { onPublish: () => void; onCa
           Payload JSON * <span className="normal-case text-dim">(avatar params, keyframes, or config)</span>
         </label>
         <textarea value={payloadJson} onChange={e => setPayloadJson(e.target.value)} rows={4}
-          className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg font-mono resize-none"
+          className="w-full mt-1 px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg font-mono resize-none"
           placeholder='{"eyeX": 0, "eyeY": 0, "mouthCurve": 0.3}' />
       </div>
 

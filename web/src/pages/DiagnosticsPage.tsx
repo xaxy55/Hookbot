@@ -27,17 +27,17 @@ export default function DiagnosticsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Diagnostics</h1>
+        <h1 className="text-xl font-bold text-fg">Diagnostics</h1>
         <button
           onClick={handleRun}
           disabled={running}
-          className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 transition-colors"
+          className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-fg rounded-lg disabled:opacity-50 transition-colors"
         >
           {running ? 'Running...' : 'Run Diagnostics'}
         </button>
       </div>
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-subtle">
         Checks database, device connectivity (TCP port 80), HTTP endpoints, DNS resolution, and firmware storage.
       </p>
 
@@ -48,15 +48,15 @@ export default function DiagnosticsPage() {
       )}
 
       {!result && !running && (
-        <div className="text-center py-16 rounded-lg border border-dashed border-gray-800">
-          <p className="text-gray-600">Click "Run Diagnostics" to check system health</p>
+        <div className="text-center py-16 rounded-lg border border-dashed border-edge">
+          <p className="text-dim">Click "Run Diagnostics" to check system health</p>
         </div>
       )}
 
       {running && !result && (
-        <div className="text-center py-16 rounded-lg border border-gray-800 bg-gray-900/50">
+        <div className="text-center py-16 rounded-lg border border-edge bg-surface">
           <div className="inline-block w-6 h-6 border-2 border-gray-600 border-t-red-400 rounded-full animate-spin mb-3" />
-          <p className="text-gray-400 text-sm">Checking endpoints...</p>
+          <p className="text-muted text-sm">Checking endpoints...</p>
         </div>
       )}
 
@@ -76,7 +76,7 @@ export default function DiagnosticsPage() {
           </div>
 
           {/* Check results */}
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 overflow-hidden divide-y divide-gray-800/50">
+          <div className="rounded-lg border border-edge bg-surface overflow-hidden divide-y divide-edge/50">
             {result.checks.map((check, i) => (
               <CheckRow key={i} check={check} />
             ))}
@@ -99,10 +99,10 @@ function CheckRow({ check }: { check: DiagCheck }) {
       <StatusIcon status={check.status} size={16} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-white">{check.name}</span>
+          <span className="text-sm font-medium text-fg">{check.name}</span>
           {check.latency_ms !== null && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-              check.latency_ms < 100 ? 'text-gray-500 bg-gray-800' :
+              check.latency_ms < 100 ? 'text-subtle bg-inset' :
               check.latency_ms < 500 ? 'text-yellow-500 bg-yellow-500/10' :
               'text-red-500 bg-red-500/10'
             }`}>
@@ -110,7 +110,7 @@ function CheckRow({ check }: { check: DiagCheck }) {
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-0.5 truncate">{check.message}</p>
+        <p className="text-xs text-subtle mt-0.5 truncate">{check.message}</p>
       </div>
     </div>
   );

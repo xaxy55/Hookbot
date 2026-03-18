@@ -76,7 +76,7 @@ export default function StorePage() {
         <select
           value={selectedDevice}
           onChange={(e) => setSelectedDevice(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-inset border border-gray-700 rounded-md text-fg"
+          className="px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
         >
           <option value="">Default device</option>
           {devices?.map((d) => (

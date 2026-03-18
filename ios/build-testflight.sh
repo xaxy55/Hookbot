@@ -14,7 +14,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
 
+# Auto-increment build number using git commit count
+BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo "1")
+
 echo "=== Hookbot TestFlight Build ==="
+echo "Build number: $BUILD_NUMBER"
 echo ""
 
 # Step 1: Generate Xcode project from project.yml
@@ -54,6 +58,7 @@ xcodebuild archive \
     -archivePath "$IOS_ARCHIVE" \
     -allowProvisioningUpdates \
     CODE_SIGN_STYLE=Automatic \
+    CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
     | tail -1
 
 echo "→ Exporting iOS for TestFlight..."
@@ -81,6 +86,7 @@ xcodebuild archive \
     -archivePath "$MAC_ARCHIVE" \
     -allowProvisioningUpdates \
     CODE_SIGN_STYLE=Automatic \
+    CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
     | tail -1
 
 echo "→ Exporting Mac for TestFlight..."
@@ -108,6 +114,7 @@ xcodebuild archive \
     -archivePath "$WATCH_ARCHIVE" \
     -allowProvisioningUpdates \
     CODE_SIGN_STYLE=Automatic \
+    CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
     | tail -1
 
 echo "→ Exporting watchOS for TestFlight..."

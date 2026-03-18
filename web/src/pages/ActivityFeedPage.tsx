@@ -34,7 +34,7 @@ const TOOL_ICONS: Record<string, string> = {
 function ToolIcon({ tool }: { tool: string }) {
   const icon = TOOL_ICONS[tool] || TOOL_ICONS['unknown'];
   return (
-    <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-xs font-mono text-gray-300 flex-shrink-0" title={tool}>
+    <div className="w-8 h-8 rounded-lg bg-inset flex items-center justify-center text-xs font-mono text-fg-2 flex-shrink-0" title={tool}>
       {icon === 'terminal' && <TerminalSvg />}
       {icon === 'eye' && <EyeSvg />}
       {icon === 'pencil' && <PencilSvg />}
@@ -65,15 +65,15 @@ export default function ActivityFeedPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Activity Feed</h1>
+        <h1 className="text-xl font-bold text-fg">Activity Feed</h1>
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs text-gray-500">Live</span>
+          <span className="text-xs text-subtle">Live</span>
           {devices && devices.length > 1 && (
             <select
               value={deviceFilter}
               onChange={(e) => setDeviceFilter(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300"
+              className="bg-inset border border-edge rounded-lg px-3 py-1.5 text-sm text-fg-2"
             >
               <option value="">All devices</option>
               {devices.map((d) => (
@@ -85,22 +85,22 @@ export default function ActivityFeedPage() {
       </div>
 
       {isLoading ? (
-        <div className="text-gray-500 text-sm">Loading activity...</div>
+        <div className="text-subtle text-sm">Loading activity...</div>
       ) : !activity || activity.length === 0 ? (
-        <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-8 text-center">
-          <p className="text-gray-500 text-sm">No activity recorded yet.</p>
-          <p className="text-gray-600 text-xs mt-1">Hook events will appear here as they come in.</p>
+        <div className="rounded-lg border border-edge bg-surface p-8 text-center">
+          <p className="text-subtle text-sm">No activity recorded yet.</p>
+          <p className="text-dim text-xs mt-1">Hook events will appear here as they come in.</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-gray-800 bg-gray-900/50 overflow-hidden">
-          <div className="divide-y divide-gray-800/50">
+        <div className="rounded-lg border border-edge bg-surface overflow-hidden">
+          <div className="divide-y divide-edge/50">
             {activity.map((entry) => (
-              <div key={entry.id} className="px-4 py-3 flex items-center gap-3 hover:bg-gray-800/30 transition-colors">
+              <div key={entry.id} className="px-4 py-3 flex items-center gap-3 hover:bg-inset/30 transition-colors">
                 <ToolIcon tool={entry.tool_name} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white">{entry.tool_name}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded ${EVENT_COLORS[entry.event] || 'text-gray-400'} bg-gray-800`}>
+                    <span className="text-sm font-medium text-fg">{entry.tool_name}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${EVENT_COLORS[entry.event] || 'text-gray-400'} bg-inset`}>
                       {EVENT_LABELS[entry.event] || entry.event}
                     </span>
                   </div>
@@ -109,7 +109,7 @@ export default function ActivityFeedPage() {
                   {entry.xp_earned > 0 && (
                     <span className="text-xs font-medium text-amber-400">+{entry.xp_earned} XP</span>
                   )}
-                  <span className="text-xs text-gray-600 font-mono w-20 text-right">
+                  <span className="text-xs text-dim font-mono w-20 text-right">
                     {formatTime(entry.created_at)}
                   </span>
                 </div>

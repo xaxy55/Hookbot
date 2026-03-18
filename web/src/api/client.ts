@@ -117,6 +117,39 @@ export const updateDeviceConfig = (id: string, data: Partial<DeviceConfig>) =>
 export const pushConfig = (id: string) =>
   request<{ ok: boolean }>(`/devices/${id}/config/push`, { method: 'POST' });
 
+// Config export/import
+export interface ConfigExportData {
+  metadata: { export_date: string; firmware_version: string | null };
+  device_info: {
+    name: string;
+    hostname: string;
+    purpose: string | null;
+    personality: string | null;
+    device_type: string | null;
+  };
+  device_config: DeviceConfig;
+  servo_config: Record<string, unknown> | null;
+  sensor_configs: SensorChannelConfig[];
+  automation_rules: {
+    name: string;
+    enabled: boolean;
+    trigger_type: string;
+    trigger_config: Record<string, unknown>;
+    action_type: string;
+    action_config: Record<string, unknown>;
+    cooldown_secs: number;
+  }[];
+}
+
+export const exportDeviceConfig = (id: string) =>
+  request<ConfigExportData>(`/devices/${id}/config/export`);
+
+export const importDeviceConfig = (id: string, data: ConfigExportData) =>
+  request<{ ok: boolean; imported: Record<string, unknown> }>(`/devices/${id}/config/import`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
 // Discovery
 export const discoverDevices = () => request<DiscoveredDevice[]>('/discovery');
 

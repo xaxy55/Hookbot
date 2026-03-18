@@ -25,18 +25,18 @@ export default function DeviceCard({ device }: { device: DeviceWithStatus }) {
   return (
     <Link
       to={`/devices/${device.id}`}
-      className="block rounded-lg border border-gray-800 bg-gray-900/50 p-4 hover:border-gray-700 hover:bg-gray-900 transition-all"
+      className="block rounded-lg border border-edge bg-surface p-4 hover:border-edge hover:bg-raised transition-all"
     >
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="font-semibold text-white">{device.name}</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{device.hostname}.local</p>
+          <h3 className="font-semibold text-fg">{device.name}</h3>
+          <p className="text-xs text-subtle mt-0.5">{device.hostname}.local</p>
         </div>
-        <div className={`w-2 h-2 rounded-full mt-1 ${device.online ? 'bg-green-500' : 'bg-gray-600'}`} />
+        <div className={`w-2 h-2 rounded-full mt-1 ${device.online ? 'bg-green-500' : 'bg-dim'}`} />
       </div>
 
       {device.purpose && (
-        <p className="text-xs text-gray-400 mt-2">{device.purpose}</p>
+        <p className="text-xs text-muted mt-2">{device.purpose}</p>
       )}
 
       <div className="mt-3 flex items-center justify-between">
@@ -49,13 +49,13 @@ export default function DeviceCard({ device }: { device: DeviceWithStatus }) {
                   v{fwVersion}
                 </span>
               )}
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-dim">
                 {formatUptime(device.latest_status.uptime_ms)}
               </span>
             </div>
           </>
         ) : (
-          <span className="text-xs text-gray-600">No status</span>
+          <span className="text-xs text-dim">No status</span>
         )}
       </div>
     </Link>

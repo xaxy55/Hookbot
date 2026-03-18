@@ -2,6 +2,7 @@
 #include "config.h"
 #include "servo.h"
 #include "sensors.h"
+#include "sound.h"
 #include <WiFi.h>
 #include <WiFiMulti.h>
 #include <ESPmDNS.h>
@@ -572,6 +573,61 @@ void init(std::function<void(AvatarState)> onStateChange) {
         }
     );
     server.addHandler(xpHandler);
+
+    // POST /sounds - set custom sound pack melodies
+    AsyncCallbackJsonWebHandler* soundsHandler = new AsyncCallbackJsonWebHandler(
+        "/sounds",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            const char* pack = body["pack"] | "default";
+            Serial.printf("[Server] Sound pack: %s\n", pack);
+
+            if (String(pack) == "default") {
+                // Disable custom melodies, revert to hardcoded
+                Sound::setCustomMelodies(false);
+            } else {
+                // Enable custom melodies and parse them
+                Sound::setCustomMelodies(true);
+
+                if (!body["melodies"].isNull() && body["melodies"].is<JsonObject>()) {
+                    JsonObject melodies = body["melodies"];
+                    const char* stateNames[] = {"0", "1", "2", "3", "4", "5"};
+                    for (int i = 0; i < 6; i++) {
+                        if (!melodies[stateNames[i]].isNull()) {
+                            JsonArray notes = melodies[stateNames[i]];
+                            Melody m = {};
+                            for (size_t n = 0; n < notes.size() && n < MAX_MELODY_NOTES; n++) {
+                                JsonObject note = notes[n];
+                                m.freqs[n] = note["freq"] | 0;
+                                m.durations[n] = note["dur"] | 0;
+                                m.count++;
+                            }
+                            Sound::setMelody(i, m);
+                        }
+                    }
+                }
+            }
+
+            // Save pack name to NVS
+            {
+                Preferences packPrefs;
+                packPrefs.begin("sndpack", false);
+                packPrefs.putString("name", pack);
+                packPrefs.end();
+            }
+            Sound::saveMelodiesToNVS();
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["pack"] = pack;
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(soundsHandler);
 
     // GET /notifications - read current notification state
     server.on("/notifications", HTTP_GET, [](AsyncWebServerRequest* req) {

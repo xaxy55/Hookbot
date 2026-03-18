@@ -87,6 +87,13 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 0 0 3px color-mix(in oklch, var(--c-brand) 15%, transparent);
 }
 
+/* ── OTA progress bar indeterminate animation ─────── */
+@keyframes ota-indeterminate {
+  0%   { transform: translateX(-100%); width: 40%; }
+  50%  { transform: translateX(60%);   width: 60%; }
+  100% { transform: translateX(200%);  width: 40%; }
+}
+
 /* ── Select styling ────────────────────────────────── */
 select {
   appearance: none;

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDevice, getDeviceConfig, getDeviceHistory, sendState, sendTasks, updateDevice, updateDeviceConfig, pushConfig, getOtaJobs, getFirmware, getServos, setServoAngle, restServos, configureServos, getSensors, updateSensors, getRules, createRule, updateRule, deleteRule } from '../api/client';
+import { getDevice, getDeviceConfig, getDeviceHistory, sendState, sendTasks, updateDevice, updateDeviceConfig, pushConfig, getOtaJobs, getFirmware, getServos, setServoAngle, restServos, configureServos, getSensors, updateSensors, getRules, createRule, updateRule, deleteRule, exportDeviceConfig, importDeviceConfig } from '../api/client';
+import type { ConfigExportData } from '../api/client';
 import type { ServoChannel, SensorChannelConfig } from '../api/client';
 import StateIndicator from '../components/StateIndicator';
 import type { AvatarState } from '../types';
@@ -35,6 +36,8 @@ export default function DeviceDetail() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>('status');
+  const [configToast, setConfigToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: device } = useQuery({
     queryKey: ['device', id],
@@ -69,6 +72,41 @@ export default function DeviceDetail() {
   const stateMut = useMutation({
     mutationFn: (state: string) => sendState(id!, state),
   });
+
+  const handleExportConfig = async () => {
+    try {
+      const data = await exportDeviceConfig(id!);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${data.device_info.name.replace(/\s+/g, '-').toLowerCase()}-config.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setConfigToast({ type: 'success', message: 'Config exported successfully' });
+      setTimeout(() => setConfigToast(null), 3000);
+    } catch (e: unknown) {
+      setConfigToast({ type: 'error', message: `Export failed: ${e instanceof Error ? e.message : 'Unknown error'}` });
+      setTimeout(() => setConfigToast(null), 4000);
+    }
+  };
+
+  const handleImportConfig = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data: ConfigExportData = JSON.parse(text);
+      await importDeviceConfig(id!, data);
+      qc.invalidateQueries({ queryKey: ['config', id] });
+      qc.invalidateQueries({ queryKey: ['device', id] });
+      setConfigToast({ type: 'success', message: 'Config imported successfully' });
+      setTimeout(() => setConfigToast(null), 3000);
+    } catch (e: unknown) {
+      setConfigToast({ type: 'error', message: `Import failed: ${e instanceof Error ? e.message : 'Unknown error'}` });
+      setTimeout(() => setConfigToast(null), 4000);
+    }
+  };
 
   if (!device) return <p className="text-subtle">Loading...</p>;
 
@@ -108,11 +146,41 @@ export default function DeviceDetail() {
               fw v{currentFirmware.version}
             </span>
           )}
+          <button
+            onClick={handleExportConfig}
+            className="px-3 py-1 rounded text-xs bg-surface border border-edge text-fg hover:bg-inset transition-colors"
+          >
+            Export Config
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3 py-1 rounded text-xs bg-surface border border-edge text-fg hover:bg-inset transition-colors"
+          >
+            Import Config
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImportConfig(file);
+              e.target.value = '';
+            }}
+          />
           <div className={`px-3 py-1 rounded-full text-xs ${device.online ? 'bg-green-900/50 text-green-400' : 'bg-inset text-subtle'}`}>
             {device.online ? 'Online' : 'Offline'}
           </div>
         </div>
       </div>
+
+      {/* Config toast */}
+      {configToast && (
+        <div className={`px-4 py-2 rounded text-sm ${configToast.type === 'success' ? 'bg-green-900/50 text-green-400 border border-green-500/20' : 'bg-red-900/50 text-red-400 border border-red-500/20'}`}>
+          {configToast.message}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-edge pb-px">
@@ -304,9 +372,16 @@ function IdentityTab({ deviceId, device, onSave }: {
 
 // --- Hardware Tab ---
 
+const SOUND_PACKS: { value: string; label: string; description: string }[] = [
+  { value: 'default', label: 'Default (CEO)', description: 'Ominous power hums and triumphant fanfares' },
+  { value: 'retro', label: 'Retro (8-bit)', description: 'Classic game-style bleeps and coin sounds' },
+  { value: 'minimal', label: 'Minimal', description: 'Subtle clicks and quiet chimes' },
+  { value: 'musical', label: 'Musical', description: 'Musical phrases and chord progressions' },
+];
+
 function HardwareTab({ deviceId, config, onSave }: {
   deviceId: string;
-  config: { led_brightness: number; sound_enabled: boolean; sound_volume: number; custom_data?: Record<string, unknown> | null };
+  config: { led_brightness: number; sound_enabled: boolean; sound_volume: number; sound_pack?: string; custom_data?: Record<string, unknown> | null };
   onSave: () => void;
 }) {
   const hw = (config.custom_data as Record<string, unknown>) || {};
@@ -319,10 +394,12 @@ function HardwareTab({ deviceId, config, onSave }: {
   const [screenH, setScreenH] = useState(String(hw.screen_height ?? 64));
   const [displayEnabled, setDisplayEnabled] = useState(hw.display_enabled !== false);
   const [soundEnabled, setSoundEnabled] = useState(config.sound_enabled);
+  const [soundPack, setSoundPack] = useState(config.sound_pack || 'default');
 
   const update = useMutation({
     mutationFn: () => updateDeviceConfig(deviceId, {
       sound_enabled: soundEnabled,
+      sound_pack: soundPack,
       custom_data: {
         ...hw,
         led_pin: Number(ledPin),
@@ -370,6 +447,22 @@ function HardwareTab({ deviceId, config, onSave }: {
       <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
         <h2 className="text-sm font-semibold text-fg-2">Audio</h2>
         <Toggle label="Sound Enabled" value={soundEnabled} onChange={setSoundEnabled} />
+
+        <div>
+          <label className="block text-xs text-subtle mb-1.5">Sound Pack</label>
+          <select
+            value={soundPack}
+            onChange={e => setSoundPack(e.target.value)}
+            className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg"
+          >
+            {SOUND_PACKS.map(p => (
+              <option key={p.value} value={p.value}>{p.label}</option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-[11px] text-dim">
+            {SOUND_PACKS.find(p => p.value === soundPack)?.description}
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

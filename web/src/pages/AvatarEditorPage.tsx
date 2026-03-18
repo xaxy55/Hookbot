@@ -204,12 +204,12 @@ export default function AvatarEditorPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Avatar Editor</h1>
+        <h1 className="text-xl font-bold text-fg">Avatar Editor</h1>
         <div className="flex items-center gap-2">
           <select
             value={selectedDevice}
             onChange={e => setSelectedDevice(e.target.value)}
-            className="px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-md text-white"
+            className="px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
           >
             <option value="">Select device...</option>
             {devices?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -238,15 +238,15 @@ export default function AvatarEditorPage() {
         {/* Left: Preview + Accessories */}
         <div className="space-y-4">
           {/* Canvas */}
-          <div className="rounded-xl border border-gray-800 bg-black p-6 flex flex-col items-center">
+          <div className="rounded-xl border border-edge bg-black p-6 flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-3">
-              <span className="text-[10px] text-gray-600 font-mono uppercase tracking-wider">128 x 64 OLED Preview (2x)</span>
+              <span className="text-[10px] text-dim font-mono uppercase tracking-wider">128 x 64 OLED Preview (2x)</span>
               <button
                 onClick={() => { setAnimating(!animating); timeRef.current = 0; }}
                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
                   animating
                     ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    : 'bg-gray-800 text-gray-400 border border-gray-700 hover:border-gray-500'
+                    : 'bg-inset text-muted border border-edge hover:border-edge'
                 }`}
               >
                 {animating ? 'Stop' : 'Animate'}
@@ -256,19 +256,19 @@ export default function AvatarEditorPage() {
               ref={canvasRef}
               width={384}
               height={192}
-              className="rounded-lg border border-gray-800 cursor-crosshair"
+              className="rounded-lg border border-edge cursor-crosshair"
               style={{ imageRendering: 'pixelated', width: '100%', maxWidth: 512 }}
               onMouseDown={e => { setDragging(true); handleCanvasInteraction(e); }}
               onMouseMove={handleCanvasInteraction}
               onMouseUp={() => setDragging(false)}
               onMouseLeave={() => setDragging(false)}
             />
-            <p className="text-[10px] text-gray-700 mt-2">Click and drag to move eyes</p>
+            <p className="text-[10px] text-dim mt-2">Click and drag to move eyes</p>
           </div>
 
           {/* State Presets */}
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4">
-            <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wider">State Presets</p>
+          <div className="rounded-lg border border-edge bg-surface p-4">
+            <p className="text-xs text-subtle mb-3 font-medium uppercase tracking-wider">State Presets</p>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
               {STATES.map(s => (
                 <button
@@ -277,7 +277,7 @@ export default function AvatarEditorPage() {
                   className={`px-3 py-2.5 text-xs rounded-lg capitalize transition-all ${
                     activeState === s
                       ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-lg shadow-red-500/10'
-                      : 'bg-gray-800/80 text-gray-400 border border-gray-700 hover:border-gray-500 hover:text-white'
+                      : 'bg-inset/80 text-muted border border-edge hover:border-edge hover:text-fg'
                   }`}
                 >
                   {s}
@@ -287,8 +287,8 @@ export default function AvatarEditorPage() {
           </div>
 
           {/* Accessories */}
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4">
-            <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wider">Accessories</p>
+          <div className="rounded-lg border border-edge bg-surface p-4">
+            <p className="text-xs text-subtle mb-3 font-medium uppercase tracking-wider">Accessories</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {ACCESSORY_LIST.map(a => (
                 <button
@@ -297,7 +297,7 @@ export default function AvatarEditorPage() {
                   className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all ${
                     accessories[a.key]
                       ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                      : 'bg-gray-800/80 text-gray-500 border border-gray-700 hover:border-gray-500'
+                      : 'bg-inset/80 text-subtle border border-edge hover:border-edge'
                   }`}
                 >
                   <span className="text-lg">{a.emoji}</span>
@@ -308,11 +308,11 @@ export default function AvatarEditorPage() {
           </div>
 
           {/* Export JSON */}
-          <details className="rounded-lg border border-gray-800 bg-gray-900/50">
-            <summary className="px-4 py-3 text-xs text-gray-500 cursor-pointer hover:text-gray-300 font-medium uppercase tracking-wider">
+          <details className="rounded-lg border border-edge bg-surface">
+            <summary className="px-4 py-3 text-xs text-subtle cursor-pointer hover:text-fg-2 font-medium uppercase tracking-wider">
               Export JSON
             </summary>
-            <pre className="px-4 pb-4 text-[11px] text-gray-400 font-mono overflow-x-auto">
+            <pre className="px-4 pb-4 text-[11px] text-muted font-mono overflow-x-auto">
 {JSON.stringify({ params, accessories, state: activeState }, null, 2)}
             </pre>
           </details>
@@ -321,13 +321,13 @@ export default function AvatarEditorPage() {
         {/* Right: Sliders */}
         <div className="space-y-4">
           {SLIDER_GROUPS.map(group => (
-            <div key={group.label} className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-3">
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{group.label}</p>
+            <div key={group.label} className="rounded-lg border border-edge bg-surface p-4 space-y-3">
+              <p className="text-xs text-subtle font-medium uppercase tracking-wider">{group.label}</p>
               {group.items.map(s => (
                 <div key={s.key}>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs text-gray-400">{s.label}</label>
-                    <span className="text-[11px] font-mono text-gray-600 tabular-nums">
+                    <label className="text-xs text-muted">{s.label}</label>
+                    <span className="text-[11px] font-mono text-dim tabular-nums">
                       {params[s.key].toFixed(2)}
                     </span>
                   </div>
@@ -336,7 +336,7 @@ export default function AvatarEditorPage() {
                     min={s.min} max={s.max} step={s.step}
                     value={params[s.key]}
                     onChange={e => updateParam(s.key, parseFloat(e.target.value))}
-                    className="w-full h-1 bg-gray-700 rounded-full appearance-none cursor-pointer
+                    className="w-full h-1 bg-raised rounded-full appearance-none cursor-pointer
                       [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
                       [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-red-500 [&::-webkit-slider-thumb]:cursor-pointer
                       [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(239,68,68,0.4)]"
@@ -348,7 +348,7 @@ export default function AvatarEditorPage() {
 
           <button
             onClick={() => { setParams(DEFAULT_PARAMS); setActiveState('idle'); }}
-            className="w-full px-3 py-2.5 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 transition-colors border border-gray-700"
+            className="w-full px-3 py-2.5 text-xs bg-inset hover:bg-raised rounded-lg text-muted transition-colors border border-edge"
           >
             Reset All
           </button>
