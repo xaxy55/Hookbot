@@ -567,6 +567,10 @@ pub async fn export_config(
     })?
     .collect::<Result<Vec<_>, _>>()?;
 
+    // Drop prepared statements before dropping conn
+    drop(sensor_stmt);
+    drop(rules_stmt);
+
     // Try to get servo config from live device
     let servo_config = {
         let ip = query_device_ip(&conn, &id).ok();
