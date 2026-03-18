@@ -8,28 +8,54 @@
 
 /* Begin PBXBuildFile section */
 		059E26B7DE33F1D35D4E3D76 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */; };
+		073508FD8742148770DFAE1F /* HookbotWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF8AD9DCE1B38800DA1ACAA /* HookbotWidget.swift */; };
 		07BD3F555688C63668D7FA3F /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 364282E1BF9F1960110F6626 /* WatchBridge.swift */; };
+		0DDF6F16A3D3FC3189659C69 /* DESKBOTUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046CFAEC7691D754A8190D98 /* DESKBOTUITests.swift */; };
 		1F911629F6DC6BB9ED760626 /* WatchMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5F1894C33647E074AD0A11 /* WatchMainView.swift */; };
+		280859937075CD2397A0B7C3 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A79020E122E87418F3C8311 /* HapticManager.swift */; };
 		2F7D8DA5F1E23D87D838B732 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68548CC1A6546E161E55B81D /* SoundManager.swift */; };
 		399EF3D57059F96999216474 /* DeskBotWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */; };
 		3F3594DB7EFB6F264533284F /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151A6E66A879D9F121E3EB91 /* AvatarView.swift */; };
 		4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */; };
+		6302DCD81C9A7632F6A3FA91 /* ComplicationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CC860A6D555386CA4917BE /* ComplicationProvider.swift */; };
 		696CDAF55768C0421919F035 /* AvatarTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */; };
 		69BE7ECCBB8C64D610ED5831 /* DeskBotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ADD593CC146528A0CF8D232 /* DeskBotApp.swift */; };
 		70F30BBAE5FA7E4DAE16FE57 /* AvatarEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958E05B4490FBB82AF160800 /* AvatarEngine.swift */; };
+		74687949565D9BF5D3055476 /* WatchTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8C1FD09F4BC65018E7A445D /* WatchTabView.swift */; };
 		795F9096463D614E1D8D278E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */; };
+		8387681CD841BE19CE263709 /* WatchActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91DC5E515C2FA269780D10B7 /* WatchActivityView.swift */; };
 		83D3838B6D8A2585F9BBAD6E /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007B5E84C28B4F2FAD647E7F /* HapticManager.swift */; };
+		852612681EE0E86FC8482672 /* WatchSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B2A699DF05CCAFBC594551 /* WatchSettingsView.swift */; };
+		8DACF8B3B12766B9175672C9 /* HookbotWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 29D23CFC76E3541E35DD929B /* HookbotWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9E32267AD83F31502A1ABB68 /* WatchAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E4D4006F271E0691E8E892 /* WatchAvatarView.swift */; };
+		A6EC1799C2B9EAA765627ABD /* DESKBOTUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4674801F306764810C52624C /* DESKBOTUITestsLaunchTests.swift */; };
 		B217C2B121308687C0468A8A /* AvatarTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */; };
 		B74A9C85770C5DDF74DF7DB7 /* AvatarEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958E05B4490FBB82AF160800 /* AvatarEngine.swift */; };
 		C839B809A95F20092F26DF60 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2C3CE9DB464C7E911F7F18C0 /* Assets.xcassets */; };
 		C935543D379DAE0399A03D44 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64E4ED6FDD298958EA1DB744 /* NetworkService.swift */; };
 		E121B6972428789C62702CCD /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FEFC46D0D53977D14F910B1 /* MainView.swift */; };
+		E84900E3375350C53FEB89E2 /* WatchStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A951A9849BB551A328D2B3FD /* WatchStatsView.swift */; };
+		EF78118C28652960BBA837F7 /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */; };
 		F156A3AF2CC4A7BA2413911A /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
+		F4F0D14584599DDB57D66845 /* WatchNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B84137B7C09B2C196A0D2896 /* WatchNetworkService.swift */; };
 		FF2350D11B46FB9A7B22EB30 /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		2201BA9A9AC2115380F845A2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E6617562021CCDEA0A23FB31;
+			remoteInfo = HookbotWidgetExtension;
+		};
+		3027DCD54A14D1B61C7818C3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3FB113BB92292451E5D9FF81;
+			remoteInfo = Hookbot;
+		};
 		41E15DD8903181203F222BC8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
@@ -39,12 +65,30 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		FDB6BE7160543AD1B6309584 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8DACF8B3B12766B9175672C9 /* HookbotWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		007B5E84C28B4F2FAD647E7F /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		03397893315BCC3E84C561BE /* AvatarRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarRenderer.swift; sourceTree = "<group>"; };
+		046CFAEC7691D754A8190D98 /* DESKBOTUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DESKBOTUITests.swift; sourceTree = "<group>"; };
 		151A6E66A879D9F121E3EB91 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
+		1A79020E122E87418F3C8311 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		29D23CFC76E3541E35DD929B /* HookbotWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HookbotWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2C3CE9DB464C7E911F7F18C0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		364282E1BF9F1960110F6626 /* WatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridge.swift; sourceTree = "<group>"; };
+		4674801F306764810C52624C /* DESKBOTUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DESKBOTUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		54D7C47D418E782FC63F6973 /* Hookbot.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Hookbot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		64E4ED6FDD298958EA1DB744 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		68548CC1A6546E161E55B81D /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
@@ -54,11 +98,20 @@
 		7ADD593CC146528A0CF8D232 /* DeskBotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotApp.swift; sourceTree = "<group>"; };
 		7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarTypes.swift; sourceTree = "<group>"; };
 		7FF48B21F485D574BFEE833B /* HookbotWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HookbotWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		84B2A699DF05CCAFBC594551 /* WatchSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSettingsView.swift; sourceTree = "<group>"; };
 		84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotWatchApp.swift; sourceTree = "<group>"; };
+		90F89258978F3788C22FAB43 /* HookbotUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HookbotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		91DC5E515C2FA269780D10B7 /* WatchActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchActivityView.swift; sourceTree = "<group>"; };
 		958E05B4490FBB82AF160800 /* AvatarEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEngine.swift; sourceTree = "<group>"; };
 		9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A951A9849BB551A328D2B3FD /* WatchStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchStatsView.swift; sourceTree = "<group>"; };
+		B84137B7C09B2C196A0D2896 /* WatchNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchNetworkService.swift; sourceTree = "<group>"; };
+		C1CC860A6D555386CA4917BE /* ComplicationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationProvider.swift; sourceTree = "<group>"; };
+		CAF8AD9DCE1B38800DA1ACAA /* HookbotWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookbotWidget.swift; sourceTree = "<group>"; };
+		D8C1FD09F4BC65018E7A445D /* WatchTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTabView.swift; sourceTree = "<group>"; };
 		EB5F1894C33647E074AD0A11 /* WatchMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMainView.swift; sourceTree = "<group>"; };
+		EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -71,6 +124,15 @@
 				364282E1BF9F1960110F6626 /* WatchBridge.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		30D135FC11E6BDC1652F5235 /* Complications */ = {
+			isa = PBXGroup;
+			children = (
+				C1CC860A6D555386CA4917BE /* ComplicationProvider.swift */,
+				CAF8AD9DCE1B38800DA1ACAA /* HookbotWidget.swift */,
+			);
+			path = Complications;
 			sourceTree = "<group>";
 		};
 		3C05CF566F178449FBE7D2CF /* Views */ = {
@@ -89,16 +151,31 @@
 			children = (
 				9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */,
 				D7F650FA895FE33B5586EFA5 /* App */,
+				30D135FC11E6BDC1652F5235 /* Complications */,
+				4E007DF837B96623D1081CB0 /* Services */,
 				73890AFDE0437EFEA421E1B8 /* Views */,
 			);
 			path = HookbotWatch;
 			sourceTree = "<group>";
 		};
+		4E007DF837B96623D1081CB0 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				1A79020E122E87418F3C8311 /* HapticManager.swift */,
+				B84137B7C09B2C196A0D2896 /* WatchNetworkService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		73890AFDE0437EFEA421E1B8 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				91DC5E515C2FA269780D10B7 /* WatchActivityView.swift */,
 				77E4D4006F271E0691E8E892 /* WatchAvatarView.swift */,
 				EB5F1894C33647E074AD0A11 /* WatchMainView.swift */,
+				84B2A699DF05CCAFBC594551 /* WatchSettingsView.swift */,
+				A951A9849BB551A328D2B3FD /* WatchStatsView.swift */,
+				D8C1FD09F4BC65018E7A445D /* WatchTabView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -107,6 +184,7 @@
 			isa = PBXGroup;
 			children = (
 				FE0BF9ABE084FD708B082190 /* Hookbot */,
+				F1C17BEEFCA8866F48D9D3CB /* HookbotUITests */,
 				3EE5533E5E90E9E02740FB5E /* HookbotWatch */,
 				9CBF57E722CAA136A89B9F81 /* Shared */,
 				91D9E95A31162E3E6CA43DFA /* Products */,
@@ -125,7 +203,9 @@
 			isa = PBXGroup;
 			children = (
 				54D7C47D418E782FC63F6973 /* Hookbot.app */,
+				90F89258978F3788C22FAB43 /* HookbotUITests.xctest */,
 				7FF48B21F485D574BFEE833B /* HookbotWatch.app */,
+				29D23CFC76E3541E35DD929B /* HookbotWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -148,6 +228,16 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		F1C17BEEFCA8866F48D9D3CB /* HookbotUITests */ = {
+			isa = PBXGroup;
+			children = (
+				046CFAEC7691D754A8190D98 /* DESKBOTUITests.swift */,
+				4674801F306764810C52624C /* DESKBOTUITestsLaunchTests.swift */,
+				EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */,
+			);
+			path = HookbotUITests;
+			sourceTree = "<group>";
+		};
 		FE0BF9ABE084FD708B082190 /* Hookbot */ = {
 			isa = PBXGroup;
 			children = (
@@ -168,11 +258,13 @@
 			buildPhases = (
 				83B71C0FD82430537B2DB014 /* Sources */,
 				308B800743C11585009C12D4 /* Resources */,
+				FDB6BE7160543AD1B6309584 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				1ED986F80F81E779AF02F3DB /* PBXTargetDependency */,
+				95E3DDA13224FCB99162B0E5 /* PBXTargetDependency */,
 			);
 			name = HookbotWatch;
 			packageProductDependencies = (
@@ -199,6 +291,41 @@
 			productReference = 54D7C47D418E782FC63F6973 /* Hookbot.app */;
 			productType = "com.apple.product-type.application";
 		};
+		D8A85BC31B8015DAA6324798 /* HookbotUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3709859A5A0DB222DE13B590 /* Build configuration list for PBXNativeTarget "HookbotUITests" */;
+			buildPhases = (
+				5BCE1B924A407AE78F5BEEA7 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8C01E282C7DAC0F915E1A346 /* PBXTargetDependency */,
+			);
+			name = HookbotUITests;
+			packageProductDependencies = (
+			);
+			productName = HookbotUITests;
+			productReference = 90F89258978F3788C22FAB43 /* HookbotUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		E6617562021CCDEA0A23FB31 /* HookbotWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7EA51164019FBFFA97D9B990 /* Build configuration list for PBXNativeTarget "HookbotWidgetExtension" */;
+			buildPhases = (
+				B353911C00778014FFB880AC /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HookbotWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = HookbotWidgetExtension;
+			productReference = 29D23CFC76E3541E35DD929B /* HookbotWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -213,6 +340,15 @@
 						ProvisioningStyle = Automatic;
 					};
 					3FB113BB92292451E5D9FF81 = {
+						DevelopmentTeam = 56YDP2JJ35;
+						ProvisioningStyle = Automatic;
+					};
+					D8A85BC31B8015DAA6324798 = {
+						DevelopmentTeam = 56YDP2JJ35;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 3FB113BB92292451E5D9FF81;
+					};
+					E6617562021CCDEA0A23FB31 = {
 						DevelopmentTeam = 56YDP2JJ35;
 						ProvisioningStyle = Automatic;
 					};
@@ -233,7 +369,9 @@
 			projectRoot = "";
 			targets = (
 				3FB113BB92292451E5D9FF81 /* Hookbot */,
+				D8A85BC31B8015DAA6324798 /* HookbotUITests */,
 				00837AA4718731B110629A8A /* HookbotWatch */,
+				E6617562021CCDEA0A23FB31 /* HookbotWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -277,6 +415,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5BCE1B924A407AE78F5BEEA7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0DDF6F16A3D3FC3189659C69 /* DESKBOTUITests.swift in Sources */,
+				A6EC1799C2B9EAA765627ABD /* DESKBOTUITestsLaunchTests.swift in Sources */,
+				EF78118C28652960BBA837F7 /* ScreenshotTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		83B71C0FD82430537B2DB014 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -285,8 +433,23 @@
 				FF2350D11B46FB9A7B22EB30 /* AvatarRenderer.swift in Sources */,
 				696CDAF55768C0421919F035 /* AvatarTypes.swift in Sources */,
 				399EF3D57059F96999216474 /* DeskBotWatchApp.swift in Sources */,
+				280859937075CD2397A0B7C3 /* HapticManager.swift in Sources */,
+				8387681CD841BE19CE263709 /* WatchActivityView.swift in Sources */,
 				9E32267AD83F31502A1ABB68 /* WatchAvatarView.swift in Sources */,
 				1F911629F6DC6BB9ED760626 /* WatchMainView.swift in Sources */,
+				F4F0D14584599DDB57D66845 /* WatchNetworkService.swift in Sources */,
+				852612681EE0E86FC8482672 /* WatchSettingsView.swift in Sources */,
+				E84900E3375350C53FEB89E2 /* WatchStatsView.swift in Sources */,
+				74687949565D9BF5D3055476 /* WatchTabView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B353911C00778014FFB880AC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6302DCD81C9A7632F6A3FA91 /* ComplicationProvider.swift in Sources */,
+				073508FD8742148770DFAE1F /* HookbotWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,9 +461,35 @@
 			target = 3FB113BB92292451E5D9FF81 /* Hookbot */;
 			targetProxy = 41E15DD8903181203F222BC8 /* PBXContainerItemProxy */;
 		};
+		8C01E282C7DAC0F915E1A346 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3FB113BB92292451E5D9FF81 /* Hookbot */;
+			targetProxy = 3027DCD54A14D1B61C7818C3 /* PBXContainerItemProxy */;
+		};
+		95E3DDA13224FCB99162B0E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E6617562021CCDEA0A23FB31 /* HookbotWidgetExtension */;
+			targetProxy = 2201BA9A9AC2115380F845A2 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		0A520D25C5621F9E8963EEDD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.watchkitapp.widget";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
 		10C5A22FAC67523BF77203E0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -358,6 +547,23 @@
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		70CC643911434A865C3048D1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.uitests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Hookbot;
 			};
 			name = Debug;
 		};
@@ -454,6 +660,23 @@
 			};
 			name = Release;
 		};
+		C176FA2AD7B6E74B7A68D476 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.uitests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Hookbot;
+			};
+			name = Release;
+		};
 		CC9289B03D5E901D8A5200B1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -512,6 +735,22 @@
 			};
 			name = Release;
 		};
+		DC4BE71C7C7E7E81DB961BC0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.watchkitapp.widget";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -524,11 +763,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		3709859A5A0DB222DE13B590 /* Build configuration list for PBXNativeTarget "HookbotUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				70CC643911434A865C3048D1 /* Debug */,
+				C176FA2AD7B6E74B7A68D476 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		6674E57AEF0675312652A33C /* Build configuration list for PBXProject "Hookbot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9B83070B64205AD36DC8F262 /* Debug */,
 				CC9289B03D5E901D8A5200B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7EA51164019FBFFA97D9B990 /* Build configuration list for PBXNativeTarget "HookbotWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DC4BE71C7C7E7E81DB961BC0 /* Debug */,
+				0A520D25C5621F9E8963EEDD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

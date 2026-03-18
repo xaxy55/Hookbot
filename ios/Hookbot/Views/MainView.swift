@@ -56,6 +56,7 @@ struct MainView: View {
                         Image(systemName: "gearshape")
                             .foregroundColor(.gray)
                     }
+                    .accessibilityIdentifier("settingsButton")
                 }
             }
             .sheet(isPresented: $showSettings) {

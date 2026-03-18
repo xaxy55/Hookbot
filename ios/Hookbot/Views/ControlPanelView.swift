@@ -37,6 +37,7 @@ struct ControlPanelView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("state_\(state.rawValue)")
             }
         }
         .padding(.horizontal)

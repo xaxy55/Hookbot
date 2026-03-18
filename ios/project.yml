@@ -54,6 +54,7 @@ targets:
       - path: HookbotWatch
         excludes:
           - "**/.DS_Store"
+          - "Complications/**"
       - path: Shared
         excludes:
           - "**/.DS_Store"
@@ -70,3 +71,35 @@ targets:
       - target: Hookbot
         embed: false
         link: false
+      - target: HookbotWidgetExtension
+
+  HookbotWidgetExtension:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - path: HookbotWatch/Complications
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot.watchkitapp.widget
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_CFBundleDisplayName: "Hookbot"
+        INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.0.0
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+
+  HookbotUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: HookbotUITests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: Hookbot
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot.uitests
