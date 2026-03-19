@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail
 
 # Hookbot TestFlight Build & Upload Script
 # Archives and uploads iOS, Mac Catalyst, and watchOS to TestFlight.
@@ -13,6 +13,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
+FAILURES=0
 
 # Auto-increment build number using git commit count
 BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo "1")
@@ -31,106 +32,80 @@ else
     exit 1
 fi
 
-upload() {
-    local file="$1"
-    local type="$2"
+archive_export_upload() {
+    local label="$1"
+    local scheme="$2"
+    local destination="$3"
+    local archive_path="$4"
+    local export_path="$5"
+    local artifact="$6"
+    local upload_type="$7"
+
+    echo ""
+    echo "=== $label ==="
+
+    echo "→ Archiving $label..."
+    if ! xcodebuild archive \
+        -project Hookbot.xcodeproj \
+        -scheme "$scheme" \
+        -destination "$destination" \
+        -archivePath "$archive_path" \
+        -allowProvisioningUpdates \
+        CODE_SIGN_STYLE=Automatic \
+        CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+        | tail -1; then
+        echo "  ✗ Archive failed for $label"
+        FAILURES=$((FAILURES + 1))
+        return 1
+    fi
+
+    echo "→ Exporting $label for TestFlight..."
+    if ! xcodebuild -exportArchive \
+        -archivePath "$archive_path" \
+        -exportOptionsPlist "$PROJECT_DIR/ExportOptions.plist" \
+        -exportPath "$export_path" \
+        -allowProvisioningUpdates \
+        | tail -1; then
+        echo "  ✗ Export failed for $label"
+        FAILURES=$((FAILURES + 1))
+        return 1
+    fi
+
+    echo "→ Uploading $label to TestFlight..."
     xcrun altool --upload-app \
-        -f "$file" \
-        -t "$type" \
+        -f "$export_path/$artifact" \
+        -t "$upload_type" \
         --apiKey "${APP_STORE_API_KEY:-}" \
         --apiIssuer "${APP_STORE_API_ISSUER:-}" \
         2>/dev/null || {
         echo "  Auto-upload skipped. Upload manually via Xcode Organizer or Transporter."
     }
+
+    echo "  ✓ $label done"
 }
 
-# Step 2: Archive & upload iOS
-echo ""
-echo "=== iOS ==="
-IOS_ARCHIVE="$PROJECT_DIR/build/Hookbot-iOS.xcarchive"
-IOS_EXPORT="$PROJECT_DIR/build/export-ios"
+archive_export_upload "iOS" \
+    "Hookbot" "generic/platform=iOS" \
+    "$PROJECT_DIR/build/Hookbot-iOS.xcarchive" \
+    "$PROJECT_DIR/build/export-ios" \
+    "Hookbot.ipa" "ios"
 
-echo "→ Archiving iOS..."
-xcodebuild archive \
-    -project Hookbot.xcodeproj \
-    -scheme Hookbot \
-    -destination "generic/platform=iOS" \
-    -archivePath "$IOS_ARCHIVE" \
-    -allowProvisioningUpdates \
-    CODE_SIGN_STYLE=Automatic \
-    CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-    | tail -1
+archive_export_upload "Mac Catalyst" \
+    "Hookbot" "generic/platform=macOS,variant=Mac Catalyst" \
+    "$PROJECT_DIR/build/Hookbot-Mac.xcarchive" \
+    "$PROJECT_DIR/build/export-mac" \
+    "Hookbot.pkg" "macos"
 
-echo "→ Exporting iOS for TestFlight..."
-xcodebuild -exportArchive \
-    -archivePath "$IOS_ARCHIVE" \
-    -exportOptionsPlist "$PROJECT_DIR/ExportOptions.plist" \
-    -exportPath "$IOS_EXPORT" \
-    -allowProvisioningUpdates \
-    | tail -1
-
-echo "→ Uploading iOS to TestFlight..."
-upload "$IOS_EXPORT/Hookbot.ipa" ios
-
-# Step 3: Archive & upload Mac Catalyst
-echo ""
-echo "=== Mac Catalyst ==="
-MAC_ARCHIVE="$PROJECT_DIR/build/Hookbot-Mac.xcarchive"
-MAC_EXPORT="$PROJECT_DIR/build/export-mac"
-
-echo "→ Archiving Mac Catalyst..."
-xcodebuild archive \
-    -project Hookbot.xcodeproj \
-    -scheme Hookbot \
-    -destination "generic/platform=macOS,variant=Mac Catalyst" \
-    -archivePath "$MAC_ARCHIVE" \
-    -allowProvisioningUpdates \
-    CODE_SIGN_STYLE=Automatic \
-    CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-    | tail -1
-
-echo "→ Exporting Mac for TestFlight..."
-xcodebuild -exportArchive \
-    -archivePath "$MAC_ARCHIVE" \
-    -exportOptionsPlist "$PROJECT_DIR/ExportOptions.plist" \
-    -exportPath "$MAC_EXPORT" \
-    -allowProvisioningUpdates \
-    | tail -1
-
-echo "→ Uploading Mac to TestFlight..."
-upload "$MAC_EXPORT/Hookbot.pkg" macos
-
-# Step 4: Archive & upload watchOS
-echo ""
-echo "=== watchOS ==="
-WATCH_ARCHIVE="$PROJECT_DIR/build/Hookbot-watchOS.xcarchive"
-WATCH_EXPORT="$PROJECT_DIR/build/export-watchos"
-
-echo "→ Archiving watchOS..."
-xcodebuild archive \
-    -project Hookbot.xcodeproj \
-    -scheme HookbotWatch \
-    -destination "generic/platform=watchOS" \
-    -archivePath "$WATCH_ARCHIVE" \
-    -allowProvisioningUpdates \
-    CODE_SIGN_STYLE=Automatic \
-    CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-    | tail -1
-
-echo "→ Exporting watchOS for TestFlight..."
-xcodebuild -exportArchive \
-    -archivePath "$WATCH_ARCHIVE" \
-    -exportOptionsPlist "$PROJECT_DIR/ExportOptions.plist" \
-    -exportPath "$WATCH_EXPORT" \
-    -allowProvisioningUpdates \
-    | tail -1
-
-echo "→ Uploading watchOS to TestFlight..."
-upload "$WATCH_EXPORT/HookbotWatch.ipa" watchos
+archive_export_upload "watchOS" \
+    "HookbotWatch" "generic/platform=watchOS" \
+    "$PROJECT_DIR/build/Hookbot-watchOS.xcarchive" \
+    "$PROJECT_DIR/build/export-watchos" \
+    "HookbotWatch.ipa" "watchos"
 
 echo ""
-echo "=== Done ==="
-echo "Archives:"
-echo "  iOS:     $IOS_ARCHIVE"
-echo "  Mac:     $MAC_ARCHIVE"
-echo "  watchOS: $WATCH_ARCHIVE"
+if [ "$FAILURES" -gt 0 ]; then
+    echo "=== Done with $FAILURES failure(s) ==="
+    exit 1
+else
+    echo "=== All platforms uploaded successfully ==="
+fi

@@ -16,4 +16,6 @@ pub mod project_routes;
 pub mod sensors;
 pub mod settings;
 pub mod shared_assets;
+pub mod mood;
+pub mod pet;
 pub mod store;

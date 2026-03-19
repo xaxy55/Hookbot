@@ -19,7 +19,7 @@ void loadFromNVS() {
         memset(channels, 0, sizeof(channels));
         for (int i = 0; i < MAX_SENSOR_CHANNELS; i++) {
             channels[i].pin  = -1;
-            channels[i].type = SensorType::DISABLED;
+            channels[i].type = SensorType::None;
             channels[i].pollIntervalMs = 1000;
         }
     }
@@ -42,11 +42,11 @@ void init() {
     loadFromNVS();
     // Configure pins for enabled channels
     for (int i = 0; i < MAX_SENSOR_CHANNELS; i++) {
-        if (channels[i].type != SensorType::DISABLED && channels[i].pin >= 0) {
-            if (channels[i].type == SensorType::DIGITAL) {
+        if (channels[i].type != SensorType::None && channels[i].pin >= 0) {
+            if (channels[i].type == SensorType::Digital) {
                 pinMode(channels[i].pin, INPUT_PULLUP);
             }
-            // ANALOG pins don't need explicit pinMode on ESP32
+            // ANALOG and AMBIENT_LIGHT pins don't need explicit pinMode on ESP32
             Serial.printf("[Sensors] Ch%d: pin=%d type=%d label=%s\n",
                 i, channels[i].pin, (int)channels[i].type, channels[i].label);
         }
@@ -60,7 +60,7 @@ void update(uint32_t deltaMs) {
 
     for (int i = 0; i < MAX_SENSOR_CHANNELS; i++) {
         SensorChannel& ch = channels[i];
-        if (ch.type == SensorType::DISABLED || ch.pin < 0) continue;
+        if (ch.type == SensorType::None || ch.pin < 0) continue;
 
         // Check poll interval
         if (globalTime - ch.lastReadAt < ch.pollIntervalMs) continue;
@@ -68,7 +68,7 @@ void update(uint32_t deltaMs) {
 
         int16_t raw = 0;
 
-        if (ch.type == SensorType::DIGITAL) {
+        if (ch.type == SensorType::Digital) {
             raw = digitalRead(ch.pin);
 
             // Debounce: ignore changes within 50ms
@@ -110,7 +110,7 @@ void update(uint32_t deltaMs) {
                 Serial.printf("[Sensors] Ch%d triggered=%d\n", i, ch.triggered);
             }
         }
-        else if (ch.type == SensorType::ANALOG) {
+        else if (ch.type == SensorType::Analog) {
             raw = analogRead(ch.pin);
 
             // Threshold crossing detection
@@ -120,6 +120,10 @@ void update(uint32_t deltaMs) {
                 Serial.printf("[Sensors] Ch%d analog=%d threshold=%d triggered=%d\n",
                     i, raw, ch.threshold, ch.triggered);
             }
+        }
+        else if (ch.type == SensorType::AmbientLight) {
+            raw = analogRead(ch.pin);
+            // No threshold logic needed — value is consumed by Led auto-brightness
         }
 
         ch.lastValue = raw;
@@ -154,7 +158,7 @@ void configureChannel(uint8_t ch, int8_t pin, SensorType type,
     channels[ch].lastMotionAt = 0;
 
     // Configure pin
-    if (type == SensorType::DIGITAL && pin >= 0) {
+    if (type == SensorType::Digital && pin >= 0) {
         pinMode(pin, INPUT_PULLUP);
     }
 
@@ -169,7 +173,7 @@ bool isPresenceAway() {
     uint32_t latestMotion = 0;
     bool hasMotionSensor = false;
     for (int i = 0; i < MAX_SENSOR_CHANNELS; i++) {
-        if (channels[i].type == SensorType::DIGITAL && channels[i].pin >= 0) {
+        if (channels[i].type == SensorType::Digital && channels[i].pin >= 0) {
             hasMotionSensor = true;
             if (channels[i].lastMotionAt > latestMotion) {
                 latestMotion = channels[i].lastMotionAt;
@@ -186,6 +190,26 @@ uint32_t getPresenceTimeoutMs() {
 
 void setPresenceTimeoutMs(uint32_t ms) {
     presenceTimeoutMs = ms;
+}
+
+// ─── Ambient light ──────────────────────────────────────────────
+
+int getAmbientLightValue() {
+    for (int i = 0; i < MAX_SENSOR_CHANNELS; i++) {
+        if (channels[i].type == SensorType::AmbientLight && channels[i].pin >= 0) {
+            return channels[i].lastValue;
+        }
+    }
+    return -1; // no ambient light sensor configured
+}
+
+bool isAmbientLightConfigured() {
+    for (int i = 0; i < MAX_SENSOR_CHANNELS; i++) {
+        if (channels[i].type == SensorType::AmbientLight && channels[i].pin >= 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace Sensors

@@ -5,7 +5,7 @@
 
 // ─── WiFi Configuration ───────────────────────────────────────────
 // WiFi is provisioned via BLE at first boot. The device advertises as
-// "DeskBot-XXYY" and accepts credentials over Bluetooth.
+// "Hookbot-XXYY" and accepts credentials over Bluetooth.
 //
 // Optional: create firmware/src/secrets.h with compile-time credentials:
 //   #define WIFI_SSID "YourSSID"

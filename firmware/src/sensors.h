@@ -4,14 +4,15 @@
 #define MAX_SENSOR_CHANNELS 8
 
 enum class SensorType : uint8_t {
-    DISABLED = 0,
-    DIGITAL  = 1,
-    ANALOG   = 2,
+    None         = 0,
+    Digital      = 1,
+    Analog       = 2,
+    AmbientLight = 3,
 };
 
 struct SensorChannel {
     int8_t   pin            = -1;
-    SensorType type         = SensorType::DISABLED;
+    SensorType type         = SensorType::None;
     char     label[16]      = "";
     uint16_t pollIntervalMs = 1000;
     int16_t  threshold      = 0;
@@ -38,4 +39,6 @@ namespace Sensors {
     bool isPresenceAway();
     uint32_t getPresenceTimeoutMs();
     void setPresenceTimeoutMs(uint32_t ms);
+    int getAmbientLightValue();
+    bool isAmbientLightConfigured();
 }

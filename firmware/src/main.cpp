@@ -5,6 +5,7 @@
 #include "display.h"
 #include "avatar.h"
 #include "screensaver.h"
+#include "animation_player.h"
 #endif
 #ifndef NO_LED
 #include "led.h"
@@ -60,9 +61,26 @@ static void setState(AvatarState state) {
 static uint32_t lastTouchTime = 0;
 static bool wasTouchingMain = false;
 
+static uint32_t lastTouchDebug = 0;
+
 static void handleTouch(uint32_t deltaMs) {
     int16_t tx, ty;
     bool touching = Display::getTouchPoint(tx, ty);
+
+    // Debug: log touch events (throttled to once per second)
+    if (touching && (millis() - lastTouchDebug > 1000)) {
+        Serial.printf("[Touch] DETECTED x=%d y=%d\n", tx, ty);
+        lastTouchDebug = millis();
+    }
+
+    // Any touch dismisses the screensaver (wake on touch)
+    if (touching && screensaverActive) {
+        screensaverActive = false;
+        stateEnteredAt = millis();  // Reset idle timer so it doesn't reactivate
+        wasTouchingMain = touching;
+        Serial.println("[Touch] Screensaver dismissed");
+        return;  // Consume this touch as a wake gesture
+    }
 
     // Feed touch data to the overlay UI
     TouchUI::update(deltaMs, tx, ty, touching);
@@ -109,6 +127,7 @@ void setup() {
     Display::init();
     Serial.println("[Main] Avatar init...");
     Avatar::init();
+    AnimPlayer::init();
 #endif
 #ifndef NO_LED
     Serial.println("[Main] LED init...");
@@ -158,6 +177,7 @@ void setup() {
     BleProv::init();
 #ifdef BOARD_ESP32_4848S040C
     TouchUI::init();
+    Display::touchTest();
 #endif
 }
 
@@ -182,7 +202,15 @@ void loop() {
 
     // Update all subsystems
 #ifndef NO_DISPLAY
-    Avatar::update(delta);
+    // When custom animation is playing, override avatar params
+    if (AnimPlayer::isPlaying()) {
+        AvatarParams animParams;
+        if (AnimPlayer::update(delta, animParams)) {
+            Avatar::overrideParams(animParams);
+        }
+    } else {
+        Avatar::update(delta);
+    }
 #endif
 #ifndef NO_LED
     Led::update(delta);

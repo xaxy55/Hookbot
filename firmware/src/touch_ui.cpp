@@ -104,15 +104,15 @@ void update(uint32_t deltaMs, int16_t touchX, int16_t touchY, bool touching) {
             int16_t dx = lastTouchX - swipeStartX;
 
             // Swipe up from bottom -> settings
-            if (dy < -15 && swipeStartY > 90 && abs(dx) < abs(dy)) {
+            if (dy < -10 && swipeStartY > 75 && abs(dx) < abs(dy)) {
                 openPanel(Panel::SETTINGS);
             }
             // Swipe from left edge -> accessories
-            else if (dx > 15 && swipeStartX < 15 && abs(dx) > abs(dy)) {
+            else if (dx > 10 && swipeStartX < 30 && abs(dx) > abs(dy)) {
                 openPanel(Panel::ACCESSORIES);
             }
             // Swipe from right edge -> state selector
-            else if (dx < -15 && swipeStartX > 105 && abs(dx) > abs(dy)) {
+            else if (dx < -10 && swipeStartX > 90 && abs(dx) > abs(dy)) {
                 openPanel(Panel::STATE_SELECT);
             }
             // Short tap top half -> cycle state (original behavior)
@@ -125,7 +125,7 @@ void update(uint32_t deltaMs, int16_t touchX, int16_t touchY, bool touching) {
         } else if (activePanel != Panel::NONE) {
             int16_t dy = lastTouchY - swipeStartY;
             // Swipe down to close panel
-            if (dy > 20) {
+            if (dy > 15) {
                 closePanel();
             }
         }

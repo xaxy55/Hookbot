@@ -111,7 +111,7 @@ static void startBLE() {
     if (bleActive) return;
 
     // Build name from MAC
-    String name = "DeskBot-";
+    String name = "Hookbot-";
     String mac = WiFi.macAddress();
     name += mac.substring(mac.length() - 5);
     name.replace(":", "");

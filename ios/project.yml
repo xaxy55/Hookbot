@@ -35,6 +35,11 @@ targets:
       - path: Shared
         excludes:
           - "**/.DS_Store"
+    entitlements:
+      path: Hookbot/Hookbot.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
     settings:
       base:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
@@ -43,6 +48,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_CFBundleDisplayName: "Hookbot"
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.developer-tools"
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server."
         INFOPLIST_KEY_NSBonjourServices:
           - "_http._tcp"

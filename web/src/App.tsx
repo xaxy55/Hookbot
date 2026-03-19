@@ -21,6 +21,11 @@ import BleSetupPage from './pages/BleSetupPage';
 import StorePage from './pages/StorePage';
 import CommunityStorePage from './pages/CommunityStorePage';
 import AssetSharingPage from './pages/AssetSharingPage';
+import PetCarePage from './pages/PetCarePage';
+import MoodJournalPage from './pages/MoodJournalPage';
+import PomodoroPage from './pages/PomodoroPage';
+import SoundBoardPage from './pages/SoundBoardPage';
+import LightShowPage from './pages/LightShowPage';
 import LoginPage from './pages/LoginPage';
 
 function AuthGuard({ children }: { children: ReactNode }) {
@@ -72,6 +77,11 @@ export default function App() {
           <Route path="/activity" element={<ActivityFeedPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
+          <Route path="/pet" element={<PetCarePage />} />
+          <Route path="/mood" element={<MoodJournalPage />} />
+          <Route path="/pomodoro" element={<PomodoroPage />} />
+          <Route path="/sounds" element={<SoundBoardPage />} />
+          <Route path="/lights" element={<LightShowPage />} />
           <Route path="/store" element={<StorePage />} />
           <Route path="/community" element={<CommunityStorePage />} />
           <Route path="/shared-assets" element={<AssetSharingPage />} />

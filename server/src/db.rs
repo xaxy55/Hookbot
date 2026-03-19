@@ -27,6 +27,36 @@ fn run_migrations(conn: &Connection) {
         "ALTER TABLE device_config ADD COLUMN sound_pack TEXT DEFAULT 'default'",
         "ALTER TABLE community_plugins ADD COLUMN verified BOOLEAN DEFAULT 0",
         "ALTER TABLE shared_assets ADD COLUMN verified BOOLEAN DEFAULT 0",
+        // Pet state
+        "CREATE TABLE IF NOT EXISTS pet_state (
+            device_id TEXT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
+            hunger INTEGER NOT NULL DEFAULT 50,
+            happiness INTEGER NOT NULL DEFAULT 50,
+            last_fed_at TEXT,
+            last_pet_at TEXT,
+            total_feeds INTEGER NOT NULL DEFAULT 0,
+            total_pets INTEGER NOT NULL DEFAULT 0
+        )",
+        // Token usage tracking
+        "CREATE TABLE IF NOT EXISTS token_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            input_tokens INTEGER NOT NULL DEFAULT 0,
+            output_tokens INTEGER NOT NULL DEFAULT 0,
+            model TEXT NOT NULL DEFAULT 'unknown',
+            recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_token_usage_device ON token_usage(device_id, recorded_at)",
+        // Mood journal
+        "CREATE TABLE IF NOT EXISTS mood_journal (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            mood TEXT NOT NULL,
+            note TEXT,
+            energy INTEGER NOT NULL DEFAULT 3,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_mood_journal_device ON mood_journal(device_id, created_at)",
     ];
 
     for sql in migrations {

@@ -11,6 +11,13 @@ static CRGB leds[NUM_LEDS];
 static AvatarState currentState = AvatarState::IDLE;
 static uint32_t stateTime = 0;
 
+// Auto-brightness state
+static bool autoBrightnessEnabled = false;
+static const int SMOOTHING_SAMPLES = 10;
+static int smoothingBuffer[SMOOTHING_SAMPLES] = {0};
+static int smoothingIndex = 0;
+static bool smoothingFilled = false;
+
 void init() {
     FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
     FastLED.setBrightness(HookbotServer::getConfig().ledBrightness);
@@ -160,6 +167,49 @@ void update(uint32_t deltaMs) {
     // Apply runtime brightness
     FastLED.setBrightness(HookbotServer::getConfig().ledBrightness);
     FastLED.show();
+}
+
+void setAutoBrightness(bool enabled) {
+    autoBrightnessEnabled = enabled;
+    if (enabled) {
+        memset(smoothingBuffer, 0, sizeof(smoothingBuffer));
+        smoothingIndex = 0;
+        smoothingFilled = false;
+    }
+    Serial.printf("[LED] Auto-brightness %s\n", enabled ? "enabled" : "disabled");
+}
+
+void updateAutoBrightness(int ambientValue) {
+    if (!autoBrightnessEnabled || ambientValue < 0) return;
+
+    // Add to smoothing buffer (running average)
+    smoothingBuffer[smoothingIndex] = ambientValue;
+    smoothingIndex = (smoothingIndex + 1) % SMOOTHING_SAMPLES;
+    if (smoothingIndex == 0) smoothingFilled = true;
+
+    int count = smoothingFilled ? SMOOTHING_SAMPLES : smoothingIndex;
+    if (count == 0) return;
+
+    long sum = 0;
+    for (int i = 0; i < count; i++) {
+        sum += smoothingBuffer[i];
+    }
+    int avg = (int)(sum / count);
+
+    // Map ambient light (0-4095) to brightness (0-255)
+    // Dark room (0-500) -> low brightness (20-60)
+    // Normal room (500-2000) -> medium (60-150)
+    // Bright room (2000-4095) -> high (150-255)
+    uint8_t brightness;
+    if (avg <= 500) {
+        brightness = (uint8_t)map(avg, 0, 500, 20, 60);
+    } else if (avg <= 2000) {
+        brightness = (uint8_t)map(avg, 500, 2000, 60, 150);
+    } else {
+        brightness = (uint8_t)map(avg, 2000, 4095, 150, 255);
+    }
+
+    HookbotServer::getConfig().ledBrightness = brightness;
 }
 
 } // namespace Led

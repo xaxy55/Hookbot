@@ -15,6 +15,8 @@ const NAV_SECTIONS = [
       { path: '/ble-setup', label: 'BLE WiFi Setup', icon: BluetoothIcon },
       { path: '/avatar', label: 'Avatar Editor', icon: FaceIcon },
       { path: '/animations', label: 'Animations', icon: PlayIcon },
+      { path: '/lights', label: 'Light Show', icon: SparkleIcon },
+      { path: '/sounds', label: 'Sound Board', icon: SpeakerIcon },
     ],
   },
   {
@@ -30,6 +32,9 @@ const NAV_SECTIONS = [
       { path: '/analytics', label: 'Analytics', icon: ChartLineIcon },
       { path: '/achievements', label: 'Achievements', icon: TrophyNavIcon },
       { path: '/store', label: 'Store', icon: StoreIcon },
+      { path: '/pet', label: 'Pet Care', icon: HeartIcon },
+      { path: '/pomodoro', label: 'Focus Timer', icon: TimerIcon },
+      { path: '/mood', label: 'Mood Journal', icon: JournalIcon },
     ],
   },
   {
@@ -365,6 +370,50 @@ function PuzzleIcon({ active }: { active: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
       <path d="M9 2H4a1 1 0 00-1 1v4h1a1.5 1.5 0 010 3H3v3a1 1 0 001 1h3v-1a1.5 1.5 0 013 0v1h3a1 1 0 001-1V9h-1a1.5 1.5 0 010-3h1V3a1 1 0 00-1-1h-3" />
+    </svg>
+  );
+}
+
+function SparkleIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z" fill={active ? 'currentColor' : 'none'} />
+    </svg>
+  );
+}
+
+function SpeakerIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M3 6h2l3-3v10L5 10H3a1 1 0 01-1-1V7a1 1 0 011-1z" fill={active ? 'currentColor' : 'none'} />
+      <path d="M11 5.5a3.5 3.5 0 010 5M13 3.5a6 6 0 010 9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TimerIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <circle cx="8" cy="9" r="5.5" />
+      <path d="M8 6.5v3l2 1M6.5 2h3M8 2v1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function JournalIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <rect x="3" y="1.5" width="10" height="13" rx="1" />
+      <path d="M6 5h4M6 8h4M6 11h2" strokeLinecap="round" />
+      <path d="M3 4h-1M3 8h-1M3 12h-1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function HeartIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M8 14s-5.5-3.5-5.5-7A3 3 0 018 4.5 3 3 0 0113.5 7C13.5 10.5 8 14 8 14z" fill={active ? 'currentColor' : 'none'} />
     </svg>
   );
 }

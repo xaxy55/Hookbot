@@ -32,4 +32,6 @@ namespace Avatar {
     AvatarState getState();
     void update(uint32_t deltaMs);
     void draw();
+    // Override face parameters for one frame (used by animation player)
+    void overrideParams(const AvatarParams& params);
 }

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import type { DeviceWithStatus } from '../types';
-import { getOtaJobs, getFirmware } from '../api/client';
+import type { DeviceWithStatus, DeviceGroup } from '../types';
+import { getOtaJobs, getFirmware, getGroups } from '../api/client';
 import StateIndicator from './StateIndicator';
 
 function formatUptime(ms: number): string {
@@ -11,9 +11,13 @@ function formatUptime(ms: number): string {
   return `${Math.floor(secs / 3600)}h ${Math.floor((secs % 3600) / 60)}m`;
 }
 
-export default function DeviceCard({ device }: { device: DeviceWithStatus }) {
+export default function DeviceCard({ device, groups }: { device: DeviceWithStatus; groups?: DeviceGroup[] }) {
   const { data: otaJobs } = useQuery({ queryKey: ['ota-jobs'], queryFn: getOtaJobs });
   const { data: firmwares } = useQuery({ queryKey: ['firmware'], queryFn: getFirmware });
+  const { data: fetchedGroups } = useQuery({ queryKey: ['groups'], queryFn: getGroups, enabled: !groups });
+
+  const allGroups = groups ?? fetchedGroups ?? [];
+  const deviceGroups = allGroups.filter(g => g.device_ids.includes(device.id));
 
   const lastSuccessJob = otaJobs
     ?.filter(j => j.device_id === device.id && j.status === 'success')
@@ -37,6 +41,24 @@ export default function DeviceCard({ device }: { device: DeviceWithStatus }) {
 
       {device.purpose && (
         <p className="text-xs text-muted mt-2">{device.purpose}</p>
+      )}
+
+      {deviceGroups.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {deviceGroups.map(g => (
+            <span
+              key={g.id}
+              className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+              style={{
+                backgroundColor: `${g.color}20`,
+                color: g.color,
+                border: `1px solid ${g.color}40`,
+              }}
+            >
+              {g.name}
+            </span>
+          ))}
+        </div>
       )}
 
       <div className="mt-3 flex items-center justify-between">

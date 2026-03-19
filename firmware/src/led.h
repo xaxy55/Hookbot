@@ -9,6 +9,8 @@ namespace Led {
     void init();
     void setState(AvatarState state);
     void update(uint32_t deltaMs);
+    void setAutoBrightness(bool enabled);
+    void updateAutoBrightness(int ambientValue);
 }
 
 #endif // !NO_LED

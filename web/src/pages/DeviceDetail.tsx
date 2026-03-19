@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDevice, getDeviceConfig, getDeviceHistory, sendState, sendTasks, updateDevice, updateDeviceConfig, pushConfig, getOtaJobs, getFirmware, getServos, setServoAngle, restServos, configureServos, getSensors, updateSensors, getRules, createRule, updateRule, deleteRule, exportDeviceConfig, importDeviceConfig } from '../api/client';
+import { getDevice, getDeviceConfig, getDeviceHistory, sendState, sendTasks, updateDevice, updateDeviceConfig, pushConfig, getOtaJobs, getFirmware, getServos, setServoAngle, restServos, configureServos, getSensors, updateSensors, getSensorReadings, getRules, createRule, updateRule, deleteRule, exportDeviceConfig, importDeviceConfig } from '../api/client';
 import type { ConfigExportData } from '../api/client';
-import type { ServoChannel, SensorChannelConfig } from '../api/client';
+import type { ServoChannel, SensorChannelConfig, SensorReading } from '../api/client';
 import StateIndicator from '../components/StateIndicator';
 import type { AvatarState } from '../types';
 
@@ -1010,6 +1010,144 @@ function ServosTab({ deviceId, online }: { deviceId: string; online: boolean }) 
 // --- Sensors Tab ---
 
 const SENSOR_TYPES = ['disabled', 'digital', 'analog'];
+const TIME_RANGES = [
+  { label: '1h', hours: 1 },
+  { label: '6h', hours: 6 },
+  { label: '24h', hours: 24 },
+  { label: '7d', hours: 168 },
+];
+
+function SensorLineChart({ readings, label }: { readings: SensorReading[]; label: string }) {
+  if (readings.length === 0) {
+    return (
+      <div className="text-center py-8 text-dim text-xs">No data for {label}</div>
+    );
+  }
+
+  const values = readings.map(r => r.value);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const avgVal = values.reduce((a, b) => a + b, 0) / values.length;
+  const valRange = maxVal - minVal || 1;
+
+  const times = readings.map(r => new Date(r.recorded_at + 'Z').getTime());
+  const minTime = Math.min(...times);
+  const maxTime = Math.max(...times);
+  const timeRange = maxTime - minTime || 1;
+
+  const w = 600;
+  const h = 200;
+  const pad = { top: 20, right: 20, bottom: 30, left: 55 };
+  const plotW = w - pad.left - pad.right;
+  const plotH = h - pad.top - pad.bottom;
+
+  const points = readings.map((r, i) => {
+    const x = pad.left + ((times[i] - minTime) / timeRange) * plotW;
+    const y = pad.top + plotH - ((r.value - minVal) / valRange) * plotH;
+    return `${x},${y}`;
+  }).join(' ');
+
+  // Time axis labels (5 ticks)
+  const timeTicks = Array.from({ length: 5 }, (_, i) => {
+    const t = minTime + (timeRange * i) / 4;
+    const d = new Date(t);
+    const hh = d.getUTCHours().toString().padStart(2, '0');
+    const mm = d.getUTCMinutes().toString().padStart(2, '0');
+    const mon = (d.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = d.getUTCDate().toString().padStart(2, '0');
+    return { x: pad.left + (plotW * i) / 4, label: `${mon}/${day} ${hh}:${mm}` };
+  });
+
+  // Value axis labels (5 ticks)
+  const valTicks = Array.from({ length: 5 }, (_, i) => {
+    const v = minVal + (valRange * i) / 4;
+    return { y: pad.top + plotH - (plotH * i) / 4, label: v.toFixed(1) };
+  });
+
+  return (
+    <div className="space-y-2">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+        {/* Grid lines */}
+        {valTicks.map((t, i) => (
+          <line key={`hg-${i}`} x1={pad.left} x2={w - pad.right} y1={t.y} y2={t.y}
+            stroke="currentColor" strokeOpacity={0.1} strokeWidth={0.5} />
+        ))}
+        {timeTicks.map((t, i) => (
+          <line key={`vg-${i}`} x1={t.x} x2={t.x} y1={pad.top} y2={pad.top + plotH}
+            stroke="currentColor" strokeOpacity={0.1} strokeWidth={0.5} />
+        ))}
+        {/* Axes */}
+        <line x1={pad.left} x2={pad.left} y1={pad.top} y2={pad.top + plotH}
+          stroke="currentColor" strokeOpacity={0.2} strokeWidth={1} />
+        <line x1={pad.left} x2={w - pad.right} y1={pad.top + plotH} y2={pad.top + plotH}
+          stroke="currentColor" strokeOpacity={0.2} strokeWidth={1} />
+        {/* Value axis labels */}
+        {valTicks.map((t, i) => (
+          <text key={`vl-${i}`} x={pad.left - 5} y={t.y + 3} textAnchor="end"
+            fontSize={9} fill="currentColor" fillOpacity={0.4}>{t.label}</text>
+        ))}
+        {/* Time axis labels */}
+        {timeTicks.map((t, i) => (
+          <text key={`tl-${i}`} x={t.x} y={pad.top + plotH + 16} textAnchor="middle"
+            fontSize={8} fill="currentColor" fillOpacity={0.4}>{t.label}</text>
+        ))}
+        {/* Data line */}
+        <polyline points={points} fill="none" stroke="#dc2626" strokeWidth={1.5} strokeLinejoin="round" />
+        {/* Data points (only if reasonable count) */}
+        {readings.length <= 200 && readings.map((r, i) => {
+          const x = pad.left + ((times[i] - minTime) / timeRange) * plotW;
+          const y = pad.top + plotH - ((r.value - minVal) / valRange) * plotH;
+          return <circle key={i} cx={x} cy={y} r={1.5} fill="#dc2626" />;
+        })}
+      </svg>
+      {/* Stats */}
+      <div className="flex gap-4 text-[10px] text-dim font-mono">
+        <span>Min: {minVal.toFixed(2)}</span>
+        <span>Max: {maxVal.toFixed(2)}</span>
+        <span>Avg: {avgVal.toFixed(2)}</span>
+        <span>Points: {readings.length}</span>
+      </div>
+    </div>
+  );
+}
+
+function SensorReadingsChart({ deviceId, channel, label }: { deviceId: string; channel: number; label: string }) {
+  const [hours, setHours] = useState(24);
+
+  const { data: readings, isLoading } = useQuery({
+    queryKey: ['sensor-readings', deviceId, channel, hours],
+    queryFn: () => getSensorReadings(deviceId, channel, hours),
+    refetchInterval: 30000,
+  });
+
+  return (
+    <div className="rounded-md border border-edge bg-inset/50 p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-fg-2">Ch {channel}: {label || `Channel ${channel}`}</span>
+        <div className="flex gap-1">
+          {TIME_RANGES.map(tr => (
+            <button
+              key={tr.hours}
+              onClick={() => setHours(tr.hours)}
+              className={`px-2 py-0.5 text-[10px] rounded ${
+                hours === tr.hours
+                  ? 'bg-red-600 text-white'
+                  : 'bg-inset border border-edge text-dim hover:text-fg-2'
+              }`}
+            >
+              {tr.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {isLoading ? (
+        <div className="text-center py-6 text-dim text-xs">Loading chart...</div>
+      ) : (
+        <SensorLineChart readings={readings || []} label={label || `Channel ${channel}`} />
+      )}
+    </div>
+  );
+}
 
 function SensorsTab({ deviceId, online }: { deviceId: string; online: boolean }) {
   const qc = useQueryClient();
@@ -1044,6 +1182,11 @@ function SensorsTab({ deviceId, online }: { deviceId: string; online: boolean })
   const channels = editing ?? (sensors || Array.from({ length: 8 }, (_, i) => ({
     channel: i, pin: -1, sensor_type: 'disabled', label: '', poll_interval_ms: 1000, threshold: 0,
   })));
+
+  // Active (non-disabled) sensor channels for charting
+  const activeChannels = (sensors || []).filter(
+    (ch: SensorChannelConfig) => ch.sensor_type !== 'disabled'
+  );
 
   return (
     <div className="space-y-6">
@@ -1145,6 +1288,24 @@ function SensorsTab({ deviceId, online }: { deviceId: string; online: boolean })
           {saveMut.isSuccess && !editing && <span className="text-xs text-green-400">Saved</span>}
         </div>
       </div>
+
+      {/* Sensor Data Visualization */}
+      {activeChannels.length > 0 && (
+        <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-fg-2">Sensor Data History</h2>
+          <p className="text-[11px] text-dim">Time-series readings from active sensor channels.</p>
+          <div className="space-y-4">
+            {activeChannels.map((ch: SensorChannelConfig) => (
+              <SensorReadingsChart
+                key={ch.channel}
+                deviceId={deviceId}
+                channel={ch.channel}
+                label={ch.label || `Channel ${ch.channel}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

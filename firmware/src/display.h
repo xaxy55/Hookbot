@@ -28,5 +28,6 @@ namespace Display {
 
 #ifdef BOARD_ESP32_4848S040C
     bool getTouchPoint(int16_t& x, int16_t& y);
+    void touchTest();
 #endif
 }

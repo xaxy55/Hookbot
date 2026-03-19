@@ -302,7 +302,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
         SensorChannel* sCh = Sensors::getChannels();
         JsonArray sensors = doc["sensors"].to<JsonArray>();
         for (int i = 0; i < Sensors::getChannelCount(); i++) {
-            if (sCh[i].type != SensorType::DISABLED) {
+            if (sCh[i].type != SensorType::None) {
                 JsonObject s = sensors.add<JsonObject>();
                 s["ch"] = i;
                 s["label"] = sCh[i].label;
@@ -599,6 +599,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
     );
     server.addHandler(xpHandler);
 
+#ifndef NO_SOUND
     // POST /sounds - set custom sound pack melodies
     AsyncCallbackJsonWebHandler* soundsHandler = new AsyncCallbackJsonWebHandler(
         "/sounds",
@@ -653,6 +654,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
         }
     );
     server.addHandler(soundsHandler);
+#endif // NO_SOUND
 
     // GET /notifications - read current notification state
     server.on("/notifications", HTTP_GET, [](AsyncWebServerRequest* req) {

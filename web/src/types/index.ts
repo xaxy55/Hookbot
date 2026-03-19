@@ -63,6 +63,16 @@ export interface DiscoveredDevice {
 
 export type AvatarState = 'idle' | 'thinking' | 'waiting' | 'success' | 'taskcheck' | 'error';
 
+// --- Device Group types ---
+
+export interface DeviceGroup {
+  id: string;
+  name: string;
+  color: string;
+  created_at: string;
+  device_ids: string[];
+}
+
 // --- Gamification types ---
 
 export interface GamificationStats {

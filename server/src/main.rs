@@ -131,6 +131,20 @@ async fn main() {
         .route("/api/store/owned", get(routes::store::owned_items))
         .with_state(pool.clone());
 
+    // Pet / token tracking routes
+    let pet_routes = Router::new()
+        .route("/api/pet", get(routes::pet::get_pet_state))
+        .route("/api/pet/feed", post(routes::pet::feed_pet))
+        .route("/api/pet/pet", post(routes::pet::pet_pet))
+        .route("/api/pet/tokens", get(routes::pet::get_token_usage).post(routes::pet::record_token_usage))
+        .with_state(pool.clone());
+
+    // Mood journal routes
+    let mood_routes = Router::new()
+        .route("/api/mood", get(routes::mood::get_entries).post(routes::mood::create_entry))
+        .route("/api/mood/stats", get(routes::mood::get_stats))
+        .with_state(pool.clone());
+
     // Community plugin store routes
     let community_routes = Router::new()
         .route("/api/community/plugins", get(routes::community_store::list_plugins).post(routes::community_store::publish_plugin))
@@ -165,6 +179,8 @@ async fn main() {
         .merge(firmware_routes)
         .merge(settings_routes)
         .merge(store_routes)
+        .merge(pet_routes)
+        .merge(mood_routes)
         .merge(community_routes)
         .merge(project_route_routes)
         .merge(group_routes)

@@ -16,7 +16,7 @@
 
 - [x] **Servo control UI** — Add a "Servos" tab to Device Detail with angle sliders, per-state map editor, and pin configuration form
 - [x] **LED color editor** — Per-state RGB color picker in the personality tab, push to device
-- [ ] **Custom animation playback on device** — Firmware endpoint to receive and play keyframe animations from the animation editor
+- [x] **Custom animation playback on device** — Firmware endpoint to receive and play keyframe animations from the animation editor
 - [x] **Notification persistence** — Store notification sources/webhook configs in SQLite, not just in-memory
 - [x] **Auto-discovery on startup** — Server scans mDNS on boot and registers new devices automatically
 - [x] **Connection resilience** — Exponential backoff on poller failures, WiFi reconnect improvements on ESP32
@@ -46,10 +46,10 @@
   - Triggers: sensor threshold, time of day, device state change, webhook received, button press
   - Actions: change avatar state, play animation, move servo, send notification, call webhook, play sound
 - [x] **Rule editor UI** — Visual drag-and-drop or form-based rule builder with live preview
-- [ ] **Sensor data logging** — Store readings in time-series table, display graphs on frontend
+- [x] **Sensor data logging** — Store readings in time-series table, display graphs on frontend
 - [x] **Physical button support** — Configurable GPIO button: short press = cycle state, long press = custom action
 - [x] **Presence detection** — PIR or ultrasonic sensor: sleep avatar when away, wake on return
-- [ ] **Ambient light** — Auto-adjust LED brightness based on room light level
+- [x] **Ambient light** — Auto-adjust LED brightness based on room light level
 
 ## Phase 3.5: Community Plugin Store & Asset Sharing
 
@@ -66,14 +66,14 @@
 - [x] **Community Store page** — Frontend browse/search/install UI for community plugins
 - [x] **Asset Sharing page** — Frontend browse/upload/install UI for shared avatars & animations
 - [ ] **Plugin sandboxing** — Run community plugins in isolated contexts with permission scoping
-- [ ] **Verified publishers** — Badge system for trusted community plugin authors
+- [x] **Verified publishers** — Badge system for trusted community plugin authors
 
 ## Phase 4: Multi-Device & Collaboration
 
 > Scale from one hookbot to a fleet. Different bots for different jobs.
 
-- [ ] **Per-project device routing** — `.hookbot` config maps workspaces to specific devices (already partially built)
-- [ ] **Device groups** — Tag devices, send commands to groups ("all calendar bots")
+- [x] **Per-project device routing** — `.hookbot` config maps workspaces to specific devices (already partially built)
+- [x] **Device groups** — Tag devices, send commands to groups ("all calendar bots")
 - [ ] **Device-to-device communication** — One bot's state change triggers another (e.g. "error on build bot" -> "alert on notification bot")
 - [ ] **Shared animation library** — Upload/download community animations, sync across devices
 - [ ] **Multi-user support** — User accounts, per-user device assignments, auth tokens

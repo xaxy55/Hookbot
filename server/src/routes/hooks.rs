@@ -76,6 +76,20 @@ pub async fn handle_hook(
         ).unwrap_or((0, vec![]))
     };
 
+    // Record token usage if provided
+    if input.input_tokens.is_some() || input.output_tokens.is_some() {
+        let conn = db.lock().unwrap();
+        let _ = conn.execute(
+            "INSERT INTO token_usage (device_id, input_tokens, output_tokens, model) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params![
+                device_id.as_deref().unwrap_or("unknown"),
+                input.input_tokens.unwrap_or(0),
+                input.output_tokens.unwrap_or(0),
+                input.model.as_deref().unwrap_or("unknown"),
+            ],
+        );
+    }
+
     if let Some(ref ip) = device_ip {
         // Forward state
         let tool_name = input.tool_name.clone().unwrap_or_default();

@@ -7,7 +7,6 @@ pub enum AppError {
     NotFound(String),
     BadRequest(String),
     Internal(String),
-    Unauthorized(String),
 }
 
 impl std::fmt::Display for AppError {
@@ -17,7 +16,6 @@ impl std::fmt::Display for AppError {
             AppError::NotFound(msg) => write!(f, "not found: {msg}"),
             AppError::BadRequest(msg) => write!(f, "bad request: {msg}"),
             AppError::Internal(msg) => write!(f, "internal error: {msg}"),
-            AppError::Unauthorized(msg) => write!(f, "unauthorized: {msg}"),
         }
     }
 }
@@ -29,7 +27,6 @@ impl IntoResponse for AppError {
             AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg.clone()),
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
             AppError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg.clone()),
-            AppError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, msg.clone()),
         };
         let body = serde_json::json!({ "error": message });
         (status, axum::Json(body)).into_response()

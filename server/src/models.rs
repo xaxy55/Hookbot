@@ -119,6 +119,9 @@ pub struct HookEvent {
     pub device_id: Option<String>,
     pub tasks: Option<Vec<TaskItem>>,
     pub active_task: Option<u8>,
+    pub input_tokens: Option<i64>,
+    pub output_tokens: Option<i64>,
+    pub model: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

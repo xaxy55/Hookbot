@@ -2,6 +2,7 @@
 
 #define LGFX_USE_V1
 #include "display.h"
+#include <Wire.h>
 #include <lgfx/v1/platforms/esp32s3/Panel_RGB.hpp>
 #include <lgfx/v1/platforms/esp32s3/Bus_RGB.hpp>
 
@@ -105,10 +106,10 @@ public:
             cfg.bus_shared = true;  // GPIO 20 shared between touch SCL and RGB G1
             cfg.offset_rotation = 0;
             cfg.i2c_port = 1;
-            cfg.i2c_addr = 0x5D;
+            cfg.i2c_addr = 0x14;   // GT911 alternate address (common on 4848S040C)
             cfg.pin_sda  = GPIO_NUM_19;
             cfg.pin_scl  = GPIO_NUM_20;
-            cfg.freq     = 400000;
+            cfg.freq     = 100000; // Lower freq for reliability with shared bus
             _touch_instance.config(cfg);
             _panel_instance.setTouch(&_touch_instance);
         }
@@ -160,12 +161,37 @@ int16_t centerY() { return SCREEN_HEIGHT / 2; }
 
 bool getTouchPoint(int16_t& x, int16_t& y) {
     lgfx::touch_point_t tp;
-    if (lcd->getTouch(&tp)) {
+    int count = lcd->getTouchRaw(&tp, 1);
+    if (count > 0) {
+        // Map raw touch coordinates to virtual canvas
         x = tp.x / 4;
         y = tp.y / 4;
         return true;
     }
     return false;
+}
+
+void touchTest() {
+    Serial.println("[Touch] Running touch diagnostics...");
+
+    // Scan I2C bus for GT911
+    Wire1.begin(GPIO_NUM_19, GPIO_NUM_20, 100000);
+    uint8_t addrs[] = {0x14, 0x5D};
+    for (auto addr : addrs) {
+        Wire1.beginTransmission(addr);
+        uint8_t err = Wire1.endTransmission();
+        Serial.printf("[Touch] I2C scan 0x%02X: %s\n", addr, err == 0 ? "FOUND" : "no response");
+    }
+    Wire1.end();
+
+    // Test touch reads
+    lgfx::touch_point_t tp;
+    for (int i = 0; i < 5; i++) {
+        int count = lcd->getTouchRaw(&tp, 1);
+        Serial.printf("[Touch] Read %d: count=%d x=%d y=%d\n", i, count, tp.x, tp.y);
+        delay(100);
+    }
+    Serial.println("[Touch] Diagnostics done. Touch screen during use to verify.");
 }
 
 } // namespace Display

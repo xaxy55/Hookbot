@@ -471,6 +471,111 @@ export const getOwnedItems = (deviceId?: string) => {
   return request<string[]>(`/store/owned${params}`);
 };
 
+// Pet / Token tracking
+export interface PetState {
+  device_id: string;
+  hunger: number;
+  happiness: number;
+  last_fed_at: string | null;
+  last_pet_at: string | null;
+  total_feeds: number;
+  total_pets: number;
+  mood: string;
+}
+
+export interface TokenUsageEntry {
+  id: number;
+  device_id: string;
+  input_tokens: number;
+  output_tokens: number;
+  model: string;
+  recorded_at: string;
+}
+
+export interface DailyTokenUsage {
+  date: string;
+  input_tokens: number;
+  output_tokens: number;
+}
+
+export interface TokenUsageSummary {
+  total_input: number;
+  total_output: number;
+  total_tokens: number;
+  today_input: number;
+  today_output: number;
+  today_total: number;
+  entries_count: number;
+  recent: TokenUsageEntry[];
+  daily: DailyTokenUsage[];
+}
+
+export const getPetState = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<PetState>(`/pet${params}`);
+};
+
+export const feedPet = (foodType?: string, deviceId?: string) =>
+  request<{ ok: boolean; hunger: number; happiness: number; mood: string; message: string }>('/pet/feed', {
+    method: 'POST',
+    body: JSON.stringify({ food_type: foodType, device_id: deviceId }),
+  });
+
+export const petPet = (deviceId?: string) =>
+  request<{ ok: boolean; hunger: number; happiness: number; mood: string; message: string }>('/pet/pet', {
+    method: 'POST',
+    body: JSON.stringify({ device_id: deviceId }),
+  });
+
+export const getTokenUsage = (deviceId?: string, days?: number) => {
+  const params = new URLSearchParams();
+  if (deviceId) params.set('device_id', deviceId);
+  if (days) params.set('days', String(days));
+  const qs = params.toString();
+  return request<TokenUsageSummary>(`/pet/tokens${qs ? `?${qs}` : ''}`);
+};
+
+export const recordTokenUsage = (data: {
+  device_id?: string;
+  input_tokens: number;
+  output_tokens: number;
+  model?: string;
+}) => request<{ ok: boolean }>('/pet/tokens', { method: 'POST', body: JSON.stringify(data) });
+
+// Mood Journal
+export interface MoodEntry {
+  id: number;
+  device_id: string;
+  mood: string;
+  note: string | null;
+  energy: number;
+  created_at: string;
+}
+
+export interface MoodStats {
+  total_entries: number;
+  this_week: number;
+  avg_energy: number;
+  most_common_mood: string | null;
+  mood_distribution: { mood: string; count: number }[];
+}
+
+export const getMoodEntries = (deviceId?: string, days?: number) => {
+  const params = new URLSearchParams();
+  if (deviceId) params.set('device_id', deviceId);
+  if (days) params.set('days', String(days));
+  const qs = params.toString();
+  return request<MoodEntry[]>(`/mood${qs ? `?${qs}` : ''}`);
+};
+
+export const createMoodEntry = (data: { device_id?: string; mood: string; note?: string; energy?: number }) =>
+  request<MoodEntry>('/mood', { method: 'POST', body: JSON.stringify(data) });
+
+export const getMoodStats = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<MoodStats>(`/mood/stats${params}`);
+};
+
 // Community Plugin Store
 export interface CommunityPlugin {
   id: string;

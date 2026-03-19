@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDevices, getHealth, getServerSettings, updateServerSettings, getLogStats, pruneLogs } from '../api/client';
+import { getDevices, getHealth, getServerSettings, updateServerSettings, getLogStats, pruneLogs, getProjectRoutes, createProjectRoute, updateProjectRoute, deleteProjectRoute, getVerifiedPublishers, addVerifiedPublisher, removeVerifiedPublisher } from '../api/client';
+import type { ProjectRoute, VerifiedPublisher } from '../api/client';
 
 type HookMode = 'direct' | 'server';
 
@@ -40,6 +41,79 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ['logStats'] });
     },
   });
+
+  // Project routing state
+  const { data: projectRoutes } = useQuery({ queryKey: ['projectRoutes'], queryFn: getProjectRoutes });
+  const [showAddRoute, setShowAddRoute] = useState(false);
+  const [routePath, setRoutePath] = useState('');
+  const [routeDeviceId, setRouteDeviceId] = useState('');
+  const [routeLabel, setRouteLabel] = useState('');
+  const [editingRouteId, setEditingRouteId] = useState<string | null>(null);
+  const [editPath, setEditPath] = useState('');
+  const [editDeviceId, setEditDeviceId] = useState('');
+  const [editLabel, setEditLabel] = useState('');
+
+  const createRouteMutation = useMutation({
+    mutationFn: (data: { project_path: string; device_id: string; label?: string }) => createProjectRoute(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectRoutes'] });
+      setShowAddRoute(false);
+      setRoutePath('');
+      setRouteDeviceId('');
+      setRouteLabel('');
+    },
+  });
+
+  const updateRouteMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { project_path?: string; device_id?: string; label?: string } }) => updateProjectRoute(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectRoutes'] });
+      setEditingRouteId(null);
+    },
+  });
+
+  const deleteRouteMutation = useMutation({
+    mutationFn: (id: string) => deleteProjectRoute(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectRoutes'] });
+    },
+  });
+
+  // Verified publishers state
+  const { data: publishers } = useQuery({ queryKey: ['verifiedPublishers'], queryFn: getVerifiedPublishers });
+  const [showAddPublisher, setShowAddPublisher] = useState(false);
+  const [pubName, setPubName] = useState('');
+  const [pubDisplayName, setPubDisplayName] = useState('');
+  const [pubBadgeType, setPubBadgeType] = useState('verified');
+
+  const addPublisherMutation = useMutation({
+    mutationFn: (data: { name: string; display_name: string; badge_type?: string }) => addVerifiedPublisher(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['verifiedPublishers'] });
+      queryClient.invalidateQueries({ queryKey: ['community-plugins'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-assets'] });
+      setShowAddPublisher(false);
+      setPubName('');
+      setPubDisplayName('');
+      setPubBadgeType('verified');
+    },
+  });
+
+  const removePublisherMutation = useMutation({
+    mutationFn: (id: string) => removeVerifiedPublisher(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['verifiedPublishers'] });
+      queryClient.invalidateQueries({ queryKey: ['community-plugins'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-assets'] });
+    },
+  });
+
+  function startEditRoute(route: ProjectRoute) {
+    setEditingRouteId(route.id);
+    setEditPath(route.project_path);
+    setEditDeviceId(route.device_id);
+    setEditLabel(route.label ?? '');
+  }
 
   function getHookConfig(): HookConfig {
     if (hookMode === 'server') {
@@ -267,6 +341,288 @@ export default function Settings() {
           <p>Content type: <code className="text-green-400 bg-inset px-1 rounded">application/json</code></p>
           <p>Events: Pushes, Pull requests, Workflow runs, Issues, Stars</p>
         </div>
+      </div>
+
+      {/* Project Routing */}
+      <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-fg-2">Project Routing</h2>
+          <button
+            onClick={() => setShowAddRoute(!showAddRoute)}
+            className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors"
+          >
+            {showAddRoute ? 'Cancel' : 'Add Route'}
+          </button>
+        </div>
+        <p className="text-xs text-subtle">
+          Route hook events from specific project directories to different devices. The project path should match the working directory sent by the hook script (e.g. <code className="text-green-400 bg-inset px-1 rounded">/Users/you/projects/myapp</code>).
+        </p>
+
+        {/* Add route form */}
+        {showAddRoute && (
+          <div className="rounded-md border border-edge bg-inset/50 p-4 space-y-3">
+            <div>
+              <label className="block text-xs text-subtle mb-1">Project Path</label>
+              <input
+                value={routePath}
+                onChange={e => setRoutePath(e.target.value)}
+                placeholder="/Users/you/projects/myapp"
+                className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-subtle mb-1">Target Device</label>
+              <select
+                value={routeDeviceId}
+                onChange={e => setRouteDeviceId(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg"
+              >
+                <option value="">Select a device...</option>
+                {devices?.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ip_address})</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-subtle mb-1">Label (optional)</label>
+              <input
+                value={routeLabel}
+                onChange={e => setRouteLabel(e.target.value)}
+                placeholder="e.g. Work project"
+                className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg"
+              />
+            </div>
+            <button
+              onClick={() => {
+                if (routePath && routeDeviceId) {
+                  createRouteMutation.mutate({
+                    project_path: routePath,
+                    device_id: routeDeviceId,
+                    ...(routeLabel ? { label: routeLabel } : {}),
+                  });
+                }
+              }}
+              disabled={!routePath || !routeDeviceId || createRouteMutation.isPending}
+              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-md transition-colors"
+            >
+              {createRouteMutation.isPending ? 'Adding...' : 'Add Route'}
+            </button>
+          </div>
+        )}
+
+        {/* Routes table */}
+        {projectRoutes && projectRoutes.length > 0 ? (
+          <div className="rounded-md border border-edge overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-edge bg-inset/50">
+                  <th className="text-left px-3 py-2 text-xs text-subtle font-medium">Project Path</th>
+                  <th className="text-left px-3 py-2 text-xs text-subtle font-medium">Device</th>
+                  <th className="text-left px-3 py-2 text-xs text-subtle font-medium">Label</th>
+                  <th className="text-right px-3 py-2 text-xs text-subtle font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-xs">
+                {projectRoutes.map(route => (
+                  <tr key={route.id} className="border-b border-edge/50 last:border-0">
+                    {editingRouteId === route.id ? (
+                      <>
+                        <td className="px-3 py-2">
+                          <input
+                            value={editPath}
+                            onChange={e => setEditPath(e.target.value)}
+                            className="w-full px-2 py-1 text-xs bg-inset border border-edge rounded text-fg font-mono"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <select
+                            value={editDeviceId}
+                            onChange={e => setEditDeviceId(e.target.value)}
+                            className="w-full px-2 py-1 text-xs bg-inset border border-edge rounded text-fg"
+                          >
+                            {devices?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                          </select>
+                        </td>
+                        <td className="px-3 py-2">
+                          <input
+                            value={editLabel}
+                            onChange={e => setEditLabel(e.target.value)}
+                            className="w-full px-2 py-1 text-xs bg-inset border border-edge rounded text-fg"
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-right space-x-2">
+                          <button
+                            onClick={() => updateRouteMutation.mutate({
+                              id: route.id,
+                              data: { project_path: editPath, device_id: editDeviceId, label: editLabel },
+                            })}
+                            disabled={updateRouteMutation.isPending}
+                            className="text-green-400 hover:text-green-300 transition-colors"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingRouteId(null)}
+                            className="text-subtle hover:text-fg transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-3 py-2 font-mono text-fg">{route.project_path}</td>
+                        <td className="px-3 py-2 text-fg">{route.device_name ?? route.device_id}</td>
+                        <td className="px-3 py-2 text-subtle">{route.label ?? '-'}</td>
+                        <td className="px-3 py-2 text-right space-x-2">
+                          <button
+                            onClick={() => startEditRoute(route)}
+                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteRouteMutation.mutate(route.id)}
+                            disabled={deleteRouteMutation.isPending}
+                            className="text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-md border border-edge bg-inset/50 p-4 text-center">
+            <p className="text-xs text-subtle">No project routes configured. All hook events will be sent to the default device.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Verified Publishers */}
+      <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-fg-2">Verified Publishers</h2>
+            <p className="text-xs text-subtle mt-1">
+              Manage verified publisher badges for the community plugin store and shared assets.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAddPublisher(!showAddPublisher)}
+            className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors"
+          >
+            {showAddPublisher ? 'Cancel' : 'Add Publisher'}
+          </button>
+        </div>
+
+        {/* Add publisher form */}
+        {showAddPublisher && (
+          <div className="rounded-md border border-edge bg-inset/50 p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-subtle mb-1">Publisher Name (must match author field)</label>
+                <input
+                  value={pubName}
+                  onChange={e => setPubName(e.target.value)}
+                  placeholder="e.g. xaxy"
+                  className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-subtle mb-1">Display Name</label>
+                <input
+                  value={pubDisplayName}
+                  onChange={e => setPubDisplayName(e.target.value)}
+                  placeholder="e.g. Xaxy Official"
+                  className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-subtle mb-1">Badge Type</label>
+              <select
+                value={pubBadgeType}
+                onChange={e => setPubBadgeType(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg"
+              >
+                <option value="verified">Verified</option>
+                <option value="official">Official</option>
+                <option value="partner">Partner</option>
+              </select>
+            </div>
+            <button
+              onClick={() => {
+                if (pubName && pubDisplayName) {
+                  addPublisherMutation.mutate({
+                    name: pubName,
+                    display_name: pubDisplayName,
+                    badge_type: pubBadgeType,
+                  });
+                }
+              }}
+              disabled={!pubName || !pubDisplayName || addPublisherMutation.isPending}
+              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-md transition-colors"
+            >
+              {addPublisherMutation.isPending ? 'Adding...' : 'Add Publisher'}
+            </button>
+          </div>
+        )}
+
+        {/* Publishers table */}
+        {publishers && publishers.length > 0 ? (
+          <div className="rounded-md border border-edge overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-edge bg-inset/50">
+                  <th className="text-left px-3 py-2 text-xs text-subtle font-medium">Name</th>
+                  <th className="text-left px-3 py-2 text-xs text-subtle font-medium">Display Name</th>
+                  <th className="text-left px-3 py-2 text-xs text-subtle font-medium">Badge</th>
+                  <th className="text-left px-3 py-2 text-xs text-subtle font-medium">Verified At</th>
+                  <th className="text-right px-3 py-2 text-xs text-subtle font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-xs">
+                {publishers.map((pub: VerifiedPublisher) => (
+                  <tr key={pub.id} className="border-b border-edge/50 last:border-0">
+                    <td className="px-3 py-2 font-mono text-fg flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      {pub.name}
+                    </td>
+                    <td className="px-3 py-2 text-fg">{pub.display_name}</td>
+                    <td className="px-3 py-2">
+                      <span className={`px-1.5 py-0.5 text-[10px] rounded font-medium uppercase tracking-wider ${
+                        pub.badge_type === 'official' ? 'bg-green-800 text-green-300' :
+                        pub.badge_type === 'partner' ? 'bg-purple-800 text-purple-300' :
+                        'bg-blue-800 text-blue-300'
+                      }`}>
+                        {pub.badge_type}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-subtle">{new Date(pub.verified_at).toLocaleDateString()}</td>
+                    <td className="px-3 py-2 text-right">
+                      <button
+                        onClick={() => removePublisherMutation.mutate(pub.id)}
+                        disabled={removePublisherMutation.isPending}
+                        className="text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-md border border-edge bg-inset/50 p-4 text-center">
+            <p className="text-xs text-subtle">No verified publishers yet. Add one to show verification badges on their plugins and assets.</p>
+          </div>
+        )}
       </div>
 
       {/* Status Log Retention */}

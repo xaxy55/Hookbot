@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig } from '../api/client';
+import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig, getOwnedItems } from '../api/client';
 import type { AvatarState } from '../types';
 
 interface AvatarParams {
@@ -71,6 +71,31 @@ export default function AvatarEditorPage() {
     queryFn: () => getDeviceConfig(selectedDevice),
     enabled: !!selectedDevice,
   });
+
+  const { data: ownedItems } = useQuery({
+    queryKey: ['store-owned', selectedDevice],
+    queryFn: () => getOwnedItems(selectedDevice || undefined),
+    enabled: !!selectedDevice,
+  });
+
+  // Map store accessory IDs to accessory keys
+  const ACC_STORE_MAP: Record<string, keyof Accessories> = {
+    acc_tophat: 'topHat',
+    acc_glasses: 'glasses',
+    acc_bowtie: 'bowtie',
+    acc_cigar: 'cigar',
+    acc_horns: 'horns',
+    acc_monocle: 'monocle',
+    acc_crown: 'crown',
+    acc_halo: 'halo',
+  };
+
+  function isAccessoryOwned(key: keyof Accessories): boolean {
+    if (!selectedDevice || !ownedItems) return true; // No device selected = show all
+    if (key === 'topHat') return true; // Top hat is free (starter item)
+    const storeId = Object.entries(ACC_STORE_MAP).find(([, v]) => v === key)?.[0];
+    return storeId ? ownedItems.includes(storeId) : true;
+  }
 
   // Load preset from device
   useEffect(() => {
@@ -290,20 +315,27 @@ export default function AvatarEditorPage() {
           <div className="rounded-lg border border-edge bg-surface p-4">
             <p className="text-xs text-subtle mb-3 font-medium uppercase tracking-wider">Accessories</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {ACCESSORY_LIST.map(a => (
-                <button
-                  key={a.key}
-                  onClick={() => toggleAccessory(a.key)}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                    accessories[a.key]
-                      ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                      : 'bg-inset/80 text-subtle border border-edge hover:border-edge'
-                  }`}
-                >
-                  <span className="text-lg">{a.emoji}</span>
-                  <span className="text-xs">{a.label}</span>
-                </button>
-              ))}
+              {ACCESSORY_LIST.map(a => {
+                const owned = isAccessoryOwned(a.key);
+                return (
+                  <button
+                    key={a.key}
+                    onClick={() => owned && toggleAccessory(a.key)}
+                    disabled={!owned}
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all ${
+                      !owned
+                        ? 'bg-inset/40 text-dim border border-edge opacity-50 cursor-not-allowed'
+                        : accessories[a.key]
+                          ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                          : 'bg-inset/80 text-subtle border border-edge hover:border-edge'
+                    }`}
+                    title={owned ? a.label : `Buy from Store to unlock`}
+                  >
+                    <span className="text-lg">{owned ? a.emoji : '\u{1F512}'}</span>
+                    <span className="text-xs">{a.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

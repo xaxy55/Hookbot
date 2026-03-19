@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig } from '../api/client';
+import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig, playAnimation, stopAnimation, getOwnedItems, getStore, getSharedAssets } from '../api/client';
+import type { AnimationPayload, SharedAsset, StoreItemDef } from '../api/client';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -152,6 +153,38 @@ export default function AnimationEditorPage() {
   const lastFrameRef = useRef(0);
 
   const { data: devices } = useQuery({ queryKey: ['devices'], queryFn: getDevices });
+
+  // ─── Store + Shared Assets ──────────────────────────────────────
+
+  const { data: ownedItems } = useQuery({
+    queryKey: ['store-owned', selectedDevice],
+    queryFn: () => getOwnedItems(selectedDevice || undefined),
+    enabled: !!selectedDevice,
+  });
+
+  const { data: store } = useQuery({
+    queryKey: ['store', selectedDevice],
+    queryFn: () => getStore(selectedDevice || undefined),
+    enabled: !!selectedDevice,
+  });
+
+  const { data: sharedAnimations } = useQuery({
+    queryKey: ['shared-assets', selectedDevice, 'animation'],
+    queryFn: () => getSharedAssets({ deviceId: selectedDevice || undefined, assetType: 'animation' }),
+    enabled: !!selectedDevice,
+  });
+
+  // Map store animation IDs to preset animations
+  const STORE_ANIM_MAP: Record<string, string> = {
+    anim_laugh: 'Laugh',
+    anim_rage: 'Rage',
+    anim_sleep: 'Sleep',
+    anim_lookaround: 'Look Around',
+  };
+
+  const storeAnimItems = store?.items.filter(i => i.category === 'animation') ?? [];
+  const ownedAnimIds = ownedItems?.filter(id => id.startsWith('anim_')) ?? [];
+  const installedSharedAnims = sharedAnimations?.filter(a => a.installed) ?? [];
 
   // ─── Playback ─────────────────────────────────────────────────
 
@@ -454,6 +487,91 @@ export default function AnimationEditorPage() {
               ))}
             </div>
           </div>
+
+          {/* Store Animations */}
+          {selectedDevice && storeAnimItems.length > 0 && (
+            <div className="rounded-lg border border-edge bg-surface p-4">
+              <span className="text-xs text-subtle font-medium uppercase tracking-wider">Store Animations</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                {storeAnimItems.map(item => {
+                  const owned = ownedAnimIds.includes(item.id);
+                  const presetName = STORE_ANIM_MAP[item.id];
+                  const preset = presetName ? PRESET_ANIMATIONS.find(p => p.name === presetName) : null;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        if (owned && preset) {
+                          setAnimation(preset);
+                          setSelectedKf(0);
+                          setPlayTime(0);
+                          setPlaying(false);
+                        }
+                      }}
+                      disabled={!owned}
+                      className={`px-3 py-2 text-xs rounded-lg border transition-all flex items-center gap-2 ${
+                        owned
+                          ? animation.name === presetName
+                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                            : 'bg-inset/80 text-fg border-edge hover:border-edge'
+                          : 'bg-inset/40 text-dim border-edge opacity-50 cursor-not-allowed'
+                      }`}
+                      title={owned ? `Load ${item.name}` : `Buy from store (${item.price} XP)`}
+                    >
+                      <span>{item.icon}</span>
+                      <div className="text-left">
+                        <div>{item.name}</div>
+                        {!owned && <div className="text-[9px] text-dim">{item.price} XP</div>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Shared Community Animations */}
+          {selectedDevice && installedSharedAnims.length > 0 && (
+            <div className="rounded-lg border border-edge bg-surface p-4">
+              <span className="text-xs text-subtle font-medium uppercase tracking-wider">Community Animations</span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+                {installedSharedAnims.map(asset => {
+                  const payload = asset.payload as Record<string, unknown>;
+                  const hasKeyframes = payload.keyframes && Array.isArray(payload.keyframes);
+                  return (
+                    <button
+                      key={asset.id}
+                      onClick={() => {
+                        if (hasKeyframes) {
+                          const loaded: Animation = {
+                            name: asset.name,
+                            duration: (payload.duration as number) || 2000,
+                            loop: (payload.loop as boolean) || false,
+                            keyframes: payload.keyframes as Keyframe[],
+                          };
+                          setAnimation(loaded);
+                          setSelectedKf(0);
+                          setPlayTime(0);
+                          setPlaying(false);
+                        }
+                      }}
+                      disabled={!hasKeyframes}
+                      className={`px-3 py-2 text-xs rounded-lg border transition-all text-left ${
+                        hasKeyframes
+                          ? animation.name === asset.name
+                            ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                            : 'bg-inset/80 text-fg border-edge hover:border-edge'
+                          : 'bg-inset/40 text-dim border-edge opacity-50'
+                      }`}
+                    >
+                      <div className="font-medium">{asset.name}</div>
+                      <div className="text-[9px] text-subtle">by {asset.author}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Animation name */}
           <div className="flex items-center gap-3">

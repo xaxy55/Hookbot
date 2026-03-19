@@ -897,6 +897,10 @@ void update(uint32_t deltaMs) {
     updateAnimations(deltaMs);
 }
 
+void overrideParams(const AvatarParams& params) {
+    current = params;
+}
+
 static void drawNotifications(DisplayCanvas* d) {
     NotificationData* notifs = HookbotServer::getNotifications();
     int count = HookbotServer::getNotificationCount();
