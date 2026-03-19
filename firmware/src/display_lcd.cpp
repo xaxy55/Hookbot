@@ -9,6 +9,11 @@
 // ─── LovyanGFX Configuration for ESP32-4848S040C (4.0" 480x480) ─
 // Pin mapping from: https://homeding.github.io/boards/esp32s3/panel-4848S040.htm
 
+// GT911 state detected during pre-init
+static uint8_t gt911_detected_addr = 0;
+static int gt911_detected_sda = 19;
+static int gt911_detected_scl = 45;
+
 class LGFX : public lgfx::LGFX_Device {
 public:
     lgfx::Bus_RGB      _bus_instance;
@@ -103,13 +108,13 @@ public:
             cfg.y_max = 479;
             cfg.pin_int  = -1;
             cfg.pin_rst  = -1;
-            cfg.bus_shared = true;  // GPIO 20 shared between touch SCL and RGB G1
+            cfg.bus_shared = (gt911_detected_scl == 20);  // Only shared if SCL=GPIO20 (RGB G1)
             cfg.offset_rotation = 0;
             cfg.i2c_port = 1;
-            cfg.i2c_addr = 0x14;   // GT911 alternate address (common on 4848S040C)
-            cfg.pin_sda  = GPIO_NUM_19;
-            cfg.pin_scl  = GPIO_NUM_20;
-            cfg.freq     = 400000; // 400kHz — faster reads reduce shared-bus contention
+            cfg.i2c_addr = (gt911_detected_addr != 0) ? gt911_detected_addr : 0x5D;
+            cfg.pin_sda  = (gpio_num_t)gt911_detected_sda;
+            cfg.pin_scl  = (gpio_num_t)gt911_detected_scl;
+            cfg.freq     = 400000;
             _touch_instance.config(cfg);
             _panel_instance.setTouch(&_touch_instance);
         }
@@ -125,47 +130,95 @@ namespace Display {
 static LGFX* lcd = nullptr;
 static lgfx::LGFX_Sprite* canvas = nullptr;
 
-// Reset GT911 into a known state before LovyanGFX takes over I2C.
-// Without INT/RST pins, do a soft-reset via I2C register write.
+// Reset GT911 into a known state before LovyanGFX takes over.
+// The GT911 I2C address is determined by the INT pin state during reset.
+// On ESP32-4848S040C, INT is usually not routed to a GPIO, so we toggle
+// the I2C pins manually to force a reset and set address 0x5D (INT=HIGH)
+// or 0x14 (INT=LOW during reset).
+// Known pin combinations for ESP32-4848S040C touch (varies by board revision)
+struct TouchPins { int sda; int scl; int intr; int rst; const char* label; };
+static const TouchPins TOUCH_PIN_CANDIDATES[] = {
+    { 19, 45,  2, 38, "Guition production (SDA=19 SCL=45 INT=2 RST=38)" },
+    { 19, 45,  2, -1, "Guition alt (SDA=19 SCL=45 INT=2 no RST)" },
+    { 19, 20, -1, -1, "Early revision (SDA=19 SCL=20 shared bus)" },
+    { 19, 20,  2, -1, "Early + INT (SDA=19 SCL=20 INT=2)" },
+};
+// Local aliases into file-scope detected values
+#define gt911_sda gt911_detected_sda
+#define gt911_scl gt911_detected_scl
+
 static void gt911_pre_init() {
-    Wire1.begin(GPIO_NUM_19, GPIO_NUM_20, 400000);
+    Serial.println("[Touch] GT911 pre-init: scanning pin combinations...");
 
-    // Probe both possible GT911 addresses
-    uint8_t addr = 0;
-    for (uint8_t a : {(uint8_t)0x14, (uint8_t)0x5D}) {
-        Wire1.beginTransmission(a);
-        if (Wire1.endTransmission() == 0) {
-            addr = a;
-            Serial.printf("[Touch] GT911 found at 0x%02X\n", a);
-            break;
+    for (const auto& pins : TOUCH_PIN_CANDIDATES) {
+        Serial.printf("[Touch] Trying %s ...\n", pins.label);
+
+        // Hardware reset via INT pin if available (sets I2C address)
+        if (pins.intr >= 0) {
+            pinMode(pins.intr, OUTPUT);
+            digitalWrite(pins.intr, LOW);  // INT=LOW during reset → addr 0x5D
+            delay(5);
         }
-    }
 
-    if (addr == 0) {
-        Serial.println("[Touch] GT911 not found on I2C — touch may not work");
+        // Hardware reset via RST pin if available
+        if (pins.rst >= 0) {
+            pinMode(pins.rst, OUTPUT);
+            digitalWrite(pins.rst, LOW);
+            delay(15);
+            digitalWrite(pins.rst, HIGH);
+            delay(80);
+        }
+
+        // Release INT after reset
+        if (pins.intr >= 0) {
+            delay(5);
+            pinMode(pins.intr, INPUT);
+        }
+
+        delay(50);
+
+        // Scan I2C
+        Wire1.begin(pins.sda, pins.scl, 400000);
+
+        for (uint8_t a : {(uint8_t)0x5D, (uint8_t)0x14}) {
+            Wire1.beginTransmission(a);
+            uint8_t err = Wire1.endTransmission();
+            Serial.printf("[Touch]   probe 0x%02X: %s\n", a, err == 0 ? "ACK" : "NACK");
+            if (err == 0) {
+                gt911_detected_addr = a;
+                gt911_sda = pins.sda;
+                gt911_scl = pins.scl;
+                Serial.printf("[Touch] GT911 FOUND at 0x%02X (%s)\n", a, pins.label);
+
+                // Soft-reset
+                Wire1.beginTransmission(a);
+                Wire1.write(0x80); Wire1.write(0x40); Wire1.write(0x02);
+                Wire1.endTransmission();
+                delay(100);
+
+                // Clear command register
+                Wire1.beginTransmission(a);
+                Wire1.write(0x80); Wire1.write(0x40); Wire1.write(0x00);
+                Wire1.endTransmission();
+                delay(50);
+
+                // Read product ID (0x8140)
+                Wire1.beginTransmission(a);
+                Wire1.write(0x81); Wire1.write(0x40);
+                Wire1.endTransmission(false);
+                Wire1.requestFrom(a, (uint8_t)4);
+                char pid[5] = {0};
+                for (int i = 0; i < 4 && Wire1.available(); i++) pid[i] = Wire1.read();
+                Serial.printf("[Touch] GT911 product ID: '%s'\n", pid);
+
+                Wire1.end();
+                return;
+            }
+        }
         Wire1.end();
-        return;
     }
 
-    // Soft-reset: write 0x02 to command register 0x8040
-    Wire1.beginTransmission(addr);
-    Wire1.write(0x80);
-    Wire1.write(0x40);
-    Wire1.write(0x02);  // soft reset command
-    Wire1.endTransmission();
-    delay(100);
-
-    // Clear command register (write 0x00) so GT911 starts reporting
-    Wire1.beginTransmission(addr);
-    Wire1.write(0x80);
-    Wire1.write(0x40);
-    Wire1.write(0x00);
-    Wire1.endTransmission();
-    delay(50);
-
-    // IMPORTANT: end Wire1 so LovyanGFX can manage it with bus_shared
-    Wire1.end();
-    Serial.println("[Touch] GT911 soft-reset complete");
+    Serial.println("[Touch] GT911 not found on any pin combination");
 }
 
 void init() {
