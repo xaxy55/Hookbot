@@ -70,6 +70,7 @@ resource "google_compute_instance" "hookbot" {
             { name = "TLS_KEY_PATH", value = "/app/certs/origin-key.pem" },
             { name = "API_KEY", value = var.hookbot_api_key },
             { name = "ADMIN_PASSWORD", value = var.hookbot_admin_password },
+            { name = "ALLOWED_ORIGINS", value = "https://bot.mr-ai.no,https://hookbot-web.pages.dev" },
           ]
           volumeMounts = [{
             name      = "hookbot-data"
