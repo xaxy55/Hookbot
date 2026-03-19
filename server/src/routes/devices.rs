@@ -487,14 +487,24 @@ pub async fn push_config(
                 let avatar_preset_str: Option<String> = row.get(4)?;
                 let custom_data_str: Option<String> = row.get(5)?;
                 let sound_pack: Option<String> = row.get(6)?;
-                Ok((json!({
+                let custom_data = custom_data_str.and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok());
+                let screensaver_mins = custom_data.as_ref()
+                    .and_then(|d| d.get("screensaver_mins"))
+                    .and_then(|v| v.as_i64());
+
+                let mut config = json!({
                     "led_brightness": row.get::<_, i32>(0)?,
                     "led_colors": led_colors_str.and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok()),
                     "sound_enabled": row.get::<_, i32>(2)? != 0,
                     "sound_volume": row.get::<_, i32>(3)?,
                     "avatar_preset": avatar_preset_str.and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok()),
-                    "custom_data": custom_data_str.and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok()),
-                }), sound_pack))
+                    "custom_data": custom_data,
+                });
+                if let Some(mins) = screensaver_mins {
+                    config["screensaver_mins"] = json!(mins);
+                }
+
+                Ok((config, sound_pack))
             },
         ).map_err(|_| AppError::NotFound(format!("Config for device {id} not found")))?;
 

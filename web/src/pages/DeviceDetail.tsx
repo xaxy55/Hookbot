@@ -496,7 +496,7 @@ const DEFAULT_LED_COLORS: Record<string, string> = {
 
 function PersonalityTab({ deviceId, config, onSave }: {
   deviceId: string;
-  config: { led_brightness: number; sound_volume: number; led_colors?: Record<string, string> | null; avatar_preset?: Record<string, unknown> | null };
+  config: { led_brightness: number; sound_volume: number; led_colors?: Record<string, string> | null; avatar_preset?: Record<string, unknown> | null; custom_data?: Record<string, unknown> | null };
   onSave: () => void;
 }) {
   const [brightness, setBrightness] = useState(config.led_brightness);
@@ -505,6 +505,10 @@ function PersonalityTab({ deviceId, config, onSave }: {
     ...DEFAULT_LED_COLORS,
     ...(config.led_colors || {}),
   });
+  const customData = (config.custom_data || {}) as Record<string, unknown>;
+  const [screensaverMins, setScreensaverMins] = useState(
+    typeof customData.screensaver_mins === 'number' ? customData.screensaver_mins : 15
+  );
   const avatarPreset = config.avatar_preset ? JSON.stringify(config.avatar_preset, null, 2) : '';
 
   const update = useMutation({
@@ -513,6 +517,7 @@ function PersonalityTab({ deviceId, config, onSave }: {
       sound_volume: volume,
       led_colors: ledColors,
       avatar_preset: avatarPreset ? JSON.parse(avatarPreset) : undefined,
+      custom_data: { ...customData, screensaver_mins: screensaverMins },
     }),
     onSuccess: onSave,
   });
@@ -573,6 +578,33 @@ function PersonalityTab({ deviceId, config, onSave }: {
             onChange={e => setVolume(Number(e.target.value))}
             className="w-full"
           />
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-fg-2">Screensaver</h2>
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-subtle">Timeout</label>
+            <span className="text-xs font-mono text-subtle">
+              {screensaverMins === 0 ? 'Disabled' : `${screensaverMins} min`}
+            </span>
+          </div>
+          <select
+            value={screensaverMins}
+            onChange={e => setScreensaverMins(Number(e.target.value))}
+            className="w-full px-3 py-2 text-sm bg-inset border border-edge rounded-md text-fg"
+          >
+            <option value={0}>Disabled</option>
+            <option value={5}>5 minutes</option>
+            <option value={10}>10 minutes</option>
+            <option value={15}>15 minutes (default)</option>
+            <option value={30}>30 minutes</option>
+            <option value={60}>1 hour</option>
+          </select>
+          <p className="mt-1.5 text-[11px] text-dim">
+            Time of inactivity before the screensaver activates. Set to Disabled to keep the avatar always visible.
+          </p>
         </div>
       </div>
 
