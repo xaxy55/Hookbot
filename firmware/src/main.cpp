@@ -177,6 +177,14 @@ void setup() {
     BleProv::init();
 #ifdef BOARD_ESP32_4848S040C
     TouchUI::init();
+    // Apply saved display brightness from config
+    {
+        RuntimeConfig& cfg = HookbotServer::getConfig();
+        if (cfg.ledBrightness > 0) {
+            Display::setBrightness(cfg.ledBrightness);
+            Serial.printf("[Main] Display brightness set to %d from config\n", cfg.ledBrightness);
+        }
+    }
     Display::touchTest();
 #endif
 }

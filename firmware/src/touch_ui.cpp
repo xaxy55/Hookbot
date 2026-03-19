@@ -171,13 +171,13 @@ static void drawSettingsPanel(DisplayCanvas* d) {
         Serial.printf("[TouchUI] Sound: %s\n", cfg.soundEnabled ? "ON" : "OFF");
     }
 
-    // LED brightness
+    // Display brightness
     rowY += 14;
     d->setCursor(4, rowY);
-    d->print("LED");
+    d->print("Bright");
     // Brightness bar
-    int16_t barX = 40;
-    int16_t barW = 70;
+    int16_t barX = 44;
+    int16_t barW = 66;
     d->drawRect(barX, rowY, barW, 7, COLOR_WHITE);
     int16_t fillW = (int16_t)((float)cfg.ledBrightness / 255.0f * (barW - 2));
     d->fillRect(barX + 1, rowY + 1, fillW, 5, COLOR_WHITE);
@@ -186,8 +186,10 @@ static void drawSettingsPanel(DisplayCanvas* d) {
         && lastTouchX >= barX && lastTouchX <= barX + barW) {
         float pct = (float)(lastTouchX - barX) / (float)barW;
         cfg.ledBrightness = (int)(pct * 255);
+        if (cfg.ledBrightness < 10) cfg.ledBrightness = 10;  // Don't allow full black
+        Display::setBrightness(cfg.ledBrightness);
         HookbotServer::saveConfigToNVS();
-        Serial.printf("[TouchUI] LED brightness: %d\n", cfg.ledBrightness);
+        Serial.printf("[TouchUI] Display brightness: %d\n", cfg.ledBrightness);
     }
 
     // Device info

@@ -228,7 +228,7 @@ void init() {
     lcd = new LGFX();
     lcd->init();
     lcd->setRotation(0);
-    lcd->setBrightness(255);
+    lcd->setBrightness(255);  // Full brightness initially, server config applied later
     lcd->fillScreen(0);
 
     // Calibrate touch to match display after rotation
@@ -298,6 +298,12 @@ void touchTest() {
         delay(200);
     }
     Serial.println("[Touch] Diagnostics done. Touch the screen to verify.");
+}
+
+void setBrightness(uint8_t level) {
+    if (lcd) {
+        lcd->setBrightness(level);
+    }
 }
 
 } // namespace Display
