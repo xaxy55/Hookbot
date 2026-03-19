@@ -1,5 +1,5 @@
 use axum::body::Body;
-use axum::extract::Request;
+use axum::extract::{ConnectInfo, Request};
 use axum::http::{header, StatusCode};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
@@ -8,8 +8,12 @@ use axum::Json;
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
+use std::collections::HashMap;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::sync::Mutex;
+use tracing::warn;
 
 use crate::config::AppConfig;
 
@@ -17,6 +21,55 @@ type HmacSha256 = Hmac<Sha256>;
 
 const SESSION_COOKIE_NAME: &str = "hookbot_session";
 const SESSION_MAX_AGE_SECS: u64 = 7 * 24 * 60 * 60; // 7 days
+
+/// Per-IP login attempt tracking for rate limiting.
+#[derive(Clone)]
+pub struct LoginRateLimiter {
+    /// Map of IP -> (attempt_count, window_start_epoch_secs)
+    attempts: Arc<Mutex<HashMap<String, (u32, u64)>>>,
+    max_attempts: u32,
+    window_secs: u64,
+}
+
+impl LoginRateLimiter {
+    pub fn new(max_attempts: u32, window_secs: u64) -> Self {
+        Self {
+            attempts: Arc::new(Mutex::new(HashMap::new())),
+            max_attempts,
+            window_secs,
+        }
+    }
+
+    /// Returns Ok(()) if the request is allowed, Err(secs_until_reset) if rate limited.
+    async fn check_and_increment(&self, ip: &str) -> Result<(), u64> {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        let mut attempts = self.attempts.lock().await;
+
+        let entry = attempts.entry(ip.to_string()).or_insert((0, now));
+
+        // Reset window if expired
+        if now >= entry.1 + self.window_secs {
+            *entry = (0, now);
+        }
+
+        if entry.0 >= self.max_attempts {
+            let retry_after = (entry.1 + self.window_secs).saturating_sub(now);
+            return Err(retry_after);
+        }
+
+        entry.0 += 1;
+        Ok(())
+    }
+
+    /// Clear attempts for an IP after successful login.
+    async fn clear(&self, ip: &str) {
+        self.attempts.lock().await.remove(ip);
+    }
+}
 
 /// Middleware that requires either a valid API key or session cookie.
 pub async fn require_auth(
@@ -134,6 +187,41 @@ fn constant_time_eq(a: &str, b: &str) -> bool {
         == 0
 }
 
+/// Build the session cookie string, adding Secure flag when TLS is enabled.
+fn build_session_cookie(token: &str, max_age: u64, tls_enabled: bool) -> String {
+    let secure = if tls_enabled { "; Secure" } else { "" };
+    format!(
+        "{}={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}{}",
+        SESSION_COOKIE_NAME, token, max_age, secure
+    )
+}
+
+/// Extract client IP from ConnectInfo or X-Forwarded-For header.
+fn extract_client_ip(req: &Request<Body>) -> String {
+    // Check X-Forwarded-For first (for reverse proxy / Cloudflare)
+    if let Some(forwarded) = req.headers().get("x-forwarded-for") {
+        if let Ok(val) = forwarded.to_str() {
+            if let Some(first_ip) = val.split(',').next() {
+                return first_ip.trim().to_string();
+            }
+        }
+    }
+
+    // Fall back to CF-Connecting-IP (Cloudflare)
+    if let Some(cf_ip) = req.headers().get("cf-connecting-ip") {
+        if let Ok(val) = cf_ip.to_str() {
+            return val.trim().to_string();
+        }
+    }
+
+    // Fall back to peer address from extensions
+    if let Some(connect_info) = req.extensions().get::<ConnectInfo<SocketAddr>>() {
+        return connect_info.0.ip().to_string();
+    }
+
+    "unknown".to_string()
+}
+
 // --- Handlers ---
 
 #[derive(Deserialize)]
@@ -153,15 +241,55 @@ pub struct AuthStatusResponse {
 
 pub async fn login(
     Extension(config): Extension<Arc<AppConfig>>,
-    Json(body): Json<LoginRequest>,
+    Extension(rate_limiter): Extension<LoginRateLimiter>,
+    req: Request<Body>,
 ) -> Response {
+    let client_ip = extract_client_ip(&req);
+
+    // Check rate limit
+    if let Err(retry_after) = rate_limiter.check_and_increment(&client_ip).await {
+        warn!("Login rate limited for IP {}", client_ip);
+        return (
+            StatusCode::TOO_MANY_REQUESTS,
+            [(header::HeaderName::from_static("retry-after"), retry_after.to_string())],
+            Json(serde_json::json!({
+                "error": "Too many login attempts. Try again later.",
+                "retry_after_secs": retry_after,
+            })),
+        )
+            .into_response();
+    }
+
+    // Parse body manually since we already consumed req for IP extraction
+    let body_bytes = match axum::body::to_bytes(req.into_body(), 1024 * 16).await {
+        Ok(b) => b,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "Invalid request body" })),
+            )
+                .into_response();
+        }
+    };
+    let body: LoginRequest = match serde_json::from_slice(&body_bytes) {
+        Ok(b) => b,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "Invalid JSON" })),
+            )
+                .into_response();
+        }
+    };
+
     match bcrypt::verify(&body.password, &config.admin_password_hash) {
         Ok(true) => {
+            // Clear rate limit on successful login
+            rate_limiter.clear(&client_ip).await;
+
+            let tls_enabled = config.tls_cert_path.is_some();
             let token = create_session_token(&config.session_secret);
-            let cookie = format!(
-                "{}={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}",
-                SESSION_COOKIE_NAME, token, SESSION_MAX_AGE_SECS
-            );
+            let cookie = build_session_cookie(&token, SESSION_MAX_AGE_SECS, tls_enabled);
 
             (
                 StatusCode::OK,
@@ -170,19 +298,22 @@ pub async fn login(
             )
                 .into_response()
         }
-        _ => (
-            StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({ "error": "Invalid password" })),
-        )
-            .into_response(),
+        _ => {
+            warn!("Failed login attempt from IP {}", client_ip);
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(serde_json::json!({ "error": "Invalid password" })),
+            )
+                .into_response()
+        }
     }
 }
 
-pub async fn logout() -> Response {
-    let cookie = format!(
-        "{}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
-        SESSION_COOKIE_NAME
-    );
+pub async fn logout(
+    Extension(config): Extension<Arc<AppConfig>>,
+) -> Response {
+    let tls_enabled = config.tls_cert_path.is_some();
+    let cookie = build_session_cookie("", 0, tls_enabled);
 
     (
         StatusCode::OK,
@@ -199,4 +330,37 @@ pub async fn auth_status(
     let authenticated = check_api_key(&req, &config.api_key)
         || check_session_cookie(&req, &config.session_secret);
     Json(AuthStatusResponse { authenticated })
+}
+
+/// Rotate the API key — generates a new key and saves it to disk.
+/// Requires the current API key for authorization (already enforced by auth middleware).
+pub async fn rotate_api_key(
+    Extension(config): Extension<Arc<AppConfig>>,
+) -> Response {
+    let new_key = uuid::Uuid::new_v4().to_string();
+
+    // Save to disk
+    let key_file = config.firmware_dir.parent().unwrap_or(&config.firmware_dir).join("api_key");
+    match std::fs::write(&key_file, &new_key) {
+        Ok(_) => {
+            tracing::info!("API key rotated, saved to {:?}", key_file);
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "ok": true,
+                    "api_key": new_key,
+                    "message": "API key rotated. Update all clients with the new key. Server restart required for the new key to take effect.",
+                })),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("Failed to save rotated API key: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": format!("Failed to save new key: {}", e) })),
+            )
+                .into_response()
+        }
+    }
 }

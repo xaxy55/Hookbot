@@ -26,6 +26,9 @@ pub struct AppConfig {
     pub api_key: String,
     pub admin_password_hash: String,
     pub session_secret: [u8; 32],
+    pub allowed_origins: Vec<String>,
+    pub login_rate_limit_max: u32,
+    pub login_rate_limit_window_secs: u64,
 }
 
 impl AppConfig {
@@ -73,6 +76,29 @@ impl AppConfig {
         let mut session_secret = [0u8; 32];
         session_secret.copy_from_slice(&result.into_bytes());
 
+        // CORS: allowed origins (comma-separated), empty = mirror request (permissive)
+        let allowed_origins: Vec<String> = env::var("ALLOWED_ORIGINS")
+            .unwrap_or_default()
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+        if allowed_origins.is_empty() {
+            warn!("ALLOWED_ORIGINS not set — CORS will allow any origin. Set ALLOWED_ORIGINS for production.");
+        } else {
+            info!("CORS allowed origins: {:?}", allowed_origins);
+        }
+
+        // Rate limiting for login
+        let login_rate_limit_max = env::var("LOGIN_RATE_LIMIT_MAX")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(5);
+        let login_rate_limit_window_secs = env::var("LOGIN_RATE_LIMIT_WINDOW_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(300); // 5 minutes
+
         Self {
             database_url,
             firmware_dir,
@@ -87,6 +113,9 @@ impl AppConfig {
             api_key,
             admin_password_hash,
             session_secret,
+            allowed_origins,
+            login_rate_limit_max,
+            login_rate_limit_window_secs,
         }
     }
 

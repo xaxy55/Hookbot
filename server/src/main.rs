@@ -37,24 +37,48 @@ async fn main() {
         routes::discovery::discover_and_register(&discover_db, &mdns_prefix).await;
     });
 
+    // Create rate limiter for login
+    let login_rate_limiter = auth::LoginRateLimiter::new(
+        config.login_rate_limit_max,
+        config.login_rate_limit_window_secs,
+    );
+    info!(
+        "Login rate limit: {} attempts per {} seconds",
+        config.login_rate_limit_max, config.login_rate_limit_window_secs
+    );
+
     let config = Arc::new(config);
 
-    let cors = CorsLayer::new()
-        .allow_origin(AllowOrigin::mirror_request())
-        .allow_methods([
-            axum::http::Method::GET,
-            axum::http::Method::POST,
-            axum::http::Method::PUT,
-            axum::http::Method::DELETE,
-            axum::http::Method::OPTIONS,
-        ])
-        .allow_headers([
-            header::CONTENT_TYPE,
-            header::AUTHORIZATION,
-            header::COOKIE,
-            header::HeaderName::from_static("x-api-key"),
-        ])
-        .allow_credentials(true);
+    // CORS: use explicit origins if configured, otherwise fall back to mirror (permissive)
+    let cors = {
+        let allow_origin = if config.allowed_origins.is_empty() {
+            AllowOrigin::mirror_request()
+        } else {
+            let origins: Vec<header::HeaderValue> = config
+                .allowed_origins
+                .iter()
+                .filter_map(|o| o.parse().ok())
+                .collect();
+            AllowOrigin::list(origins)
+        };
+
+        CorsLayer::new()
+            .allow_origin(allow_origin)
+            .allow_methods([
+                axum::http::Method::GET,
+                axum::http::Method::POST,
+                axum::http::Method::PUT,
+                axum::http::Method::DELETE,
+                axum::http::Method::OPTIONS,
+            ])
+            .allow_headers([
+                header::CONTENT_TYPE,
+                header::AUTHORIZATION,
+                header::COOKIE,
+                header::HeaderName::from_static("x-api-key"),
+            ])
+            .allow_credentials(true)
+    };
 
     // Public routes — no auth required
     let public_routes = Router::new()
@@ -173,6 +197,10 @@ async fn main() {
         .route("/api/groups/{id}/command", post(routes::groups::send_group_command))
         .with_state(pool.clone());
 
+    // Auth management routes (protected — require current API key)
+    let auth_mgmt_routes = Router::new()
+        .route("/api/auth/rotate-key", post(auth::rotate_api_key));
+
     // Protected routes — require API key or session cookie
     let protected_routes = Router::new()
         .merge(device_routes)
@@ -184,11 +212,13 @@ async fn main() {
         .merge(community_routes)
         .merge(project_route_routes)
         .merge(group_routes)
+        .merge(auth_mgmt_routes)
         .route_layer(middleware::from_fn(auth::require_auth));
 
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .layer(Extension(login_rate_limiter))
         .layer(Extension(config.clone()))
         .layer(cors);
 
@@ -200,7 +230,7 @@ async fn main() {
             .await
             .expect("Failed to load TLS cert/key");
 
-        // Spawn HTTP→HTTPS redirect on port 80
+        // Spawn HTTP->HTTPS redirect on port 80
         let redirect_app = Router::new().fallback(|req: axum::extract::Request| async move {
             let host = req.headers()
                 .get("host")
