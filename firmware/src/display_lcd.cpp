@@ -109,7 +109,7 @@ public:
             cfg.i2c_addr = 0x14;   // GT911 alternate address (common on 4848S040C)
             cfg.pin_sda  = GPIO_NUM_19;
             cfg.pin_scl  = GPIO_NUM_20;
-            cfg.freq     = 100000; // Lower freq for reliability with shared bus
+            cfg.freq     = 400000; // 400kHz — faster reads reduce shared-bus contention
             _touch_instance.config(cfg);
             _panel_instance.setTouch(&_touch_instance);
         }
@@ -125,12 +125,63 @@ namespace Display {
 static LGFX* lcd = nullptr;
 static lgfx::LGFX_Sprite* canvas = nullptr;
 
+// Reset GT911 into a known state before LovyanGFX takes over I2C.
+// Without INT/RST pins, do a soft-reset via I2C register write.
+static void gt911_pre_init() {
+    Wire1.begin(GPIO_NUM_19, GPIO_NUM_20, 400000);
+
+    // Probe both possible GT911 addresses
+    uint8_t addr = 0;
+    for (uint8_t a : {(uint8_t)0x14, (uint8_t)0x5D}) {
+        Wire1.beginTransmission(a);
+        if (Wire1.endTransmission() == 0) {
+            addr = a;
+            Serial.printf("[Touch] GT911 found at 0x%02X\n", a);
+            break;
+        }
+    }
+
+    if (addr == 0) {
+        Serial.println("[Touch] GT911 not found on I2C — touch may not work");
+        Wire1.end();
+        return;
+    }
+
+    // Soft-reset: write 0x02 to command register 0x8040
+    Wire1.beginTransmission(addr);
+    Wire1.write(0x80);
+    Wire1.write(0x40);
+    Wire1.write(0x02);  // soft reset command
+    Wire1.endTransmission();
+    delay(100);
+
+    // Clear command register (write 0x00) so GT911 starts reporting
+    Wire1.beginTransmission(addr);
+    Wire1.write(0x80);
+    Wire1.write(0x40);
+    Wire1.write(0x00);
+    Wire1.endTransmission();
+    delay(50);
+
+    // IMPORTANT: end Wire1 so LovyanGFX can manage it with bus_shared
+    Wire1.end();
+    Serial.println("[Touch] GT911 soft-reset complete");
+}
+
 void init() {
+    // Pre-init GT911 before display takes over the shared bus
+    gt911_pre_init();
+
     lcd = new LGFX();
     lcd->init();
     lcd->setRotation(0);
     lcd->setBrightness(255);
     lcd->fillScreen(0);
+
+    // Calibrate touch to match display after rotation
+    // Map raw touch (0-479) to display pixels (0-479)
+    uint16_t calData[8] = { 0, 0, 0, 479, 479, 0, 479, 479 };
+    lcd->setTouchCalibrate(calData);
 
     // Virtual canvas at 120x120, scaled 4x to fill 480x480
     canvas = new lgfx::LGFX_Sprite(lcd);
@@ -161,11 +212,17 @@ int16_t centerY() { return SCREEN_HEIGHT / 2; }
 
 bool getTouchPoint(int16_t& x, int16_t& y) {
     lgfx::touch_point_t tp;
-    int count = lcd->getTouchRaw(&tp, 1);
+    // Use getTouch (applies calibration + rotation) not getTouchRaw
+    int count = lcd->getTouch(&tp, 1);
     if (count > 0) {
-        // Map raw touch coordinates to virtual canvas
-        x = tp.x / 4;
-        y = tp.y / 4;
+        // Map display coordinates (0-479) to virtual canvas (0-119)
+        x = tp.x / LCD_SCALE;
+        y = tp.y / LCD_SCALE;
+        // Clamp to canvas bounds
+        if (x < 0) x = 0;
+        if (x >= SCREEN_WIDTH) x = SCREEN_WIDTH - 1;
+        if (y < 0) y = 0;
+        if (y >= SCREEN_HEIGHT) y = SCREEN_HEIGHT - 1;
         return true;
     }
     return false;
@@ -174,24 +231,20 @@ bool getTouchPoint(int16_t& x, int16_t& y) {
 void touchTest() {
     Serial.println("[Touch] Running touch diagnostics...");
 
-    // Scan I2C bus for GT911
-    Wire1.begin(GPIO_NUM_19, GPIO_NUM_20, 100000);
-    uint8_t addrs[] = {0x14, 0x5D};
-    for (auto addr : addrs) {
-        Wire1.beginTransmission(addr);
-        uint8_t err = Wire1.endTransmission();
-        Serial.printf("[Touch] I2C scan 0x%02X: %s\n", addr, err == 0 ? "FOUND" : "no response");
-    }
-    Wire1.end();
-
-    // Test touch reads
+    // Test touch reads using LovyanGFX (don't reinit Wire1 — it's managed by LGFX)
     lgfx::touch_point_t tp;
-    for (int i = 0; i < 5; i++) {
-        int count = lcd->getTouchRaw(&tp, 1);
-        Serial.printf("[Touch] Read %d: count=%d x=%d y=%d\n", i, count, tp.x, tp.y);
-        delay(100);
+    for (int i = 0; i < 10; i++) {
+        int countRaw = lcd->getTouchRaw(&tp, 1);
+        Serial.printf("[Touch] Read %d: count=%d raw_x=%d raw_y=%d\n", i, countRaw, tp.x, tp.y);
+
+        int countCal = lcd->getTouch(&tp, 1);
+        if (countCal > 0) {
+            Serial.printf("[Touch]   calibrated: x=%d y=%d -> canvas(%d,%d)\n",
+                tp.x, tp.y, tp.x / LCD_SCALE, tp.y / LCD_SCALE);
+        }
+        delay(200);
     }
-    Serial.println("[Touch] Diagnostics done. Touch screen during use to verify.");
+    Serial.println("[Touch] Diagnostics done. Touch the screen to verify.");
 }
 
 } // namespace Display

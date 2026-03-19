@@ -104,28 +104,22 @@ void update(uint32_t deltaMs, int16_t touchX, int16_t touchY, bool touching) {
             int16_t dx = lastTouchX - swipeStartX;
 
             // Swipe up from bottom -> settings
-            if (dy < -10 && swipeStartY > 75 && abs(dx) < abs(dy)) {
+            if (dy < -8 && swipeStartY > 85 && abs(dx) < abs(dy)) {
                 openPanel(Panel::SETTINGS);
             }
             // Swipe from left edge -> accessories
-            else if (dx > 10 && swipeStartX < 30 && abs(dx) > abs(dy)) {
+            else if (dx > 8 && swipeStartX < 25 && abs(dx) > abs(dy)) {
                 openPanel(Panel::ACCESSORIES);
             }
             // Swipe from right edge -> state selector
-            else if (dx < -10 && swipeStartX > 90 && abs(dx) > abs(dy)) {
+            else if (dx < -8 && swipeStartX > 95 && abs(dx) > abs(dy)) {
                 openPanel(Panel::STATE_SELECT);
-            }
-            // Short tap top half -> cycle state (original behavior)
-            else if (touchDuration < 300 && abs(dy) < 5 && abs(dx) < 5) {
-                if (swipeStartY < 60) {
-                    int next = ((int)Avatar::getState() + 1) % 6;
-                    // This will be handled by main.cpp
-                }
             }
         } else if (activePanel != Panel::NONE) {
             int16_t dy = lastTouchY - swipeStartY;
-            // Swipe down to close panel
-            if (dy > 15) {
+            int16_t dx = lastTouchX - swipeStartX;
+            // Swipe away to close panel (down for settings, right-to-left for accessories, etc.)
+            if (abs(dy) > 10 || abs(dx) > 10) {
                 closePanel();
             }
         }
