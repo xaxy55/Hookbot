@@ -133,7 +133,7 @@ void update(uint32_t deltaMs, int16_t touchX, int16_t touchY, bool touching) {
 // ─── Drawing helpers ────────────────────────────────────────────
 
 static void drawSettingsPanel(DisplayCanvas* d) {
-    int16_t panelH = 80;
+    int16_t panelH = 95;
     int16_t panelY = 120 - (int16_t)(panelH * slideProgress);
 
     // Panel background
@@ -192,8 +192,44 @@ static void drawSettingsPanel(DisplayCanvas* d) {
         Serial.printf("[TouchUI] Display brightness: %d\n", cfg.ledBrightness);
     }
 
-    // Device info
+    // Screensaver timeout
     rowY += 14;
+    d->setCursor(4, rowY);
+    d->print("Sleep");
+    // Show current value
+    char ssBuf[12];
+    if (cfg.screensaverMins == 0) {
+        snprintf(ssBuf, sizeof(ssBuf), "OFF");
+    } else {
+        snprintf(ssBuf, sizeof(ssBuf), "%dm", cfg.screensaverMins);
+    }
+    d->setCursor(90, rowY);
+    d->print(ssBuf);
+    // Tap left half to decrease, right half to increase
+    if (justReleased && lastTouchY >= rowY - 2 && lastTouchY <= rowY + 10) {
+        if (lastTouchX >= 70 && lastTouchX < 95) {
+            // Decrease (cycle: 0, 5, 10, 15, 30, 60)
+            int vals[] = {0, 5, 10, 15, 30, 60};
+            int n = sizeof(vals)/sizeof(vals[0]);
+            for (int i = n - 1; i >= 0; i--) {
+                if (vals[i] < cfg.screensaverMins) { cfg.screensaverMins = vals[i]; break; }
+            }
+            HookbotServer::saveConfigToNVS();
+            Serial.printf("[TouchUI] Screensaver: %d min\n", cfg.screensaverMins);
+        } else if (lastTouchX >= 95) {
+            // Increase
+            int vals[] = {0, 5, 10, 15, 30, 60};
+            int n = sizeof(vals)/sizeof(vals[0]);
+            for (int i = 0; i < n; i++) {
+                if (vals[i] > cfg.screensaverMins) { cfg.screensaverMins = vals[i]; break; }
+            }
+            HookbotServer::saveConfigToNVS();
+            Serial.printf("[TouchUI] Screensaver: %d min\n", cfg.screensaverMins);
+        }
+    }
+
+    // Device info
+    rowY += 12;
     d->setTextColor(COLOR_WHITE);
     d->setCursor(4, rowY);
     d->print("IP:");

@@ -91,6 +91,8 @@ void loadConfigFromNVS() {
     }
     // Auto-brightness
     runtimeConfig.autoBrightness = prefs.getBool("autoBright", false);
+    // Screensaver timeout (default 15 minutes, 0 = disabled)
+    runtimeConfig.screensaverMins = prefs.getInt("ssTimeout", 15);
     prefs.end();
     Serial.printf("[Server] Config loaded: brightness=%d, sound=%s, vol=%d, host=%s\n",
         runtimeConfig.ledBrightness,
@@ -120,6 +122,8 @@ void saveConfigToNVS() {
     prefs.putBytes("ledClrs", runtimeConfig.ledColors, sizeof(runtimeConfig.ledColors));
     // Auto-brightness
     prefs.putBool("autoBright", runtimeConfig.autoBrightness);
+    // Screensaver timeout
+    prefs.putInt("ssTimeout", runtimeConfig.screensaverMins);
     prefs.end();
     Serial.println("[Server] Config saved to NVS");
 }
@@ -465,6 +469,12 @@ void init(std::function<void(AvatarState)> onStateChange) {
                 Serial.println("[Server] Custom LED colors updated");
             }
 
+            // Screensaver timeout
+            if (!body["screensaver_mins"].isNull()) {
+                runtimeConfig.screensaverMins = body["screensaver_mins"];
+                Serial.printf("[Server] Screensaver timeout: %d min\n", runtimeConfig.screensaverMins);
+            }
+
             // Auto-brightness from ambient light sensor
             if (!body["auto_brightness"].isNull()) {
                 runtimeConfig.autoBrightness = body["auto_brightness"];
@@ -484,6 +494,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
             resp["sound_volume"] = runtimeConfig.soundVolume;
             resp["hostname"] = runtimeConfig.hostname;
             resp["auto_brightness"] = runtimeConfig.autoBrightness;
+            resp["screensaver_mins"] = runtimeConfig.screensaverMins;
 
             String json;
             serializeJson(resp, json);

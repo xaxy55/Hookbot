@@ -67,6 +67,8 @@ struct RuntimeConfig {
     bool ledColorsCustom;
     // Auto-brightness from ambient light sensor
     bool autoBrightness;
+    // Screensaver timeout in minutes (0 = disabled)
+    int screensaverMins;
 };
 
 // WiFi + HTTP API + mDNS subsystem

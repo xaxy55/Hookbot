@@ -23,7 +23,7 @@
 
 // ─── Screensaver ────────────────────────────────────────────────
 
-#define SCREENSAVER_TIMEOUT_MS 300000  // 5 minutes of idle before screensaver
+// Screensaver timeout is configurable via RuntimeConfig.screensaverMins
 
 #ifndef NO_DISPLAY
 static bool screensaverActive = false;
@@ -234,17 +234,18 @@ void loop() {
 #endif
 
 #ifndef NO_DISPLAY
-    // Screensaver: activate after extended idle, prevent OLED burn-in
-    // Skip on LCD — no burn-in risk and it just looks like a black screen
-#ifndef BOARD_ESP32_4848S040C
-    if (currentState == AvatarState::IDLE
-        && (now - stateEnteredAt >= SCREENSAVER_TIMEOUT_MS)
-        && !screensaverActive) {
-        screensaverActive = true;
-        Screensaver::randomize();
-        Serial.println("[Main] Screensaver activated");
+    // Screensaver: activate after extended idle (0 = disabled)
+    {
+        int ssMins = HookbotServer::getConfig().screensaverMins;
+        if (ssMins > 0
+            && currentState == AvatarState::IDLE
+            && (now - stateEnteredAt >= (uint32_t)ssMins * 60000UL)
+            && !screensaverActive) {
+            screensaverActive = true;
+            Screensaver::randomize();
+            Serial.printf("[Main] Screensaver activated (after %d min)\n", ssMins);
+        }
     }
-#endif
 
     if (screensaverActive) {
         Display::clear();
