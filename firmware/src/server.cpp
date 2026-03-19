@@ -3,6 +3,10 @@
 #include "servo.h"
 #include "sensors.h"
 #include "sound.h"
+#ifndef NO_LED
+#include "led.h"
+#endif
+#include "animation_player.h"
 #include <WiFi.h>
 #include <WiFiMulti.h>
 #include <ESPmDNS.h>
@@ -69,6 +73,8 @@ void loadConfigFromNVS() {
     strncpy(runtimeConfig.hostname, hostname.c_str(), sizeof(runtimeConfig.hostname) - 1);
     String mgmt = prefs.getString("mgmtServer", DEFAULT_MGMT_SERVER);
     strncpy(runtimeConfig.mgmtServer, mgmt.c_str(), sizeof(runtimeConfig.mgmtServer) - 1);
+    String apiKey = prefs.getString("apiKey", "");
+    strncpy(runtimeConfig.apiKey, apiKey.c_str(), sizeof(runtimeConfig.apiKey) - 1);
     // Accessories (default: hat + cigar for the CEO)
     runtimeConfig.topHat = prefs.getBool("accHat", true);
     runtimeConfig.cigar = prefs.getBool("accCigar", true);
@@ -83,6 +89,8 @@ void loadConfigFromNVS() {
     if (runtimeConfig.ledColorsCustom) {
         prefs.getBytes("ledClrs", runtimeConfig.ledColors, sizeof(runtimeConfig.ledColors));
     }
+    // Auto-brightness
+    runtimeConfig.autoBrightness = prefs.getBool("autoBright", false);
     prefs.end();
     Serial.printf("[Server] Config loaded: brightness=%d, sound=%s, vol=%d, host=%s\n",
         runtimeConfig.ledBrightness,
@@ -98,6 +106,7 @@ void saveConfigToNVS() {
     prefs.putInt("soundVol", runtimeConfig.soundVolume);
     prefs.putString("hostname", runtimeConfig.hostname);
     prefs.putString("mgmtServer", runtimeConfig.mgmtServer);
+    prefs.putString("apiKey", runtimeConfig.apiKey);
     prefs.putBool("accHat", runtimeConfig.topHat);
     prefs.putBool("accCigar", runtimeConfig.cigar);
     prefs.putBool("accGlasses", runtimeConfig.glasses);
@@ -109,6 +118,8 @@ void saveConfigToNVS() {
     // Custom LED colors
     prefs.putBool("ledCustom", runtimeConfig.ledColorsCustom);
     prefs.putBytes("ledClrs", runtimeConfig.ledColors, sizeof(runtimeConfig.ledColors));
+    // Auto-brightness
+    prefs.putBool("autoBright", runtimeConfig.autoBrightness);
     prefs.end();
     Serial.println("[Server] Config saved to NVS");
 }
@@ -120,6 +131,9 @@ static void registerWithServer() {
     String url = String(runtimeConfig.mgmtServer) + "/api/devices";
     http.begin(url);
     http.addHeader("Content-Type", "application/json");
+    if (strlen(runtimeConfig.apiKey) > 0) {
+        http.addHeader("X-API-Key", runtimeConfig.apiKey);
+    }
 
     JsonDocument doc;
     doc["name"] = runtimeConfig.hostname;
@@ -451,6 +465,16 @@ void init(std::function<void(AvatarState)> onStateChange) {
                 Serial.println("[Server] Custom LED colors updated");
             }
 
+            // Auto-brightness from ambient light sensor
+            if (!body["auto_brightness"].isNull()) {
+                runtimeConfig.autoBrightness = body["auto_brightness"];
+#ifndef NO_LED
+                Led::setAutoBrightness(runtimeConfig.autoBrightness);
+#endif
+                Serial.printf("[Server] Auto-brightness: %s\n",
+                    runtimeConfig.autoBrightness ? "on" : "off");
+            }
+
             saveConfigToNVS();
 
             JsonDocument resp;
@@ -459,6 +483,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
             resp["sound_enabled"] = runtimeConfig.soundEnabled;
             resp["sound_volume"] = runtimeConfig.soundVolume;
             resp["hostname"] = runtimeConfig.hostname;
+            resp["auto_brightness"] = runtimeConfig.autoBrightness;
 
             String json;
             serializeJson(resp, json);
@@ -936,6 +961,44 @@ void init(std::function<void(AvatarState)> onStateChange) {
         }
     );
     server.addHandler(sensorConfigHandler);
+
+    // POST /animation - receive animation JSON and play it
+    AsyncCallbackJsonWebHandler* animHandler = new AsyncCallbackJsonWebHandler(
+        "/animation",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            String body;
+            serializeJson(jsonBody, body);
+
+            if (!AnimPlayer::loadFromJson(body.c_str())) {
+                req->send(400, "application/json", "{\"error\":\"invalid animation JSON\"}");
+                return;
+            }
+
+            AnimPlayer::play();
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["msg"] = "animation started";
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(animHandler);
+
+    // POST /animation/stop - stop current animation
+    server.on("/animation/stop", HTTP_POST, [](AsyncWebServerRequest* req) {
+        AnimPlayer::stop();
+
+        JsonDocument resp;
+        resp["ok"] = true;
+        resp["msg"] = "animation stopped";
+
+        String json;
+        serializeJson(resp, json);
+        req->send(200, "application/json", json);
+    });
 
     server.begin();
     Serial.println("[Server] HTTP server started on port 80");

@@ -20,6 +20,11 @@ final class WatchNetworkService: ObservableObject {
             UserDefaults.standard.set(deviceId, forKey: "hookbot_watch_device")
         }
     }
+    @Published var apiKey: String = "" {
+        didSet {
+            UserDefaults.standard.set(apiKey, forKey: "hookbot_watch_api_key")
+        }
+    }
 
     private var pollTimer: Timer?
     private var lastKnownState: AvatarState = .idle
@@ -34,6 +39,15 @@ final class WatchNetworkService: ObservableObject {
 
         self.serverURL = UserDefaults.standard.string(forKey: "hookbot_watch_server") ?? ""
         self.deviceId = UserDefaults.standard.string(forKey: "hookbot_watch_device") ?? ""
+        self.apiKey = UserDefaults.standard.string(forKey: "hookbot_watch_api_key") ?? ""
+    }
+
+    private func authedRequest(url: URL) -> URLRequest {
+        var request = URLRequest(url: url)
+        if !apiKey.isEmpty {
+            request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        }
+        return request
     }
 
     // MARK: - Polling
@@ -63,7 +77,7 @@ final class WatchNetworkService: ObservableObject {
         guard !serverURL.isEmpty, !deviceId.isEmpty else { return }
 
         guard let url = URL(string: "\(serverURL)/api/devices/\(deviceId)/status") else { return }
-        session.dataTask(with: url) { [weak self] data, response, _ in
+        session.dataTask(with: authedRequest(url: url)) { [weak self] data, response, _ in
             DispatchQueue.main.async {
                 guard let self else { return }
 
@@ -116,7 +130,7 @@ final class WatchNetworkService: ObservableObject {
         let deviceQuery = deviceId.isEmpty ? "" : "?device_id=\(deviceId)"
         guard let url = URL(string: "\(serverURL)/api/gamification/stats\(deviceQuery)") else { return }
 
-        session.dataTask(with: url) { [weak self] data, response, _ in
+        session.dataTask(with: authedRequest(url: url)) { [weak self] data, response, _ in
             guard let data,
                   let http = response as? HTTPURLResponse, http.statusCode == 200 else { return }
 
@@ -142,7 +156,7 @@ final class WatchNetworkService: ObservableObject {
         let deviceQuery = deviceId.isEmpty ? "?limit=10" : "?device_id=\(deviceId)&limit=10"
         guard let url = URL(string: "\(serverURL)/api/gamification/activity\(deviceQuery)") else { return }
 
-        session.dataTask(with: url) { [weak self] data, response, _ in
+        session.dataTask(with: authedRequest(url: url)) { [weak self] data, response, _ in
             guard let data,
                   let http = response as? HTTPURLResponse, http.statusCode == 200 else { return }
 
@@ -160,7 +174,7 @@ final class WatchNetworkService: ObservableObject {
         guard !serverURL.isEmpty, !deviceId.isEmpty else { return }
 
         guard let url = URL(string: "\(serverURL)/api/devices/\(deviceId)/state") else { return }
-        var request = URLRequest(url: url)
+        var request = authedRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: ["state": state.rawValue])

@@ -1,3 +1,4 @@
+mod auth;
 mod config;
 mod db;
 mod error;
@@ -6,11 +7,12 @@ mod routes;
 mod services;
 
 use axum::routing::{delete, get, post, put};
-use axum::Router;
+use axum::{middleware, Extension, Router};
 use axum::response::Redirect;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tracing::info;
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use config::AppConfig;
 
@@ -34,10 +36,28 @@ async fn main() {
         routes::discovery::discover_and_register(&discover_db, &mdns_prefix).await;
     });
 
+    let config = Arc::new(config);
+
     let cors = CorsLayer::new()
-        .allow_origin(Any)
+        .allow_origin(AllowOrigin::mirror_request())
         .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_headers(Any)
+        .allow_credentials(true);
+
+    // Public routes — no auth required
+    let public_routes = Router::new()
+        .route("/api/health", get(|| async {
+            axum::Json(serde_json::json!({
+                "status": "ok",
+                "uptime_secs": std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs(),
+            }))
+        }))
+        .route("/api/auth/login", post(auth::login))
+        .route("/api/auth/logout", post(auth::logout))
+        .route("/api/auth/status", get(auth::auth_status));
 
     // Device routes use just the pool
     let device_routes = Router::new()
@@ -83,14 +103,14 @@ async fn main() {
         .route("/api/firmware/build", post(routes::build::build_firmware))
         .route("/api/ota/deploy", post(routes::ota::deploy))
         .route("/api/ota/jobs", get(routes::ota::list_jobs))
-        .with_state((pool.clone(), config.clone()));
+        .with_state((pool.clone(), (*config).clone()));
 
     // Settings & log management routes
     let settings_routes = Router::new()
         .route("/api/settings", get(routes::settings::get_settings).put(routes::settings::update_settings))
         .route("/api/logs/stats", get(routes::settings::get_log_stats))
         .route("/api/logs/prune", delete(routes::settings::prune_logs))
-        .with_state((pool.clone(), config.clone()));
+        .with_state((pool.clone(), (*config).clone()));
 
     // Store routes
     let store_routes = Router::new()
@@ -127,16 +147,8 @@ async fn main() {
         .route("/api/groups/{id}/command", post(routes::groups::send_group_command))
         .with_state(pool.clone());
 
-    let app = Router::new()
-        .route("/api/health", get(|| async {
-            axum::Json(serde_json::json!({
-                "status": "ok",
-                "uptime_secs": std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs(),
-            }))
-        }))
+    // Protected routes — require API key or session cookie
+    let protected_routes = Router::new()
         .merge(device_routes)
         .merge(firmware_routes)
         .merge(settings_routes)
@@ -144,6 +156,12 @@ async fn main() {
         .merge(community_routes)
         .merge(project_route_routes)
         .merge(group_routes)
+        .route_layer(middleware::from_fn(auth::require_auth));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
+        .layer(Extension(config.clone()))
         .layer(cors);
 
     // If TLS cert and key are provided, serve HTTPS on 443 + HTTP redirect on 80

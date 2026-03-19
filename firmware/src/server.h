@@ -52,6 +52,7 @@ struct RuntimeConfig {
     int soundVolume;
     char hostname[32];
     char mgmtServer[128];
+    char apiKey[64];
     // Accessories
     bool topHat;
     bool cigar;
@@ -64,6 +65,8 @@ struct RuntimeConfig {
     // Custom LED colors (one per AvatarState: IDLE=0 through ERROR=5)
     LedColorRGB ledColors[6];
     bool ledColorsCustom;
+    // Auto-brightness from ambient light sensor
+    bool autoBrightness;
 };
 
 // WiFi + HTTP API + mDNS subsystem

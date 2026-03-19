@@ -94,6 +94,7 @@ function sendToServer(host, event, input, deviceId) {
         headers: {
           "Content-Type": "application/json",
           "Content-Length": Buffer.byteLength(body),
+          ...(config.api_key ? { "X-API-Key": config.api_key } : {}),
         },
         timeout: TIMEOUT_MS,
       },

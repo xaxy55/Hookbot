@@ -222,6 +222,9 @@ final class NetworkService: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if !engine.config.apiKey.isEmpty {
+            request.setValue(engine.config.apiKey, forHTTPHeaderField: "X-API-Key")
+        }
         request.timeoutInterval = 5
 
         let payload: [String: Any] = [

@@ -26,6 +26,20 @@ variable "cloudflare_account_id" {
   type        = string
 }
 
+variable "hookbot_api_key" {
+  description = "API key for device/hook authentication (auto-generated if empty)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "hookbot_admin_password" {
+  description = "Admin password for web dashboard (auto-generated if empty)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "cloudflare_pages_project" {
   description = "Cloudflare Pages project name"
   type        = string

@@ -1,5 +1,7 @@
+import { useState, useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/Toast';
+import { getAuthStatus } from './api/client';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import DevicesPage from './pages/DevicesPage';
@@ -19,13 +21,46 @@ import BleSetupPage from './pages/BleSetupPage';
 import StorePage from './pages/StorePage';
 import CommunityStorePage from './pages/CommunityStorePage';
 import AssetSharingPage from './pages/AssetSharingPage';
+import LoginPage from './pages/LoginPage';
+
+function AuthGuard({ children }: { children: ReactNode }) {
+  const [authed, setAuthed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getAuthStatus()
+      .then(r => setAuthed(r.authenticated))
+      .catch(() => setAuthed(false));
+  }, []);
+
+  if (authed === null) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0a0a0f',
+        color: '#888',
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  if (!authed) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 export default function App() {
   return (
     <ToastProvider>
     <BrowserRouter>
       <Routes>
-        <Route element={<Layout />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<AuthGuard><Layout /></AuthGuard>}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/devices" element={<DevicesPage />} />
           <Route path="/devices/:id" element={<DeviceDetail />} />

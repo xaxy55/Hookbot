@@ -20,14 +20,32 @@ const BASE = import.meta.env.VITE_API_BASE_URL
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     ...options,
   });
+  if (res.status === 401 && !path.startsWith('/auth/')) {
+    window.location.href = '/login';
+    throw new Error('Unauthorized');
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(body.error || res.statusText);
   }
   return res.json();
 }
+
+// Auth
+export const login = (password: string) =>
+  request<{ ok: boolean }>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ password }),
+  });
+
+export const logout = () =>
+  request<{ ok: boolean }>('/auth/logout', { method: 'POST' });
+
+export const getAuthStatus = () =>
+  request<{ authenticated: boolean }>('/auth/status');
 
 // Devices
 export const getDevices = () => request<DeviceWithStatus[]>('/devices');
@@ -150,6 +168,32 @@ export const importDeviceConfig = (id: string, data: ConfigExportData) =>
     body: JSON.stringify(data),
   });
 
+// Animation
+export interface AnimationKeyframe {
+  time: number;
+  eyeX: number; eyeY: number; eyeOpen: number;
+  mouthCurve: number; mouthOpen: number;
+  bounce: number; shake: number;
+  browAngle: number; browY: number;
+}
+
+export interface AnimationPayload {
+  frames: AnimationKeyframe[];
+  loop: boolean;
+  duration_ms: number;
+}
+
+export const playAnimation = (deviceId: string, animation: AnimationPayload) =>
+  request<{ ok: boolean }>(`/devices/${deviceId}/animation`, {
+    method: 'POST',
+    body: JSON.stringify(animation),
+  });
+
+export const stopAnimation = (deviceId: string) =>
+  request<{ ok: boolean }>(`/devices/${deviceId}/animation/stop`, {
+    method: 'POST',
+  });
+
 // Discovery
 export const discoverDevices = () => request<DiscoveredDevice[]>('/discovery');
 
@@ -163,7 +207,7 @@ export const uploadFirmware = async (file: File, version: string, notes?: string
   if (notes) form.append('notes', notes);
   if (deviceType) form.append('device_type', deviceType);
 
-  const res = await fetch(`${BASE}/firmware`, { method: 'POST', body: form });
+  const res = await fetch(`${BASE}/firmware`, { method: 'POST', body: form, credentials: 'include' });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(body.error || res.statusText);
@@ -249,6 +293,29 @@ export const updateSensors = (deviceId: string, channels: Partial<SensorChannelC
     method: 'PUT',
     body: JSON.stringify({ channels }),
   });
+
+// Sensor Readings
+export interface SensorReading {
+  id: number;
+  device_id: string;
+  channel: number;
+  value: number;
+  recorded_at: string;
+}
+
+export const getSensorReadings = (deviceId: string, channel?: number, hours?: number) => {
+  const params = new URLSearchParams();
+  if (channel !== undefined) params.set('channel', String(channel));
+  if (hours !== undefined) params.set('hours', String(hours));
+  const qs = params.toString();
+  return request<SensorReading[]>(`/devices/${deviceId}/sensors/readings${qs ? `?${qs}` : ''}`);
+};
+
+export const getLatestSensorReadings = (deviceId: string) =>
+  request<SensorReading[]>(`/devices/${deviceId}/sensors/readings/latest`);
+
+export const purgeSensorReadings = (deviceId: string) =>
+  request<{ ok: boolean; deleted: number }>(`/devices/${deviceId}/sensors/readings`, { method: 'DELETE' });
 
 // Automation Rules
 export interface AutomationRule {
@@ -418,6 +485,7 @@ export interface CommunityPlugin {
   rating_avg: number;
   rating_count: number;
   installed: boolean;
+  verified: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -471,6 +539,7 @@ export interface SharedAsset {
   rating_avg: number;
   rating_count: number;
   installed: boolean;
+  verified: boolean;
   created_at: string;
 }
 
@@ -507,4 +576,97 @@ export const rateAsset = (assetId: string, stars: number, deviceId?: string) =>
   request<{ ok: boolean }>(`/community/assets/${assetId}/rate`, {
     method: 'POST',
     body: JSON.stringify({ stars, device_id: deviceId }),
+  });
+
+// Verified Publishers
+export interface VerifiedPublisher {
+  id: string;
+  name: string;
+  display_name: string;
+  badge_type: string;
+  verified_at: string;
+  verified_by: string | null;
+}
+
+export const getVerifiedPublishers = () =>
+  request<VerifiedPublisher[]>('/community/publishers');
+
+export const addVerifiedPublisher = (data: {
+  name: string;
+  display_name: string;
+  badge_type?: string;
+}) => request<VerifiedPublisher>('/community/publishers', {
+  method: 'POST',
+  body: JSON.stringify(data),
+});
+
+export const removeVerifiedPublisher = (id: string) =>
+  request<{ ok: boolean }>(`/community/publishers/${id}`, { method: 'DELETE' });
+
+// Project Routes
+export interface ProjectRoute {
+  id: string;
+  project_path: string;
+  device_id: string;
+  label: string | null;
+  created_at: string;
+  device_name: string | null;
+}
+
+export const getProjectRoutes = () => request<ProjectRoute[]>('/routes');
+
+export const createProjectRoute = (data: {
+  project_path: string;
+  device_id: string;
+  label?: string;
+}) => request<ProjectRoute>('/routes', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateProjectRoute = (id: string, data: {
+  project_path?: string;
+  device_id?: string;
+  label?: string;
+}) => request<ProjectRoute>(`/routes/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteProjectRoute = (id: string) =>
+  request<{ ok: boolean }>(`/routes/${id}`, { method: 'DELETE' });
+
+// Device Groups
+export interface DeviceGroup {
+  id: string;
+  name: string;
+  color: string;
+  created_at: string;
+  device_ids: string[];
+}
+
+export const getGroups = () => request<DeviceGroup[]>('/groups');
+
+export const createGroup = (data: { name: string; color?: string }) =>
+  request<DeviceGroup>('/groups', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateGroup = (id: string, data: { name?: string; color?: string }) =>
+  request<DeviceGroup>(`/groups/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteGroup = (id: string) =>
+  request<{ ok: boolean }>(`/groups/${id}`, { method: 'DELETE' });
+
+export const addGroupMember = (groupId: string, deviceId: string) =>
+  request<DeviceGroup>(`/groups/${groupId}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ device_id: deviceId }),
+  });
+
+export const removeGroupMember = (groupId: string, deviceId: string) =>
+  request<{ ok: boolean }>(`/groups/${groupId}/members/${deviceId}`, { method: 'DELETE' });
+
+export const sendGroupState = (groupId: string, state: string) =>
+  request<{ ok: boolean; successes: number; failures: number }>(`/groups/${groupId}/state`, {
+    method: 'POST',
+    body: JSON.stringify({ state }),
+  });
+
+export const sendGroupCommand = (groupId: string, endpoint: string, body: Record<string, unknown>) =>
+  request<{ ok: boolean; successes: number; failures: number }>(`/groups/${groupId}/command`, {
+    method: 'POST',
+    body: JSON.stringify({ endpoint, body }),
   });

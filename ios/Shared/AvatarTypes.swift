@@ -71,6 +71,7 @@ struct RuntimeConfig: Codable {
     var soundVolume: Int = 50
     var accessories: AccessoriesConfig = AccessoriesConfig()
     var serverURL: String = ""
+    var apiKey: String = ""
     var deviceName: String = "hookbot-ios"
 }
 

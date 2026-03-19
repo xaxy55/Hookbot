@@ -1,5 +1,12 @@
 use std::env;
+use std::fs;
 use std::path::PathBuf;
+
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
+use tracing::{info, warn};
+
+type HmacSha256 = Hmac<Sha256>;
 
 #[derive(Debug, Clone)]
 pub struct AppConfig {
@@ -16,6 +23,9 @@ pub struct AppConfig {
     pub anthropic_api_key: Option<String>,
     #[allow(dead_code)]
     pub calendar_url: Option<String>,
+    pub api_key: String,
+    pub admin_password_hash: String,
+    pub session_secret: [u8; 32],
 }
 
 impl AppConfig {
@@ -24,7 +34,7 @@ impl AppConfig {
             .unwrap_or_else(|_| "data/deskbot.db".to_string())
             .into();
 
-        let firmware_dir = env::var("FIRMWARE_DIR")
+        let firmware_dir: PathBuf = env::var("FIRMWARE_DIR")
             .unwrap_or_else(|_| "data/firmware".to_string())
             .into();
 
@@ -49,6 +59,20 @@ impl AppConfig {
         let anthropic_api_key = env::var("ANTHROPIC_API_KEY").ok();
         let calendar_url = env::var("CALENDAR_URL").ok();
 
+        // Auth: API key
+        let api_key = Self::resolve_api_key(&firmware_dir);
+
+        // Auth: Admin password
+        let admin_password_hash = Self::resolve_admin_password();
+
+        // Session signing secret derived from API key
+        let mut mac = HmacSha256::new_from_slice(api_key.as_bytes())
+            .expect("HMAC can take key of any size");
+        mac.update(b"hookbot-session");
+        let result = mac.finalize();
+        let mut session_secret = [0u8; 32];
+        session_secret.copy_from_slice(&result.into_bytes());
+
         Self {
             database_url,
             firmware_dir,
@@ -60,6 +84,67 @@ impl AppConfig {
             tls_key_path,
             anthropic_api_key,
             calendar_url,
+            api_key,
+            admin_password_hash,
+            session_secret,
         }
+    }
+
+    fn resolve_api_key(data_dir: &PathBuf) -> String {
+        // 1. Check env var
+        if let Ok(key) = env::var("API_KEY") {
+            if !key.is_empty() {
+                info!("Using API key from API_KEY env var");
+                return key;
+            }
+        }
+
+        // 2. Check data/api_key file
+        let key_file = data_dir.parent().unwrap_or(data_dir).join("api_key");
+        if let Ok(key) = fs::read_to_string(&key_file) {
+            let key = key.trim().to_string();
+            if !key.is_empty() {
+                info!("Using API key from {:?}", key_file);
+                return key;
+            }
+        }
+
+        // 3. Auto-generate
+        let key = uuid::Uuid::new_v4().to_string();
+        if let Some(parent) = key_file.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        match fs::write(&key_file, &key) {
+            Ok(_) => info!("Generated new API key, saved to {:?}", key_file),
+            Err(e) => warn!("Could not save API key to {:?}: {}", key_file, e),
+        }
+        info!("=== AUTO-GENERATED API KEY: {} ===", key);
+        key
+    }
+
+    fn resolve_admin_password() -> String {
+        // 1. Check pre-hashed password
+        if let Ok(hash) = env::var("ADMIN_PASSWORD_HASH") {
+            if !hash.is_empty() {
+                info!("Using admin password hash from ADMIN_PASSWORD_HASH env var");
+                return hash;
+            }
+        }
+
+        // 2. Check plaintext password, hash it
+        if let Ok(password) = env::var("ADMIN_PASSWORD") {
+            if !password.is_empty() {
+                info!("Hashing admin password from ADMIN_PASSWORD env var");
+                return bcrypt::hash(&password, bcrypt::DEFAULT_COST)
+                    .expect("Failed to hash admin password");
+            }
+        }
+
+        // 3. Auto-generate
+        let password = uuid::Uuid::new_v4().to_string().split('-').next().unwrap().to_string();
+        let hash = bcrypt::hash(&password, bcrypt::DEFAULT_COST)
+            .expect("Failed to hash auto-generated password");
+        info!("=== AUTO-GENERATED ADMIN PASSWORD: {} ===", password);
+        hash
     }
 }
