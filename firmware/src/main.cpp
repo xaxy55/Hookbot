@@ -235,6 +235,8 @@ void loop() {
 
 #ifndef NO_DISPLAY
     // Screensaver: activate after extended idle, prevent OLED burn-in
+    // Skip on LCD — no burn-in risk and it just looks like a black screen
+#ifndef BOARD_ESP32_4848S040C
     if (currentState == AvatarState::IDLE
         && (now - stateEnteredAt >= SCREENSAVER_TIMEOUT_MS)
         && !screensaverActive) {
@@ -242,6 +244,7 @@ void loop() {
         Screensaver::randomize();
         Serial.println("[Main] Screensaver activated");
     }
+#endif
 
     if (screensaverActive) {
         Display::clear();
