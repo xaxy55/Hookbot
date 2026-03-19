@@ -138,8 +138,9 @@ static lgfx::LGFX_Sprite* canvas = nullptr;
 // Known pin combinations for ESP32-4848S040C touch (varies by board revision)
 struct TouchPins { int sda; int scl; int intr; int rst; const char* label; };
 static const TouchPins TOUCH_PIN_CANDIDATES[] = {
-    { 19, 45,  2, 38, "Guition production (SDA=19 SCL=45 INT=2 RST=38)" },
-    { 19, 45,  2, -1, "Guition alt (SDA=19 SCL=45 INT=2 no RST)" },
+    // NOTE: RST must NOT be 38 — that pin is the LCD backlight PWM.
+    // Toggling it kills the display. INT + I2C soft-reset is sufficient.
+    { 19, 45,  2, -1, "Guition production (SDA=19 SCL=45 INT=2)" },
     { 19, 20, -1, -1, "Early revision (SDA=19 SCL=20 shared bus)" },
     { 19, 20,  2, -1, "Early + INT (SDA=19 SCL=20 INT=2)" },
 };
