@@ -75,10 +75,10 @@
 - [x] **Per-project device routing** — `.hookbot` config maps workspaces to specific devices (already partially built)
 - [x] **Device groups** — Tag devices, send commands to groups ("all calendar bots")
 - [ ] **Device-to-device communication** — One bot's state change triggers another (e.g. "error on build bot" -> "alert on notification bot")
-- [ ] **Shared animation library** — Upload/download community animations, sync across devices
+- [x] **Shared animation library** — Upload/download community animations, sync across devices
 - [ ] **Multi-user support** — User accounts, per-user device assignments, auth tokens
 - [ ] **Remote access** — Tunnel/proxy for controlling hookbots outside LAN (Cloudflare Tunnel or similar)
-- [ ] **Mobile app** — React Native companion for quick state changes and notifications on the go
+- [x] **Mobile app** — Native iOS companion (iPhone + Apple Watch) for quick state changes and notifications on the go
 
 ## Phase 5: AI & Intelligence
 
