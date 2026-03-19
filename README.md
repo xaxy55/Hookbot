@@ -4,7 +4,7 @@ An ESP32 desk companion that reacts to your dev workflow — animated OLED avata
 
 <p align="left">
   <a href="https://www.buymeacoffee.com/xaxy55">
-    <img src="https://img.shields.io/badge/%F0%9F%A4%96-Buy%20tokens-FFDD00?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/%F0%9F%A4%96-Buy%20me%20tokens-FFDD00?style=for-the-badge" />
   </a>
 </p>
 
