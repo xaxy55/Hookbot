@@ -4,8 +4,11 @@ struct SettingsView: View {
     @EnvironmentObject var engine: AvatarEngine
     @Environment(\.dismiss) var dismiss
 
+    @EnvironmentObject var network: NetworkService
     @State private var soundEnabled: Bool = true
     @State private var serverURL: String = ""
+    @State private var apiKey: String = ""
+    @State private var deviceId: String = ""
     #if targetEnvironment(macCatalyst)
     @State private var deviceName: String = "hookbot-mac"
     #else
@@ -23,6 +26,14 @@ struct SettingsView: View {
                     TextField("Device Name", text: $deviceName)
                         .font(.system(.body, design: .monospaced))
                     TextField("Management Server URL", text: $serverURL)
+                        .font(.system(.body, design: .monospaced))
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    TextField("API Key", text: $apiKey)
+                        .font(.system(.body, design: .monospaced))
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    TextField("Device ID (auto-assigned on register)", text: $deviceId)
                         .font(.system(.body, design: .monospaced))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -92,20 +103,17 @@ struct SettingsView: View {
                         .font(.caption2)
                 }
 
-                Section("Network") {
+                Section("Connection") {
+                    HStack(spacing: 8) {
+                        Image(systemName: network.isConnected ? "circle.fill" : "circle")
+                            .foregroundColor(network.isConnected ? .green : .red)
+                            .font(.caption2)
+                        Text(network.isConnected ? "Connected (polling)" : "Not connected")
+                            .font(.system(.body, design: .monospaced))
+                    }
                     if let ip = NetworkService.localIPAddress() {
                         LabeledContent("Local IP") {
                             Text(ip).font(.system(.body, design: .monospaced))
-                        }
-                        LabeledContent("HTTP Server") {
-                            Text("http://\(ip):8080").font(.system(.caption, design: .monospaced))
-                        }
-                    }
-                    LabeledContent("API Endpoints") {
-                        VStack(alignment: .trailing) {
-                            Text("POST /state").font(.system(.caption2, design: .monospaced))
-                            Text("GET /status").font(.system(.caption2, design: .monospaced))
-                            Text("POST /config").font(.system(.caption2, design: .monospaced))
                         }
                     }
                 }
@@ -123,6 +131,8 @@ struct SettingsView: View {
             .onAppear {
                 soundEnabled = engine.config.soundEnabled
                 serverURL = engine.config.serverURL
+                apiKey = engine.config.apiKey
+                deviceId = engine.config.deviceId
                 deviceName = engine.config.deviceName
                 accessories = engine.config.accessories
             }
@@ -154,6 +164,9 @@ struct SettingsView: View {
 
         var request = URLRequest(url: url)
         request.timeoutInterval = 5
+        if !apiKey.isEmpty {
+            request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        }
 
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
@@ -202,13 +215,22 @@ struct SettingsView: View {
     }
 
     private func save() {
+        let serverChanged = engine.config.serverURL != serverURL || engine.config.deviceId != deviceId
+
         engine.config.soundEnabled = soundEnabled
         engine.config.serverURL = serverURL
+        engine.config.apiKey = apiKey
+        engine.config.deviceId = deviceId
         engine.config.deviceName = deviceName
         engine.config.accessories = accessories
 
         if let data = try? JSONEncoder().encode(engine.config) {
             UserDefaults.standard.set(data, forKey: "hookbot_config")
+        }
+
+        // Restart polling if server or device ID changed
+        if serverChanged {
+            network.startPolling()
         }
     }
 }

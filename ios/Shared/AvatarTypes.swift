@@ -72,6 +72,7 @@ struct RuntimeConfig: Codable {
     var accessories: AccessoriesConfig = AccessoriesConfig()
     var serverURL: String = ""
     var apiKey: String = ""
+    var deviceId: String = ""
     var deviceName: String = "hookbot-ios"
 }
 

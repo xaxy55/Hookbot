@@ -1,247 +1,223 @@
 import Foundation
-import Network
 
-// HTTP server that listens on port 8080 for state changes
-// Same API as the ESP firmware: POST /state, GET /status, POST /config
+// Polls the management server for state changes — no open ports required.
+// Same approach as the Watch: poll /api/devices/{id}/status every 3 seconds.
 
 final class NetworkService: ObservableObject {
-    private var listener: NWListener?
+    @Published var isConnected = false
+
     private weak var engine: AvatarEngine?
-    private let port: UInt16 = 8080
-    private var bonjourService: NetService?
+    private var pollTimer: Timer?
+    private var lastKnownState: AvatarState = .idle
+    private var lastKnownTool: String = ""
+    private var statsPollCount = 0
+    private let session: URLSession
 
-    func startServer(engine: AvatarEngine) {
+    init() {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 10
+        config.waitsForConnectivity = false
+        self.session = URLSession(configuration: config)
+    }
+
+    // MARK: - Start / Stop
+
+    func start(engine: AvatarEngine) {
         self.engine = engine
+        self.lastKnownState = engine.currentState
 
-        do {
-            let params = NWParameters.tcp
-            listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: port)!)
-        } catch {
-            print("[Network] Failed to create listener: \(error)")
-            return
-        }
-
-        listener?.stateUpdateHandler = { state in
-            switch state {
-            case .ready:
-                print("[Network] HTTP server listening on port \(self.port)")
-            case .failed(let error):
-                print("[Network] Listener failed: \(error)")
-            default:
-                break
-            }
-        }
-
-        listener?.newConnectionHandler = { [weak self] connection in
-            self?.handleConnection(connection)
-        }
-
-        listener?.start(queue: .global(qos: .userInitiated))
-        print("[Network] Starting HTTP server on port \(port)")
-
-        // Advertise via Bonjour/mDNS so the management server can discover us
-        startBonjourAdvertising(name: engine.config.deviceName)
-
-        // Register with management server if configured
+        // Register with server on first launch, then start polling
         if !engine.config.serverURL.isEmpty {
             registerWithServer()
         }
+
+        startPolling()
+
+        print("[Network] Polling mode — no open ports")
     }
 
     func stop() {
-        listener?.cancel()
-        listener = nil
-        bonjourService?.stop()
-        bonjourService = nil
+        pollTimer?.invalidate()
+        pollTimer = nil
     }
 
-    // MARK: - Bonjour/mDNS Advertising
-
-    private func startBonjourAdvertising(name: String) {
-        // Advertise as _http._tcp so the management server's mDNS scan finds us
-        // Hostname must start with "hookbot" to match the server's filter
-        #if targetEnvironment(macCatalyst)
-        let fallback = "hookbot-mac"
-        #else
-        let fallback = "hookbot-ios"
-        #endif
-        let serviceName = name.hasPrefix("hookbot") ? name : fallback
-        bonjourService = NetService(domain: "local.", type: "_http._tcp.", name: serviceName, port: Int32(port))
-        bonjourService?.publish()
-        print("[Network] Bonjour advertising: \(serviceName)._http._tcp.local. on port \(port)")
-    }
-
-    // MARK: - Connection Handling
-
-    private func handleConnection(_ connection: NWConnection) {
-        connection.start(queue: .global(qos: .userInitiated))
-
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, _, error in
-            guard let self, let data, error == nil else {
-                connection.cancel()
-                return
-            }
-
-            let request = String(data: data, encoding: .utf8) ?? ""
-            let response = self.routeRequest(request)
-            let httpResponse = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nContent-Length: \(response.utf8.count)\r\n\r\n\(response)"
-
-            connection.send(content: httpResponse.data(using: .utf8), completion: .contentProcessed { _ in
-                connection.cancel()
-            })
-        }
-    }
-
-    private func routeRequest(_ raw: String) -> String {
-        let lines = raw.split(separator: "\r\n", maxSplits: 1)
-        guard let firstLine = lines.first else { return "{\"error\":\"bad request\"}" }
-
-        let parts = firstLine.split(separator: " ")
-        guard parts.count >= 2 else { return "{\"error\":\"bad request\"}" }
-
-        let method = String(parts[0])
-        let path = String(parts[1])
-
-        // Extract JSON body (after empty line)
-        var body: [String: Any] = [:]
-        if let range = raw.range(of: "\r\n\r\n") {
-            let jsonStr = String(raw[range.upperBound...])
-            if let jsonData = jsonStr.data(using: .utf8),
-               let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
-                body = json
-            }
+    func startPolling() {
+        pollTimer?.invalidate()
+        guard let engine, !engine.config.serverURL.isEmpty, !engine.config.deviceId.isEmpty else {
+            return
         }
 
-        switch (method, path) {
-        case ("GET", "/status"):
-            return handleStatus()
-        case ("GET", "/info"):
-            return handleInfo()
-        case ("POST", "/state"):
-            return handleState(body)
-        case ("POST", "/config"):
-            return handleConfig(body)
-        case ("POST", "/tasks"):
-            return handleTasks(body)
-        case ("GET", "/"):
-            return "{\"name\":\"Hookbot iOS\",\"version\":\"1.0.0\"}"
-        default:
-            // Handle CORS preflight
-            if method == "OPTIONS" {
-                return "{\"ok\":true}"
-            }
-            return "{\"error\":\"not found\"}"
+        // Poll every 3 seconds for state changes
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+            self?.pollState()
         }
+        // Initial fetch
+        pollState()
+
+        print("[Network] Polling \(engine.config.serverURL) for device \(engine.config.deviceId)")
     }
 
-    // MARK: - Route Handlers
+    // MARK: - Polling
 
-    private func handleStatus() -> String {
-        guard let engine else { return "{\"error\":\"not ready\"}" }
-        let uptime = ProcessInfo.processInfo.systemUptime
-        return """
-        {"state":"\(engine.currentState.rawValue)","uptime":\(Int(uptime * 1000)),"ip":"\(Self.localIPAddress() ?? "unknown")","hostname":"\(engine.config.deviceName)","firmware_version":"\(Self.platformID)-1.0.0","platform":"\(Self.platformID)"}
-        """
-    }
+    private func pollState() {
+        guard let engine,
+              !engine.config.serverURL.isEmpty,
+              !engine.config.deviceId.isEmpty else { return }
 
-    private func handleInfo() -> String {
-        guard let engine else { return "{\"error\":\"not ready\"}" }
-        return """
-        {"hostname":"\(engine.config.deviceName)","firmware_version":"\(Self.platformID)-1.0.0","ip":"\(Self.localIPAddress() ?? "unknown")","platform":"\(Self.platformID)","capabilities":["display","sound","haptics"]}
-        """
-    }
+        let urlStr = "\(engine.config.serverURL)/api/devices/\(engine.config.deviceId)/status"
+        guard let url = URL(string: urlStr) else { return }
 
-    private func handleState(_ body: [String: Any]) -> String {
-        guard let engine else { return "{\"error\":\"not ready\"}" }
-        let stateStr = body["state"] as? String ?? "idle"
-        let toolName = body["tool"] as? String ?? ""
-        let toolDetail = body["detail"] as? String ?? ""
-
-        if let state = AvatarState(rawValue: stateStr) {
+        session.dataTask(with: authedRequest(url: url)) { [weak self] data, response, _ in
             DispatchQueue.main.async {
-                engine.setTool(name: toolName, detail: toolDetail)
-                engine.setState(state)
+                guard let self else { return }
+
+                if let http = response as? HTTPURLResponse, http.statusCode == 200, let data {
+                    self.isConnected = true
+                    self.parseStateResponse(data)
+                } else {
+                    self.isConnected = false
+                }
+
+                // Fetch tasks every 10th poll (~30s)
+                self.statsPollCount += 1
+                if self.statsPollCount % 10 == 0 {
+                    self.pollTasks()
+                }
             }
-            return "{\"ok\":true,\"state\":\"\(stateStr)\",\"tool\":\"\(toolName)\"}"
-        }
-        return "{\"error\":\"invalid state\"}"
+        }.resume()
     }
 
-    private func handleConfig(_ body: [String: Any]) -> String {
-        guard let engine else { return "{\"error\":\"not ready\"}" }
+    private func parseStateResponse(_ data: Data) {
+        guard let engine,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
 
-        DispatchQueue.main.async {
-            if let soundEnabled = body["sound_enabled"] as? Bool {
-                engine.config.soundEnabled = soundEnabled
-            }
-            if let preset = body["avatar_preset"] as? [String: Any],
-               let acc = preset["accessories"] as? [String: Any] {
-                if let v = acc["topHat"] as? Bool  { engine.config.accessories.topHat = v }
-                if let v = acc["cigar"] as? Bool    { engine.config.accessories.cigar = v }
-                if let v = acc["glasses"] as? Bool  { engine.config.accessories.glasses = v }
-                if let v = acc["monocle"] as? Bool  { engine.config.accessories.monocle = v }
-                if let v = acc["bowtie"] as? Bool   { engine.config.accessories.bowtie = v }
-                if let v = acc["crown"] as? Bool    { engine.config.accessories.crown = v }
-                if let v = acc["horns"] as? Bool    { engine.config.accessories.horns = v }
-                if let v = acc["halo"] as? Bool     { engine.config.accessories.halo = v }
-            }
-            // Persist
-            if let data = try? JSONEncoder().encode(engine.config) {
-                UserDefaults.standard.set(data, forKey: "hookbot_config")
-            }
+        // State is in latest_status.state or top-level
+        let statusDict: [String: Any]?
+        if let latestStatus = json["latest_status"] as? [String: Any] {
+            statusDict = latestStatus
+        } else {
+            statusDict = json
         }
 
-        return "{\"ok\":true}"
+        guard let statusDict else { return }
+
+        let stateStr = statusDict["state"] as? String
+        let toolName = statusDict["tool"] as? String ?? ""
+        let toolDetail = statusDict["detail"] as? String ?? ""
+
+        guard let stateStr, let state = AvatarState(rawValue: stateStr) else { return }
+
+        // Only update on change
+        if state != lastKnownState || toolName != lastKnownTool {
+            lastKnownState = state
+            lastKnownTool = toolName
+
+            engine.setTool(name: toolName, detail: toolDetail)
+            engine.setState(state)
+
+            // Forward to Watch
+            WatchBridge.shared.sendState(state, tool: toolName, detail: toolDetail)
+        }
     }
 
-    private func handleTasks(_ body: [String: Any]) -> String {
-        guard let engine else { return "{\"error\":\"not ready\"}" }
+    private func pollTasks() {
+        guard let engine,
+              !engine.config.serverURL.isEmpty,
+              !engine.config.deviceId.isEmpty else { return }
 
-        DispatchQueue.main.async {
-            var newTasks: [TaskItem] = []
-            if let items = body["items"] as? [[String: Any]] {
-                for item in items {
+        let urlStr = "\(engine.config.serverURL)/api/devices/\(engine.config.deviceId)/status"
+        guard let url = URL(string: urlStr) else { return }
+
+        // Tasks come from the same status endpoint
+        session.dataTask(with: authedRequest(url: url)) { [weak self] data, _, _ in
+            guard let data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let tasks = json["tasks"] as? [[String: Any]] else { return }
+
+            DispatchQueue.main.async {
+                guard let self, let engine = self.engine else { return }
+                var newTasks: [TaskItem] = []
+                for item in tasks {
                     let label = item["label"] as? String ?? ""
                     let status = item["status"] as? Int ?? 0
                     newTasks.append(TaskItem(label: label, status: status))
                 }
+                engine.tasks = newTasks
+                engine.activeTaskIndex = json["active_task"] as? Int ?? 0
             }
-            engine.tasks = newTasks
-            engine.activeTaskIndex = body["active"] as? Int ?? 0
-        }
+        }.resume()
+    }
 
-        return "{\"ok\":true}"
+    // MARK: - Auth Helper
+
+    private func authedRequest(url: URL) -> URLRequest {
+        var request = URLRequest(url: url)
+        if let engine, !engine.config.apiKey.isEmpty {
+            request.setValue(engine.config.apiKey, forHTTPHeaderField: "X-API-Key")
+        }
+        return request
     }
 
     // MARK: - Management Server Registration
 
-    private func registerWithServer() {
+    func registerWithServer() {
         guard let engine, !engine.config.serverURL.isEmpty else { return }
 
         let url = URL(string: "\(engine.config.serverURL)/api/devices")!
-        var request = URLRequest(url: url)
+        var request = authedRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if !engine.config.apiKey.isEmpty {
-            request.setValue(engine.config.apiKey, forHTTPHeaderField: "X-API-Key")
-        }
         request.timeoutInterval = 5
 
         let payload: [String: Any] = [
             "name": engine.config.deviceName,
             "hostname": engine.config.deviceName,
-            "ip_address": Self.localIPAddress() ?? "unknown",
+            "ip_address": "polling",
             "purpose": "hookbot-\(Self.platformID)"
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
 
-        URLSession.shared.dataTask(with: request) { _, response, error in
+        session.dataTask(with: request) { [weak self] data, response, error in
             if let error {
                 print("[Network] Registration failed: \(error)")
-            } else if let http = response as? HTTPURLResponse {
+                return
+            }
+            if let http = response as? HTTPURLResponse {
                 print("[Network] Registered with server: \(http.statusCode)")
             }
+            // If server returns the device ID, save it
+            if let data,
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let id = json["id"] as? String,
+               let engine = self?.engine {
+                DispatchQueue.main.async {
+                    if engine.config.deviceId.isEmpty {
+                        engine.config.deviceId = id
+                        if let encoded = try? JSONEncoder().encode(engine.config) {
+                            UserDefaults.standard.set(encoded, forKey: "hookbot_config")
+                        }
+                        print("[Network] Saved device ID: \(id)")
+                        self?.startPolling()
+                    }
+                }
+            }
         }.resume()
+    }
+
+    // MARK: - Send State (for manual state changes from iPhone UI)
+
+    func sendState(_ state: AvatarState) {
+        guard let engine,
+              !engine.config.serverURL.isEmpty,
+              !engine.config.deviceId.isEmpty else { return }
+
+        guard let url = URL(string: "\(engine.config.serverURL)/api/devices/\(engine.config.deviceId)/state") else { return }
+        var request = authedRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["state": state.rawValue])
+
+        session.dataTask(with: request) { _, _, _ in }.resume()
     }
 
     // MARK: - Platform
@@ -254,7 +230,7 @@ final class NetworkService: ObservableObject {
         #endif
     }
 
-    // MARK: - IP Address
+    // MARK: - IP Address (kept for settings display)
 
     static func localIPAddress() -> String? {
         var address: String?

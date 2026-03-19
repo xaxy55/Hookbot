@@ -13,9 +13,9 @@ struct HookbotApp: App {
                 .environmentObject(network)
                 .environmentObject(sound)
                 .onAppear {
-                    setupBindings()
-                    network.startServer(engine: engine)
                     loadConfig()
+                    setupBindings()
+                    network.start(engine: engine)
                     WatchBridge.shared.activate()
                 }
         }
