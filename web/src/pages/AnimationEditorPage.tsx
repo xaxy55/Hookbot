@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig, playAnimation, stopAnimation, getOwnedItems, getStore, getSharedAssets } from '../api/client';
-import type { AnimationPayload, SharedAsset, StoreItemDef } from '../api/client';
+import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig, getOwnedItems, getStore, getSharedAssets } from '../api/client';
 
 // ─── Types ──────────────────────────────────────────────────────
 

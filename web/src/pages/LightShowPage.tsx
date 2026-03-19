@@ -290,7 +290,6 @@ export default function LightShowPage() {
                     style={{
                       backgroundColor: colors[s],
                       boxShadow: activeState === s ? `0 0 20px ${colors[s]}80` : `0 0 8px ${colors[s]}40`,
-                      ringColor: colors[s],
                     }}
                   />
                   <span className={`text-xs font-medium ${activeState === s ? 'text-fg' : 'text-muted'}`}>
