@@ -9,7 +9,8 @@ mod services;
 use axum::routing::{delete, get, post, put};
 use axum::{middleware, Extension, Router};
 use axum::response::Redirect;
-use tower_http::cors::{AllowOrigin, Any, CorsLayer};
+use axum::http::header;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing::info;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -40,8 +41,19 @@ async fn main() {
 
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::mirror_request())
-        .allow_methods(Any)
-        .allow_headers(Any)
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+            axum::http::Method::DELETE,
+            axum::http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            header::CONTENT_TYPE,
+            header::AUTHORIZATION,
+            header::COOKIE,
+            header::HeaderName::from_static("x-api-key"),
+        ])
         .allow_credentials(true);
 
     // Public routes — no auth required
