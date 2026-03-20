@@ -220,7 +220,10 @@ static const char* pomodoroStatusStr(PomodoroStatus s) {
     return "idle";
 }
 
+static bool pomoCompleted = false;
+
 static void pomodoroAdvance() {
+    pomoCompleted = true;
     if (pomodoroData.session == PomodoroSession::FOCUS) {
         pomodoroData.focusCount++;
         pomodoroData.todaySessions++;
@@ -1627,6 +1630,14 @@ PetData& getPetData() {
 
 PomodoroData& getPomodoro() {
     return pomodoroData;
+}
+
+bool pomodoroJustCompleted() {
+    return pomoCompleted;
+}
+
+void clearPomodoroCompleted() {
+    pomoCompleted = false;
 }
 
 void sendVoiceToServer(const uint8_t* data, size_t size) {

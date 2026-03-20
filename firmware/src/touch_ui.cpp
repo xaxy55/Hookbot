@@ -39,6 +39,11 @@ static int16_t lastTouchX = -1;
 static int16_t lastTouchY = -1;
 static bool justReleased = false;
 
+// ─── Pomodoro completion flash ──────────────────────────────────
+static bool pomoFlashActive = false;
+static uint32_t pomoFlashStart = 0;
+static const uint32_t POMO_FLASH_DURATION = 5000; // 5 seconds max
+
 // Forward declarations for pet fullscreen mode
 static void updatePetAnim(float dt);
 static void drawPetFullscreen(DisplayCanvas* d);
@@ -76,6 +81,18 @@ void update(uint32_t deltaMs, int16_t touchX, int16_t touchY, bool touching) {
         updatePetAnim(dt);
     }
 
+    // Check for pomodoro completion -> start flash
+    if (HookbotServer::pomodoroJustCompleted()) {
+        HookbotServer::clearPomodoroCompleted();
+        pomoFlashActive = true;
+        pomoFlashStart = millis();
+    }
+
+    // Auto-dismiss flash after timeout
+    if (pomoFlashActive && (millis() - pomoFlashStart >= POMO_FLASH_DURATION)) {
+        pomoFlashActive = false;
+    }
+
     // Slide animation
     if (slideIn) {
         slideProgress += SLIDE_SPEED * dt;
@@ -95,6 +112,10 @@ void update(uint32_t deltaMs, int16_t touchX, int16_t touchY, bool touching) {
 
     // Touch handling
     if (touching && !wasTouching) {
+        // Dismiss flash on any touch
+        if (pomoFlashActive) {
+            pomoFlashActive = false;
+        }
         // Touch start
         swipeStartX = touchX;
         swipeStartY = touchY;
@@ -1182,6 +1203,39 @@ static void drawSwipeHints(DisplayCanvas* d) {
 
 void draw() {
     DisplayCanvas* d = Display::getCanvas();
+
+    // Pomodoro completion flash overlay
+    if (pomoFlashActive) {
+        uint32_t elapsed = millis() - pomoFlashStart;
+        float phase = (float)elapsed / 250.0f; // flash frequency
+        bool bright = ((int)phase % 2) == 0;
+
+        // Fade out over time
+        float fade = 1.0f - (float)elapsed / (float)POMO_FLASH_DURATION;
+        if (fade < 0) fade = 0;
+
+        if (bright && fade > 0.1f) {
+            // Flash the border with session color
+            PomodoroData& pomo = HookbotServer::getPomodoro();
+            uint16_t clr = 0x631F;
+            if (pomo.session == PomodoroSession::SHORT_BREAK) clr = 0x4726;
+            if (pomo.session == PomodoroSession::LONG_BREAK) clr = 0x0EBE;
+            // Draw flashing border
+            for (int i = 0; i < 3; i++) {
+                d->drawRect(i, i, 120 - i * 2, 120 - i * 2, clr);
+            }
+        }
+
+        // "Done!" text
+        d->setTextSize(2);
+        d->setTextColor(COLOR_WHITE);
+        d->setCursor(28, 52);
+        d->print("Done!");
+        d->setTextSize(1);
+        d->setTextColor(0x8410);
+        d->setCursor(30, 72);
+        d->print("Tap to dismiss");
+    }
 
     // Fullscreen pet mode takes over everything
     if (activePanel == Panel::PET_FULLSCREEN) {

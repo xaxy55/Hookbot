@@ -142,4 +142,6 @@ namespace HookbotServer {
     void sendVoiceToServer(const uint8_t* data, size_t size);
     PetData& getPetData();
     PomodoroData& getPomodoro();
+    bool pomodoroJustCompleted();  // true once after a session completes
+    void clearPomodoroCompleted();
 }
