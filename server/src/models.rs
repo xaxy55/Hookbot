@@ -594,7 +594,7 @@ pub struct UpdateDeviceLink {
 // --- User types ---
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct User {
+pub struct LocalUser {
     pub id: String,
     pub username: String,
     pub display_name: String,
@@ -621,7 +621,7 @@ pub struct UpdateUser {
 #[derive(Debug, Clone, Serialize)]
 pub struct UserWithDevices {
     #[serde(flatten)]
-    pub user: User,
+    pub user: LocalUser,
     pub device_ids: Vec<String>,
 }
 
@@ -706,6 +706,77 @@ pub struct MoodSuggestion {
     pub suggested_animation: Option<String>,
     pub confidence: f64,
     pub reason: String,
+}
+
+// --- Voice Control types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VoiceCommand {
+    pub id: i64,
+    pub device_id: String,
+    pub audio_size: i64,
+    pub duration_secs: f64,
+    pub transcript: String,
+    pub response: String,
+    pub status: String,
+    pub created_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct VoiceResponse {
+    pub ok: bool,
+    pub transcript: String,
+    pub response: String,
+    pub state: Option<String>,
+    pub tts_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TtsRequest {
+    pub device_id: Option<String>,
+    pub text: String,
+    pub voice: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TtsResponse {
+    pub ok: bool,
+    pub text: String,
+    pub audio_url: Option<String>,
+    pub duration_secs: Option<f64>,
+    pub format: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct VoiceCommandRequest {
+    pub device_id: Option<String>,
+    pub text: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct VoiceHistoryQuery {
+    pub device_id: Option<String>,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VoiceConfig {
+    pub device_id: String,
+    pub wake_word_enabled: bool,
+    pub tts_enabled: bool,
+    pub tts_voice: String,
+    pub volume: i32,
+    pub language: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateVoiceConfig {
+    pub device_id: Option<String>,
+    pub wake_word_enabled: Option<bool>,
+    pub tts_enabled: Option<bool>,
+    pub tts_voice: Option<String>,
+    pub volume: Option<i32>,
+    pub language: Option<String>,
 }
 
 // --- Context types ---

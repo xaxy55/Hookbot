@@ -150,6 +150,27 @@ fn run_migrations(conn: &Connection) {
         "CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id)",
         "ALTER TABLE device_groups ADD COLUMN user_id TEXT REFERENCES users(id)",
         "ALTER TABLE project_routes ADD COLUMN user_id TEXT REFERENCES users(id)",
+        // Voice control & TTS
+        "CREATE TABLE IF NOT EXISTS voice_commands (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            audio_size INTEGER NOT NULL DEFAULT 0,
+            duration_secs REAL NOT NULL DEFAULT 0,
+            transcript TEXT NOT NULL DEFAULT '',
+            response TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'received',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_voice_commands_device ON voice_commands(device_id, created_at)",
+        "CREATE TABLE IF NOT EXISTS voice_config (
+            device_id TEXT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
+            wake_word_enabled INTEGER NOT NULL DEFAULT 1,
+            tts_enabled INTEGER NOT NULL DEFAULT 1,
+            tts_voice TEXT NOT NULL DEFAULT 'default',
+            volume INTEGER NOT NULL DEFAULT 80,
+            language TEXT NOT NULL DEFAULT 'en',
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
     ];
 
     for sql in migrations {

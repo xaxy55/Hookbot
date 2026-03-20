@@ -10,7 +10,7 @@ fn query_user_with_devices(conn: &rusqlite::Connection, id: &str) -> Result<User
     let user = conn.query_row(
         "SELECT id, username, display_name, role, last_login_at, created_at FROM users WHERE id = ?1",
         [id],
-        |row| Ok(User {
+        |row| Ok(LocalUser {
             id: row.get(0)?,
             username: row.get(1)?,
             display_name: row.get(2)?,
@@ -38,8 +38,8 @@ pub async fn list_users(
     let mut stmt = conn.prepare(
         "SELECT id, username, display_name, role, last_login_at, created_at FROM users ORDER BY created_at"
     )?;
-    let users: Vec<User> = stmt.query_map([], |row| {
-        Ok(User {
+    let users: Vec<LocalUser> = stmt.query_map([], |row| {
+        Ok(LocalUser {
             id: row.get(0)?,
             username: row.get(1)?,
             display_name: row.get(2)?,

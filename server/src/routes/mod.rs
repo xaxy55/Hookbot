@@ -24,3 +24,4 @@ pub mod shared_assets;
 pub mod store;
 pub mod tunnels;
 pub mod users;
+pub mod voice;
