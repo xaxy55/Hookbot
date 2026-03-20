@@ -4,6 +4,7 @@ struct MainView: View {
     @EnvironmentObject var engine: AvatarEngine
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @State private var showSettings = false
+    @State private var showPetCare = false
 
     var isLandscape: Bool { verticalSizeClass == .compact }
 
@@ -49,6 +50,15 @@ struct MainView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(isLandscape ? .hidden : .visible, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showPetCare = true
+                    } label: {
+                        Image(systemName: "pawprint.fill")
+                            .foregroundColor(.gray)
+                    }
+                    .accessibilityIdentifier("petCareButton")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSettings = true
@@ -58,6 +68,20 @@ struct MainView: View {
                     }
                     .accessibilityIdentifier("settingsButton")
                 }
+            }
+            .sheet(isPresented: $showPetCare) {
+                NavigationStack {
+                    PetCareView()
+                        .environmentObject(engine)
+                        .navigationTitle("Pet Care")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") { showPetCare = false }
+                            }
+                        }
+                }
+                .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()

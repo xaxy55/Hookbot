@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig, getOwnedItems } from '../api/client';
+import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig, getOwnedItems, getPetState, selectPet } from '../api/client';
 import type { AvatarState } from '../types';
 
 interface AvatarParams {
@@ -60,6 +60,7 @@ export default function AvatarEditorPage() {
   const [animating, setAnimating] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(searchParams.get('device') || '');
   const [dragging, setDragging] = useState(false);
+  const [editorTab, setEditorTab] = useState<'avatar' | 'pet'>('avatar');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const timeRef = useRef(0);
@@ -76,6 +77,17 @@ export default function AvatarEditorPage() {
     queryKey: ['store-owned', selectedDevice],
     queryFn: () => getOwnedItems(selectedDevice || undefined),
     enabled: !!selectedDevice,
+  });
+
+  const { data: petState } = useQuery({
+    queryKey: ['pet', selectedDevice],
+    queryFn: () => getPetState(selectedDevice),
+    enabled: !!selectedDevice,
+  });
+
+  const selectPetMut = useMutation({
+    mutationFn: (petId: number) => selectPet(petId, selectedDevice),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['pet', selectedDevice] }),
   });
 
   // Map store accessory IDs to accessory keys
@@ -259,7 +271,103 @@ export default function AvatarEditorPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+      {/* Tabs */}
+      <div className="flex gap-1.5">
+        <button
+          onClick={() => setEditorTab('avatar')}
+          className={`px-4 py-1.5 text-xs rounded-md transition-colors ${
+            editorTab === 'avatar' ? 'bg-red-500/15 text-red-400 border border-red-500/30' : 'bg-inset text-subtle border border-transparent'
+          }`}
+        >
+          Avatar
+        </button>
+        <button
+          onClick={() => setEditorTab('pet')}
+          className={`px-4 py-1.5 text-xs rounded-md transition-colors ${
+            editorTab === 'pet' ? 'bg-red-500/15 text-red-400 border border-red-500/30' : 'bg-inset text-subtle border border-transparent'
+          }`}
+        >
+          Pet Companion
+        </button>
+      </div>
+
+      {editorTab === 'pet' && (
+        <div className="space-y-6">
+          {/* Active pet preview */}
+          <div className="rounded-xl border border-edge bg-black p-8 flex flex-col items-center">
+            <div className="relative w-48 h-48 flex items-center justify-center">
+              <PetPreview petId={petState?.active_pet_id ?? 0} size={160} animate />
+            </div>
+            <p className="text-sm text-fg font-medium mt-4">{petState?.active_pet ?? 'Dog'}</p>
+            <p className="text-xs text-subtle">Active companion on device</p>
+          </div>
+
+          {/* Pet store grid */}
+          <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
+            <p className="text-xs text-subtle font-medium uppercase tracking-wider">Pet Companions</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {(petState?.store ?? [
+                { id: 0, name: 'Dog', unlocked: true, cost: 0, progress: 0 },
+                { id: 1, name: 'Cat', unlocked: false, cost: 10, progress: 0 },
+                { id: 2, name: 'Robot', unlocked: false, cost: 25, progress: 0 },
+                { id: 3, name: 'Dragon', unlocked: false, cost: 50, progress: 0 },
+              ]).map(pet => {
+                const isActive = pet.id === (petState?.active_pet_id ?? 0);
+                return (
+                  <button
+                    key={pet.id}
+                    onClick={() => pet.unlocked && selectPetMut.mutate(pet.id)}
+                    disabled={!pet.unlocked || selectPetMut.isPending}
+                    className={`relative flex flex-col items-center gap-3 p-5 rounded-xl transition-all border ${
+                      isActive
+                        ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/10'
+                        : pet.unlocked
+                          ? 'bg-inset/80 border-edge hover:border-subtle hover:bg-raised/50'
+                          : 'bg-inset/40 border-edge opacity-60'
+                    }`}
+                  >
+                    {isActive && (
+                      <span className="absolute top-2 right-2 text-[10px] font-medium text-red-400 bg-red-500/15 px-1.5 py-0.5 rounded-full">
+                        Active
+                      </span>
+                    )}
+                    <div className="w-20 h-20 flex items-center justify-center">
+                      {pet.unlocked ? (
+                        <PetPreview petId={pet.id} size={72} animate={isActive} />
+                      ) : (
+                        <div className="text-4xl opacity-40">&#x1F512;</div>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium text-fg">{pet.name}</span>
+                    {!pet.unlocked && (
+                      <div className="w-full space-y-1">
+                        <div className="w-full h-1.5 bg-raised rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500 rounded-full transition-all"
+                            style={{ width: `${(pet.progress / pet.cost) * 100}%` }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-dim text-center">{pet.progress}/{pet.cost} interactions</p>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="rounded-lg border border-edge bg-surface p-4">
+            <p className="text-xs text-subtle font-medium uppercase tracking-wider mb-2">How to unlock</p>
+            <p className="text-sm text-muted">
+              Unlock new pet companions by feeding and petting your bot on the Pet Care page.
+              Each interaction counts toward unlocking the next companion.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {editorTab === 'avatar' && <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         {/* Left: Preview + Accessories */}
         <div className="space-y-4">
           {/* Canvas */}
@@ -385,9 +493,147 @@ export default function AvatarEditorPage() {
             Reset All
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   );
+}
+
+// ─── Pet Preview Component ──────────────────────────────────────
+
+// 16x16 pet sprites as multi-color pixel data
+// Each cell: 0=transparent, 1=body, 2=dark/detail, 3=accent (eyes, nose, etc)
+const PET_PIXEL_DATA: Record<number, number[][]> = {
+  // Dog — sitting golden retriever, side view, tail up
+  0: [
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
+    [0,0,1,3,1,1,1,1,3,1,1,0,0,0,0,0],
+    [0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,1,1,2,2,2,1,1,0,0,0,0,0,0],
+    [0,0,0,0,1,1,2,1,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0],
+    [0,0,0,0,1,1,1,1,1,0,0,0,1,1,0,0],
+    [0,0,0,1,1,1,1,1,1,1,0,1,1,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0],
+    [0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0],
+    [0,0,0,1,2,0,0,0,1,2,0,0,0,0,0,0],
+    [0,0,0,2,2,0,0,0,2,2,0,0,0,0,0,0],
+  ],
+  // Cat — sitting, pointy ears, curled tail
+  1: [
+    [0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
+    [0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0],
+    [0,0,1,3,1,1,1,1,3,1,0,0,0,0,0,0],
+    [0,0,1,1,1,2,1,1,1,1,0,0,0,0,0,0],
+    [0,0,0,1,1,1,2,1,1,0,0,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0,0,1,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0,1,1,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,1,1,0,0,0],
+    [0,0,0,0,1,0,0,1,0,0,1,1,0,0,0,0],
+    [0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0],
+    [0,0,0,0,2,0,0,2,0,0,0,0,0,0,0,0],
+  ],
+  // Robot — cute bot with antenna and screen face
+  2: [
+    [0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,3,3,3,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0],
+    [0,0,1,2,2,2,2,2,2,1,0,0,0,0,0,0],
+    [0,0,1,2,3,2,2,3,2,1,0,0,0,0,0,0],
+    [0,0,1,2,2,2,2,2,2,1,0,0,0,0,0,0],
+    [0,0,1,2,3,3,3,3,2,1,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0],
+    [0,0,3,1,1,1,1,1,1,3,0,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0],
+    [0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0],
+    [0,0,0,2,2,0,0,2,2,0,0,0,0,0,0,0],
+  ],
+  // Dragon — small dragon with wings and horns
+  3: [
+    [0,0,3,0,0,0,0,3,0,0,0,0,0,0,0,0],
+    [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,1,3,1,1,3,1,0,0,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,0,1,2,2,1,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0],
+    [1,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0,1,0,0,0],
+    [0,0,0,1,1,1,1,1,0,0,0,1,1,0,0,0],
+    [0,0,0,0,1,0,0,1,0,0,1,1,3,0,0,0],
+    [0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0],
+    [0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0],
+  ],
+};
+
+// Multi-color palettes per pet: [transparent, body, dark/detail, accent]
+const PET_PALETTES: Record<number, [string, string, string, string]> = {
+  0: ['transparent', '#D4A853', '#8B6914', '#222222'], // dog: golden, brown paws, dark eyes
+  1: ['transparent', '#9898A8', '#606068', '#44CC44'], // cat: grey, dark paws, green eyes
+  2: ['transparent', '#7799BB', '#334455', '#44EEFF'], // robot: steel, dark panels, cyan glow
+  3: ['transparent', '#44BB55', '#226633', '#FFAA22'], // dragon: green, dark scales, orange accents
+};
+
+function PetPreview({ petId, size, animate }: { petId: number; size: number; animate?: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const pixels = PET_PIXEL_DATA[petId] ?? PET_PIXEL_DATA[0];
+    const palette = PET_PALETTES[petId] ?? PET_PALETTES[0];
+    const pxSize = Math.floor(size / 16);
+
+    let frame = 0;
+    const draw = () => {
+      frame++;
+      ctx.clearRect(0, 0, size, size);
+
+      const bounceY = animate ? Math.sin(frame * 0.06) * pxSize * 0.4 : 0;
+
+      // Shadow
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.beginPath();
+      ctx.ellipse(size / 2, size - pxSize * 0.5, size * 0.25, pxSize * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let r = 0; r < 16; r++) {
+        for (let c = 0; c < 16; c++) {
+          const v = pixels[r][c];
+          if (v > 0) {
+            ctx.fillStyle = palette[v];
+            ctx.fillRect(c * pxSize, r * pxSize + bounceY, pxSize, pxSize);
+          }
+        }
+      }
+
+      if (animate) {
+        animRef.current = requestAnimationFrame(draw);
+      }
+    };
+    draw();
+    return () => cancelAnimationFrame(animRef.current);
+  }, [petId, size, animate]);
+
+  return <canvas ref={canvasRef} width={size} height={size} style={{ imageRendering: 'pixelated' }} />;
 }
 
 // ─── Canvas Drawing ─────────────────────────────────────────────

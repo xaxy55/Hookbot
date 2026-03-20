@@ -472,6 +472,14 @@ export const getOwnedItems = (deviceId?: string) => {
 };
 
 // Pet / Token tracking
+export interface PetStoreItem {
+  id: number;
+  name: string;
+  unlocked: boolean;
+  cost: number;
+  progress: number;
+}
+
 export interface PetState {
   device_id: string;
   hunger: number;
@@ -481,6 +489,9 @@ export interface PetState {
   total_feeds: number;
   total_pets: number;
   mood: string;
+  active_pet: string;
+  active_pet_id: number;
+  store: PetStoreItem[];
 }
 
 export interface TokenUsageEntry {
@@ -525,6 +536,35 @@ export const petPet = (deviceId?: string) =>
   request<{ ok: boolean; hunger: number; happiness: number; mood: string; message: string }>('/pet/pet', {
     method: 'POST',
     body: JSON.stringify({ device_id: deviceId }),
+  });
+
+export const selectPet = (petId: number, deviceId?: string) =>
+  request<{ ok: boolean; active_pet: string; active_pet_id: number }>('/pet/select', {
+    method: 'POST',
+    body: JSON.stringify({ id: petId, device_id: deviceId }),
+  });
+
+// Pomodoro sync
+export interface PomodoroState {
+  session: 'focus' | 'shortBreak' | 'longBreak';
+  status: 'idle' | 'running' | 'paused';
+  time_left: number;
+  total_duration: number;
+  focus_count: number;
+  today_sessions: number;
+  today_minutes: number;
+  config: { focus: number; short_break: number; long_break: number };
+}
+
+export const getPomodoroState = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<PomodoroState>(`/pomodoro${params}`);
+};
+
+export const sendPomodoroAction = (action: string, data?: Record<string, unknown>, deviceId?: string) =>
+  request<{ ok: boolean; session: string; status: string; time_left: number }>('/pomodoro', {
+    method: 'POST',
+    body: JSON.stringify({ action, device_id: deviceId, ...data }),
   });
 
 export const getTokenUsage = (deviceId?: string, days?: number) => {

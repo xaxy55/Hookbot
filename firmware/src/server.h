@@ -34,6 +34,53 @@ struct NotificationData {
 
 #define MAX_NOTIFICATIONS 4
 
+// Pet types
+enum class PetType : uint8_t {
+    DOG = 0,
+    CAT = 1,
+    ROBOT = 2,
+    DRAGON = 3,
+    PET_TYPE_COUNT = 4,
+};
+
+// Pet care state
+struct PetData {
+    int hunger;       // 0-100 (0 = starving, 100 = full)
+    int happiness;    // 0-100
+    int totalFeeds;
+    int totalPets;
+    uint32_t lastFedAt;   // millis() timestamp (0 = never)
+    uint32_t lastPetAt;
+    uint32_t lastDecayAt; // last time decay was applied
+    PetType activePet;
+    bool unlocked[4]; // one per PetType
+};
+
+// Pomodoro timer state
+enum class PomodoroSession : uint8_t {
+    FOCUS = 0,
+    SHORT_BREAK = 1,
+    LONG_BREAK = 2,
+};
+enum class PomodoroStatus : uint8_t {
+    IDLE = 0,
+    RUNNING = 1,
+    PAUSED = 2,
+};
+struct PomodoroData {
+    PomodoroSession session;
+    PomodoroStatus status;
+    int32_t timeLeftSec;      // seconds remaining
+    int32_t totalDurationSec; // total duration for current session
+    uint32_t lastTickAt;      // millis() of last tick
+    int focusCount;           // completed focus sessions
+    int todaySessions;
+    int todayMinutes;
+    int focusMins;            // configurable focus duration
+    int shortBreakMins;
+    int longBreakMins;
+};
+
 // Active project info
 #define MAX_PROJECT_LEN 24
 struct ProjectInfo {
@@ -93,4 +140,6 @@ namespace HookbotServer {
     XpData& getXpData();
     ProjectInfo& getProject();
     void sendVoiceToServer(const uint8_t* data, size_t size);
+    PetData& getPetData();
+    PomodoroData& getPomodoro();
 }

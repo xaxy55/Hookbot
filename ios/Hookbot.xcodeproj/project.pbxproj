@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		059E26B7DE33F1D35D4E3D76 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* PetCareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C7D8E9F0A1B2C3 /* PetCareView.swift */; };
 		073508FD8742148770DFAE1F /* HookbotWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF8AD9DCE1B38800DA1ACAA /* HookbotWidget.swift */; };
 		07BD3F555688C63668D7FA3F /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 364282E1BF9F1960110F6626 /* WatchBridge.swift */; };
 		0DDF6F16A3D3FC3189659C69 /* DESKBOTUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046CFAEC7691D754A8190D98 /* DESKBOTUITests.swift */; };
@@ -95,6 +96,7 @@
 		64E4ED6FDD298958EA1DB744 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		68548CC1A6546E161E55B81D /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		6FEFC46D0D53977D14F910B1 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		D2E3F4A5B6C7D8E9F0A1B2C3 /* PetCareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetCareView.swift; sourceTree = "<group>"; };
 		766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlPanelView.swift; sourceTree = "<group>"; };
 		77E4D4006F271E0691E8E892 /* WatchAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAvatarView.swift; sourceTree = "<group>"; };
 		7ADD593CC146528A0CF8D232 /* DeskBotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotApp.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 				151A6E66A879D9F121E3EB91 /* AvatarView.swift */,
 				766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */,
 				6FEFC46D0D53977D14F910B1 /* MainView.swift */,
+				D2E3F4A5B6C7D8E9F0A1B2C3 /* PetCareView.swift */,
 				9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */,
 			);
 			path = Views;
@@ -413,6 +416,7 @@
 				83D3838B6D8A2585F9BBAD6E /* HapticManager.swift in Sources */,
 				E121B6972428789C62702CCD /* MainView.swift in Sources */,
 				C935543D379DAE0399A03D44 /* NetworkService.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* PetCareView.swift in Sources */,
 				4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */,
 				2F7D8DA5F1E23D87D838B732 /* SoundManager.swift in Sources */,
 				07BD3F555688C63668D7FA3F /* WatchBridge.swift in Sources */,

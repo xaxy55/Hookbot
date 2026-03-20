@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getDevices, sendState, getGamificationStats } from '../api/client';
+import { getDevices, sendState, getGamificationStats, sendPomodoroAction } from '../api/client';
 
 type SessionType = 'focus' | 'shortBreak' | 'longBreak';
 type TimerStatus = 'idle' | 'running' | 'paused';
@@ -119,6 +119,19 @@ export default function PomodoroPage() {
     [deviceId]
   );
 
+  const syncPomodoro = useCallback(
+    async (action: string, extra?: Record<string, unknown>) => {
+      if (deviceId) {
+        try {
+          await sendPomodoroAction(action, extra, deviceId);
+        } catch {
+          // Device might be offline
+        }
+      }
+    },
+    [deviceId]
+  );
+
   const advanceSession = useCallback(() => {
     const currentType = sessionTypeRef.current;
     const currentFocusCount = focusCountRef.current;
@@ -167,6 +180,11 @@ export default function PomodoroPage() {
     } else {
       sendDeviceState('idle');
     }
+    syncPomodoro('start', {
+      session: sessionTypeRef.current,
+      time_left: timeLeft,
+      total_duration: config[sessionTypeRef.current] * 60,
+    });
 
     intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
@@ -189,7 +207,8 @@ export default function PomodoroPage() {
     }
     setStatus('paused');
     sendDeviceState('idle');
-  }, [sendDeviceState]);
+    syncPomodoro('pause');
+  }, [sendDeviceState, syncPomodoro]);
 
   const resetTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -199,7 +218,8 @@ export default function PomodoroPage() {
     setStatus('idle');
     setTimeLeft(config[sessionType] * 60);
     sendDeviceState('idle');
-  }, [config, sessionType, sendDeviceState]);
+    syncPomodoro('reset');
+  }, [config, sessionType, sendDeviceState, syncPomodoro]);
 
   const toggleTimer = useCallback(() => {
     if (statusRef.current === 'running') {
@@ -211,17 +231,20 @@ export default function PomodoroPage() {
 
   const switchSession = useCallback(
     (type: SessionType) => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      setStatus('idle');
+      // Don't interrupt a running timer
+      if (statusRef.current === 'running') return;
+
       setSessionType(type);
       sessionTypeRef.current = type;
       setTimeLeft(config[type] * 60);
-      sendDeviceState('idle');
+      setStatus('idle');
+      syncPomodoro('pause', {
+        session: type,
+        time_left: config[type] * 60,
+        total_duration: config[type] * 60,
+      });
     },
-    [config, sendDeviceState]
+    [config, syncPomodoro]
   );
 
   // Keyboard shortcut: Space to toggle

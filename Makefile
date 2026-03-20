@@ -6,8 +6,9 @@ help: ## Show this help
 test: ## Run Playwright tests
 	npx playwright test
 
+ADMIN_PASSWORD ?= $(shell grep '^ADMIN_PASSWORD=' .env 2>/dev/null | cut -d= -f2)
+
 server: ## Start backend dev server (port 3000, debug logging)
-	ADMIN_PASSWORD ?= $(shell grep '^ADMIN_PASSWORD=' .env 2>/dev/null | cut -d= -f2)
 	cd server && RUST_LOG=debug ADMIN_PASSWORD=$(ADMIN_PASSWORD) cargo run
 
 web: ## Start frontend dev server (port 5173)

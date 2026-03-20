@@ -35,6 +35,12 @@ static NotificationData notifications[MAX_NOTIFICATIONS] = {};
 static int notificationCount = 0;
 static XpData xpData = {0, 0, 0, "Newbie"};
 static ProjectInfo projectInfo = {"", 0};
+static PetData petData = {50, 50, 0, 0, 0, 0, 0, PetType::DOG, {true, false, false, false}};
+static PomodoroData pomodoroData = {
+    PomodoroSession::FOCUS, PomodoroStatus::IDLE,
+    25 * 60, 25 * 60, 0, 0, 0, 0,
+    25, 5, 15
+};
 
 static const char* stateToString(AvatarState s) {
     switch (s) {
@@ -130,6 +136,141 @@ void saveConfigToNVS() {
     prefs.putInt("ssTimeout", runtimeConfig.screensaverMins);
     prefs.end();
     Serial.println("[Server] Config saved to NVS");
+}
+
+static void loadPetFromNVS() {
+    Preferences p;
+    p.begin("pet", true);
+    petData.hunger = p.getInt("hunger", 50);
+    petData.happiness = p.getInt("happiness", 50);
+    petData.totalFeeds = p.getInt("feeds", 0);
+    petData.totalPets = p.getInt("pets", 0);
+    petData.lastFedAt = p.getULong("lastFed", 0);
+    petData.lastPetAt = p.getULong("lastPet", 0);
+    p.end();
+    petData.activePet = (PetType)p.getUChar("type", 0);
+    uint8_t unlockBits = p.getUChar("unlocks", 0x01); // dog unlocked by default
+    for (int i = 0; i < 4; i++) petData.unlocked[i] = (unlockBits >> i) & 1;
+    petData.lastDecayAt = millis();
+    Serial.printf("[Pet] Loaded: hunger=%d happiness=%d feeds=%d pets=%d type=%d unlocks=0x%02X\n",
+        petData.hunger, petData.happiness, petData.totalFeeds, petData.totalPets,
+        (int)petData.activePet, unlockBits);
+}
+
+static void savePetToNVS() {
+    Preferences p;
+    p.begin("pet", false);
+    p.putInt("hunger", petData.hunger);
+    p.putInt("happiness", petData.happiness);
+    p.putInt("feeds", petData.totalFeeds);
+    p.putInt("pets", petData.totalPets);
+    p.putULong("lastFed", petData.lastFedAt);
+    p.putULong("lastPet", petData.lastPetAt);
+    p.putUChar("type", (uint8_t)petData.activePet);
+    uint8_t unlockBits = 0;
+    for (int i = 0; i < 4; i++) if (petData.unlocked[i]) unlockBits |= (1 << i);
+    p.putUChar("unlocks", unlockBits);
+    p.end();
+}
+
+static const char* petMood() {
+    int avg = (petData.hunger + petData.happiness) / 2;
+    if (avg >= 80) return "ecstatic";
+    if (avg >= 60) return "happy";
+    if (avg >= 40) return "content";
+    if (avg >= 25) return "grumpy";
+    if (avg >= 10) return "sad";
+    return "miserable";
+}
+
+// Unlock thresholds: total interactions (feeds + pets) needed
+static const int PET_UNLOCK_COST[] = {0, 10, 25, 50};
+static const char* PET_NAMES[] = {"Dog", "Cat", "Robot", "Dragon"};
+
+static void checkPetUnlocks() {
+    int total = petData.totalFeeds + petData.totalPets;
+    bool changed = false;
+    for (int i = 0; i < 4; i++) {
+        if (!petData.unlocked[i] && total >= PET_UNLOCK_COST[i]) {
+            petData.unlocked[i] = true;
+            changed = true;
+            Serial.printf("[Pet] Unlocked: %s (at %d interactions)\n", PET_NAMES[i], total);
+        }
+    }
+    if (changed) savePetToNVS();
+}
+
+// ─── Pomodoro helpers ────────────────────────────────────────────
+
+static const char* pomodoroSessionStr(PomodoroSession s) {
+    switch (s) {
+        case PomodoroSession::FOCUS:       return "focus";
+        case PomodoroSession::SHORT_BREAK: return "shortBreak";
+        case PomodoroSession::LONG_BREAK:  return "longBreak";
+    }
+    return "focus";
+}
+
+static const char* pomodoroStatusStr(PomodoroStatus s) {
+    switch (s) {
+        case PomodoroStatus::IDLE:    return "idle";
+        case PomodoroStatus::RUNNING: return "running";
+        case PomodoroStatus::PAUSED:  return "paused";
+    }
+    return "idle";
+}
+
+static void pomodoroAdvance() {
+    if (pomodoroData.session == PomodoroSession::FOCUS) {
+        pomodoroData.focusCount++;
+        pomodoroData.todaySessions++;
+        pomodoroData.todayMinutes += pomodoroData.focusMins;
+        // Long break every 4 focus sessions
+        if (pomodoroData.focusCount % 4 == 0) {
+            pomodoroData.session = PomodoroSession::LONG_BREAK;
+            pomodoroData.timeLeftSec = pomodoroData.longBreakMins * 60;
+            pomodoroData.totalDurationSec = pomodoroData.longBreakMins * 60;
+        } else {
+            pomodoroData.session = PomodoroSession::SHORT_BREAK;
+            pomodoroData.timeLeftSec = pomodoroData.shortBreakMins * 60;
+            pomodoroData.totalDurationSec = pomodoroData.shortBreakMins * 60;
+        }
+    } else {
+        // Break ended, back to focus
+        pomodoroData.session = PomodoroSession::FOCUS;
+        pomodoroData.timeLeftSec = pomodoroData.focusMins * 60;
+        pomodoroData.totalDurationSec = pomodoroData.focusMins * 60;
+    }
+    pomodoroData.status = PomodoroStatus::IDLE;
+    Serial.printf("[Pomodoro] Advanced: session=%s focus_count=%d\n",
+        pomodoroSessionStr(pomodoroData.session), pomodoroData.focusCount);
+}
+
+static void pomodoroTick() {
+    if (pomodoroData.status != PomodoroStatus::RUNNING) return;
+    uint32_t now = millis();
+    uint32_t elapsed = now - pomodoroData.lastTickAt;
+    if (elapsed >= 1000) {
+        int ticks = elapsed / 1000;
+        pomodoroData.timeLeftSec -= ticks;
+        pomodoroData.lastTickAt = now;
+        if (pomodoroData.timeLeftSec <= 0) {
+            pomodoroData.timeLeftSec = 0;
+            pomodoroAdvance();
+        }
+    }
+}
+
+static void petDecay() {
+    uint32_t now = millis();
+    uint32_t elapsed = now - petData.lastDecayAt;
+    // Decay 1 point every 5 minutes
+    if (elapsed >= 300000UL) {
+        int ticks = elapsed / 300000UL;
+        petData.hunger = max(0, petData.hunger - ticks);
+        petData.happiness = max(0, petData.happiness - ticks);
+        petData.lastDecayAt = now;
+    }
 }
 
 static void registerWithServer() {
@@ -230,6 +371,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
 
     // Load config from NVS
     loadConfigFromNVS();
+    loadPetFromNVS();
 
     // Connect WiFi (multi-network support)
     WiFi.mode(WIFI_STA);
@@ -1175,6 +1317,232 @@ void init(std::function<void(AvatarState)> onStateChange) {
     server.addHandler(volHandler);
 #endif // NO_AUDIO
 
+    // GET /pet - return pet state
+    server.on("/pet", HTTP_GET, [](AsyncWebServerRequest* req) {
+        petDecay();
+        JsonDocument doc;
+        doc["device_id"] = runtimeConfig.hostname;
+        doc["hunger"] = petData.hunger;
+        doc["happiness"] = petData.happiness;
+        doc["total_feeds"] = petData.totalFeeds;
+        doc["total_pets"] = petData.totalPets;
+        doc["mood"] = petMood();
+        if (petData.lastFedAt > 0) {
+            doc["last_fed_at"] = String(petData.lastFedAt / 1000) + "s ago";
+        } else {
+            doc["last_fed_at"] = (char*)nullptr;
+        }
+        if (petData.lastPetAt > 0) {
+            doc["last_pet_at"] = String(petData.lastPetAt / 1000) + "s ago";
+        } else {
+            doc["last_pet_at"] = (char*)nullptr;
+        }
+        doc["active_pet"] = PET_NAMES[(int)petData.activePet];
+        doc["active_pet_id"] = (int)petData.activePet;
+        JsonArray store = doc["store"].to<JsonArray>();
+        int totalInteractions = petData.totalFeeds + petData.totalPets;
+        for (int i = 0; i < 4; i++) {
+            JsonObject p = store.add<JsonObject>();
+            p["id"] = i;
+            p["name"] = PET_NAMES[i];
+            p["unlocked"] = petData.unlocked[i];
+            p["cost"] = PET_UNLOCK_COST[i];
+            p["progress"] = petData.unlocked[i] ? PET_UNLOCK_COST[i]
+                : min(totalInteractions, PET_UNLOCK_COST[i]);
+        }
+
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
+    });
+
+    // POST /pet/feed - feed the pet
+    AsyncCallbackJsonWebHandler* petFeedHandler = new AsyncCallbackJsonWebHandler(
+        "/pet/feed",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+            const char* foodType = body["food_type"] | "snack";
+
+            int amount = 15; // snack
+            if (strcmp(foodType, "meal") == 0) amount = 35;
+            else if (strcmp(foodType, "feast") == 0) amount = 60;
+
+            petData.hunger = min(100, petData.hunger + amount);
+            petData.happiness = min(100, petData.happiness + amount / 3);
+            petData.totalFeeds++;
+            petData.lastFedAt = millis();
+            savePetToNVS();
+
+            checkPetUnlocks();
+            Serial.printf("[Pet] Fed %s: hunger=%d happiness=%d\n",
+                foodType, petData.hunger, petData.happiness);
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["hunger"] = petData.hunger;
+            resp["happiness"] = petData.happiness;
+            resp["mood"] = petMood();
+            resp["message"] = String("Nom nom! +") + amount + " hunger";
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(petFeedHandler);
+
+    // POST /pet/pet - pet the bot
+    AsyncCallbackJsonWebHandler* petPetHandler = new AsyncCallbackJsonWebHandler(
+        "/pet/pet",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            petData.happiness = min(100, petData.happiness + 20);
+            petData.hunger = max(0, petData.hunger - 2); // petting makes slightly hungry
+            petData.totalPets++;
+            petData.lastPetAt = millis();
+            savePetToNVS();
+
+            checkPetUnlocks();
+            Serial.printf("[Pet] Petted: hunger=%d happiness=%d\n",
+                petData.hunger, petData.happiness);
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["hunger"] = petData.hunger;
+            resp["happiness"] = petData.happiness;
+            resp["mood"] = petMood();
+            resp["message"] = "Purrrr! +20 happiness";
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(petPetHandler);
+
+    // POST /pet/select - switch active pet type
+    AsyncCallbackJsonWebHandler* petSelectHandler = new AsyncCallbackJsonWebHandler(
+        "/pet/select",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+            int id = body["id"] | 0;
+
+            if (id < 0 || id >= (int)PetType::PET_TYPE_COUNT) {
+                req->send(400, "application/json", "{\"error\":\"invalid pet id\"}");
+                return;
+            }
+            if (!petData.unlocked[id]) {
+                req->send(403, "application/json", "{\"error\":\"pet not unlocked\"}");
+                return;
+            }
+
+            petData.activePet = (PetType)id;
+            savePetToNVS();
+            Serial.printf("[Pet] Selected: %s\n", PET_NAMES[id]);
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["active_pet"] = PET_NAMES[id];
+            resp["active_pet_id"] = id;
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(petSelectHandler);
+
+    // GET /pomodoro - return current timer state
+    server.on("/pomodoro", HTTP_GET, [](AsyncWebServerRequest* req) {
+        pomodoroTick(); // ensure up to date
+        JsonDocument doc;
+        doc["session"] = pomodoroSessionStr(pomodoroData.session);
+        doc["status"] = pomodoroStatusStr(pomodoroData.status);
+        doc["time_left"] = pomodoroData.timeLeftSec;
+        doc["total_duration"] = pomodoroData.totalDurationSec;
+        doc["focus_count"] = pomodoroData.focusCount;
+        doc["today_sessions"] = pomodoroData.todaySessions;
+        doc["today_minutes"] = pomodoroData.todayMinutes;
+        JsonObject cfg = doc["config"].to<JsonObject>();
+        cfg["focus"] = pomodoroData.focusMins;
+        cfg["short_break"] = pomodoroData.shortBreakMins;
+        cfg["long_break"] = pomodoroData.longBreakMins;
+
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
+    });
+
+    // POST /pomodoro - control timer (start, pause, reset, config)
+    AsyncCallbackJsonWebHandler* pomoHandler = new AsyncCallbackJsonWebHandler(
+        "/pomodoro",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+            const char* action = body["action"] | "";
+
+            if (strcmp(action, "start") == 0) {
+                pomodoroData.status = PomodoroStatus::RUNNING;
+                pomodoroData.lastTickAt = millis();
+                if (stateCallback) {
+                    stateCallback(pomodoroData.session == PomodoroSession::FOCUS
+                        ? AvatarState::THINKING : AvatarState::IDLE);
+                }
+                Serial.println("[Pomodoro] Started");
+            }
+            else if (strcmp(action, "pause") == 0) {
+                pomodoroData.status = PomodoroStatus::PAUSED;
+                if (stateCallback) stateCallback(AvatarState::IDLE);
+                Serial.println("[Pomodoro] Paused");
+            }
+            else if (strcmp(action, "reset") == 0) {
+                pomodoroData.status = PomodoroStatus::IDLE;
+                pomodoroData.timeLeftSec = pomodoroData.focusMins * 60;
+                pomodoroData.totalDurationSec = pomodoroData.focusMins * 60;
+                pomodoroData.session = PomodoroSession::FOCUS;
+                if (stateCallback) stateCallback(AvatarState::IDLE);
+                Serial.println("[Pomodoro] Reset");
+            }
+            else if (strcmp(action, "skip") == 0) {
+                pomodoroAdvance();
+                Serial.println("[Pomodoro] Skipped");
+            }
+
+            // Config update
+            if (!body["focus"].isNull())
+                pomodoroData.focusMins = body["focus"] | 25;
+            if (!body["short_break"].isNull())
+                pomodoroData.shortBreakMins = body["short_break"] | 5;
+            if (!body["long_break"].isNull())
+                pomodoroData.longBreakMins = body["long_break"] | 15;
+
+            // Sync timer state from frontend (when frontend is driving)
+            if (!body["time_left"].isNull()) {
+                pomodoroData.timeLeftSec = body["time_left"] | 0;
+                pomodoroData.lastTickAt = millis();
+            }
+            if (!body["session"].isNull()) {
+                const char* s = body["session"] | "focus";
+                if (strcmp(s, "focus") == 0) pomodoroData.session = PomodoroSession::FOCUS;
+                else if (strcmp(s, "shortBreak") == 0) pomodoroData.session = PomodoroSession::SHORT_BREAK;
+                else if (strcmp(s, "longBreak") == 0) pomodoroData.session = PomodoroSession::LONG_BREAK;
+            }
+            if (!body["total_duration"].isNull())
+                pomodoroData.totalDurationSec = body["total_duration"] | (25 * 60);
+
+            pomodoroTick();
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["session"] = pomodoroSessionStr(pomodoroData.session);
+            resp["status"] = pomodoroStatusStr(pomodoroData.status);
+            resp["time_left"] = pomodoroData.timeLeftSec;
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(pomoHandler);
+
     server.begin();
     Serial.println("[Server] HTTP server started on port 80");
 
@@ -1185,6 +1553,11 @@ void init(std::function<void(AvatarState)> onStateChange) {
 }
 
 void update() {
+    // Pet decay (hunger/happiness decrease over time)
+    petDecay();
+    // Pomodoro countdown
+    pomodoroTick();
+
     // WiFi reconnection (tries all configured networks)
     static uint32_t lastReconnect = 0;
     if (WiFi.status() != WL_CONNECTED && millis() - lastReconnect > 10000) {
@@ -1246,6 +1619,14 @@ XpData& getXpData() {
 
 ProjectInfo& getProject() {
     return projectInfo;
+}
+
+PetData& getPetData() {
+    return petData;
+}
+
+PomodoroData& getPomodoro() {
+    return pomodoroData;
 }
 
 void sendVoiceToServer(const uint8_t* data, size_t size) {
