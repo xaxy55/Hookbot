@@ -43,13 +43,6 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Create state bucket if needed
-        run: |
-          gcloud storage buckets describe gs://hookbot-tfstate 2>/dev/null || \
-          gcloud storage buckets create gs://hookbot-tfstate \
-            --location=us-central1 \
-            --uniform-bucket-level-access
-
       - name: Terraform Init
         run: terraform init
 
@@ -108,13 +101,6 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
-      - name: Create state bucket if needed
-        run: |
-          gcloud storage buckets describe gs://hookbot-tfstate 2>/dev/null || \
-          gcloud storage buckets create gs://hookbot-tfstate \
-            --location=us-central1 \
-            --uniform-bucket-level-access
 
       - name: Terraform Init
         run: terraform init
