@@ -309,11 +309,19 @@ fn constant_time_eq(a: &str, b: &str) -> bool {
 }
 
 /// Build the session cookie string, adding Secure flag when TLS is enabled.
-fn build_session_cookie(token: &str, max_age: u64, tls_enabled: bool) -> String {
-    let secure = if tls_enabled { "; Secure" } else { "" };
+fn build_session_cookie(token: &str, max_age: u64, tls_enabled: bool, cookie_domain: Option<&str>) -> String {
+    let (secure, same_site) = if cookie_domain.is_some() {
+        // Cross-subdomain: need SameSite=None + Secure for cross-origin fetch
+        ("; Secure", "None")
+    } else if tls_enabled {
+        ("; Secure", "Lax")
+    } else {
+        ("", "Lax")
+    };
+    let domain = cookie_domain.map(|d| format!("; Domain={}", d)).unwrap_or_default();
     format!(
-        "{}={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}{}",
-        SESSION_COOKIE_NAME, token, max_age, secure
+        "{}={}; HttpOnly; SameSite={}; Path=/; Max-Age={}{}{}",
+        SESSION_COOKIE_NAME, token, same_site, max_age, secure, domain
     )
 }
 
@@ -412,7 +420,7 @@ pub async fn login(
 
             let tls_enabled = config.tls_cert_path.is_some();
             let token = create_session_token(&config.session_secret);
-            let cookie = build_session_cookie(&token, SESSION_MAX_AGE_SECS, tls_enabled);
+            let cookie = build_session_cookie(&token, SESSION_MAX_AGE_SECS, tls_enabled, config.cookie_domain.as_deref());
 
             (
                 StatusCode::OK,
@@ -436,7 +444,7 @@ pub async fn logout(
     Extension(config): Extension<Arc<AppConfig>>,
 ) -> Response {
     let tls_enabled = config.tls_cert_path.is_some();
-    let cookie = build_session_cookie("", 0, tls_enabled);
+    let cookie = build_session_cookie("", 0, tls_enabled, config.cookie_domain.as_deref());
 
     (
         StatusCode::OK,
@@ -667,13 +675,15 @@ pub async fn workos_callback(
     // Create session cookie with user_id
     let tls_enabled = config.tls_cert_path.is_some();
     let token = create_workos_session_token(&user_id, &config.session_secret);
-    let cookie = build_session_cookie(&token, SESSION_MAX_AGE_SECS, tls_enabled);
+    let cookie = build_session_cookie(&token, SESSION_MAX_AGE_SECS, tls_enabled, config.cookie_domain.as_deref());
+
+    let redirect_url = config.frontend_url.clone().unwrap_or_else(|| "/".to_string());
 
     (
         StatusCode::FOUND,
         [
             (header::SET_COOKIE, cookie),
-            (header::LOCATION, "/".to_string()),
+            (header::LOCATION, redirect_url),
         ],
     )
         .into_response()

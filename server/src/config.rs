@@ -19,8 +19,8 @@ pub struct AppConfig {
     pub mdns_prefix: String,
     pub tls_cert_path: Option<String>,
     pub tls_key_path: Option<String>,
-    #[allow(dead_code)]
     pub anthropic_api_key: Option<String>,
+    pub openai_api_key: Option<String>,
     #[allow(dead_code)]
     pub calendar_url: Option<String>,
     pub api_key: String,
@@ -32,6 +32,8 @@ pub struct AppConfig {
     pub workos_client_id: Option<String>,
     pub workos_api_key: Option<String>,
     pub workos_redirect_uri: Option<String>,
+    pub cookie_domain: Option<String>,
+    pub frontend_url: Option<String>,
 }
 
 impl AppConfig {
@@ -63,6 +65,7 @@ impl AppConfig {
         let tls_cert_path = env::var("TLS_CERT_PATH").ok();
         let tls_key_path = env::var("TLS_KEY_PATH").ok();
         let anthropic_api_key = env::var("ANTHROPIC_API_KEY").ok();
+        let openai_api_key = env::var("OPENAI_API_KEY").ok();
         let calendar_url = env::var("CALENDAR_URL").ok();
 
         // Auth: API key
@@ -106,6 +109,8 @@ impl AppConfig {
         let workos_client_id = env::var("WORKOS_CLIENT_ID").ok().filter(|s| !s.is_empty());
         let workos_api_key = env::var("WORKOS_API_KEY").ok().filter(|s| !s.is_empty());
         let workos_redirect_uri = env::var("WORKOS_REDIRECT_URI").ok().filter(|s| !s.is_empty());
+        let cookie_domain = env::var("COOKIE_DOMAIN").ok().filter(|s| !s.is_empty());
+        let frontend_url = env::var("FRONTEND_URL").ok().filter(|s| !s.is_empty());
         if workos_client_id.is_some() {
             info!("WorkOS multi-tenant mode enabled");
         }
@@ -120,6 +125,7 @@ impl AppConfig {
             tls_cert_path,
             tls_key_path,
             anthropic_api_key,
+            openai_api_key,
             calendar_url,
             api_key,
             admin_password_hash,
@@ -130,6 +136,8 @@ impl AppConfig {
             workos_client_id,
             workos_api_key,
             workos_redirect_uri,
+            cookie_domain,
+            frontend_url,
         }
     }
 

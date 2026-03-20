@@ -73,7 +73,9 @@ resource "google_compute_instance" "hookbot" {
             { name = "ALLOWED_ORIGINS", value = "https://bot.mr-ai.no,https://hookbot.mr-ai.no,https://hookbot-web.pages.dev" },
             { name = "WORKOS_CLIENT_ID", value = var.workos_client_id },
             { name = "WORKOS_API_KEY", value = var.workos_api_key },
-            { name = "WORKOS_REDIRECT_URI", value = "https://hookbot.mr-ai.no/auth/callback" },
+            { name = "WORKOS_REDIRECT_URI", value = "https://bot.mr-ai.no/auth/callback" },
+            { name = "COOKIE_DOMAIN", value = ".mr-ai.no" },
+            { name = "FRONTEND_URL", value = "https://hookbot.mr-ai.no" },
           ]
           volumeMounts = [{
             name      = "hookbot-data"

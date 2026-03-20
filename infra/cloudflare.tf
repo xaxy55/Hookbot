@@ -12,14 +12,14 @@ resource "cloudflare_pages_project" "hookbot_web" {
   deployment_configs {
     production {
       environment_variables = {
-        VITE_API_BASE_URL = "http://${google_compute_address.hookbot.address}"
+        VITE_API_BASE_URL = "https://bot.mr-ai.no"
         NODE_VERSION      = "20"
       }
     }
 
     preview {
       environment_variables = {
-        VITE_API_BASE_URL = "http://${google_compute_address.hookbot.address}"
+        VITE_API_BASE_URL = "https://bot.mr-ai.no"
         NODE_VERSION      = "20"
       }
     }
