@@ -22,10 +22,8 @@ provider "google" {
   project = var.gcp_project_id
   region  = var.gcp_region
   zone    = var.gcp_zone
-  workos_domain = var.workos_domain
 }
 
 provider "cloudflare" {
   api_token = var.cloudflare_api_token
-  vite_api_base_url = var.vite_api_base_url
 }
