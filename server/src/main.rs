@@ -236,6 +236,50 @@ async fn main() {
         .route("/api/mood/suggest", get(routes::mood_learning::get_suggestion))
         .with_state(pool.clone());
 
+    // Phase 8: Desk Ecosystem & Smart Home routes
+    let desk_light_routes = Router::new()
+        .route("/api/desk-lights", get(routes::desk_lights::list_lights).post(routes::desk_lights::create_light))
+        .route("/api/desk-lights/{id}", put(routes::desk_lights::update_light).delete(routes::desk_lights::delete_light))
+        .route("/api/desk-lights/{id}/action", post(routes::desk_lights::trigger_action))
+        .with_state(pool.clone());
+
+    let music_routes = Router::new()
+        .route("/api/music/config", get(routes::music::get_config).post(routes::music::create_config))
+        .route("/api/music/config/{id}", put(routes::music::update_config).delete(routes::music::delete_config))
+        .route("/api/music/now-playing", get(routes::music::now_playing))
+        .route("/api/music/action", post(routes::music::music_action))
+        .with_state(pool.clone());
+
+    let standing_desk_routes = Router::new()
+        .route("/api/standing-desk", get(routes::standing_desk::get_config).put(routes::standing_desk::update_config))
+        .route("/api/standing-desk/position", post(routes::standing_desk::change_position))
+        .route("/api/standing-desk/report", get(routes::standing_desk::get_report))
+        .with_state(pool.clone());
+
+    let streamdeck_routes = Router::new()
+        .route("/api/streamdeck/buttons", get(routes::streamdeck::list_buttons).post(routes::streamdeck::create_button))
+        .route("/api/streamdeck/buttons/{id}", put(routes::streamdeck::update_button).delete(routes::streamdeck::delete_button))
+        .route("/api/streamdeck/trigger", post(routes::streamdeck::trigger_button))
+        .with_state(pool.clone());
+
+    let homeassistant_routes = Router::new()
+        .route("/api/homeassistant", get(routes::homeassistant::get_config).post(routes::homeassistant::create_config))
+        .route("/api/homeassistant/{id}", put(routes::homeassistant::update_config).delete(routes::homeassistant::delete_config))
+        .route("/api/homeassistant/entity", get(routes::homeassistant::get_entity))
+        .route("/api/homeassistant/sync", post(routes::homeassistant::sync_state))
+        .with_state(pool.clone());
+
+    let desk_occupancy_routes = Router::new()
+        .route("/api/desk-occupancy/config", get(routes::desk_occupancy::get_config).put(routes::desk_occupancy::update_config))
+        .route("/api/desk-occupancy/events", get(routes::desk_occupancy::get_events).post(routes::desk_occupancy::record_event))
+        .route("/api/desk-occupancy/report", get(routes::desk_occupancy::get_report))
+        .with_state(pool.clone());
+
+    let monitor_routes = Router::new()
+        .route("/api/monitors", get(routes::monitors::get_config).put(routes::monitors::update_config))
+        .route("/api/monitors/active", post(routes::monitors::set_active_monitor))
+        .with_state(pool.clone());
+
     // Voice control routes (need pool + config for API keys)
     let voice_routes = Router::new()
         .route("/api/voice/transcribe", post(routes::voice::transcribe))
@@ -267,6 +311,13 @@ async fn main() {
         .merge(tunnel_routes)
         .merge(mood_learning_routes)
         .merge(voice_routes)
+        .merge(desk_light_routes)
+        .merge(music_routes)
+        .merge(standing_desk_routes)
+        .merge(streamdeck_routes)
+        .merge(homeassistant_routes)
+        .merge(desk_occupancy_routes)
+        .merge(monitor_routes)
         .merge(auth_mgmt_routes)
         .route_layer(middleware::from_fn(auth::require_auth));
 

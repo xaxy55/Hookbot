@@ -171,6 +171,102 @@ fn run_migrations(conn: &Connection) {
             language TEXT NOT NULL DEFAULT 'en',
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         )",
+        // Phase 8: Desk Ecosystem & Smart Home
+        "CREATE TABLE IF NOT EXISTS desk_lights (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            provider TEXT NOT NULL DEFAULT 'hue',
+            name TEXT NOT NULL,
+            bridge_ip TEXT,
+            api_key TEXT,
+            light_ids TEXT NOT NULL DEFAULT '[]',
+            state_colors TEXT NOT NULL DEFAULT '{}',
+            enabled INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_desk_lights_device ON desk_lights(device_id)",
+        "CREATE TABLE IF NOT EXISTS music_configs (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            provider TEXT NOT NULL DEFAULT 'spotify',
+            access_token TEXT,
+            refresh_token TEXT,
+            auto_pause_meetings INTEGER NOT NULL DEFAULT 1,
+            focus_playlist_id TEXT,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE(device_id, provider)
+        )",
+        "CREATE TABLE IF NOT EXISTS standing_desk (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL UNIQUE REFERENCES devices(id) ON DELETE CASCADE,
+            sit_remind_minutes INTEGER NOT NULL DEFAULT 45,
+            stand_remind_minutes INTEGER NOT NULL DEFAULT 15,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            current_position TEXT NOT NULL DEFAULT 'sitting',
+            total_stand_minutes INTEGER NOT NULL DEFAULT 0,
+            total_sit_minutes INTEGER NOT NULL DEFAULT 0,
+            transitions_today INTEGER NOT NULL DEFAULT 0,
+            last_transition_at TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE TABLE IF NOT EXISTS standing_desk_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            position TEXT NOT NULL,
+            duration_minutes INTEGER NOT NULL DEFAULT 0,
+            recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_standing_desk_history_device ON standing_desk_history(device_id, recorded_at)",
+        "CREATE TABLE IF NOT EXISTS streamdeck_buttons (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            position INTEGER NOT NULL,
+            label TEXT NOT NULL,
+            icon TEXT,
+            action_type TEXT NOT NULL DEFAULT 'state_change',
+            action_config TEXT NOT NULL DEFAULT '{}',
+            enabled INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE(device_id, position)
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_streamdeck_buttons_device ON streamdeck_buttons(device_id)",
+        "CREATE TABLE IF NOT EXISTS homeassistant_configs (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL UNIQUE REFERENCES devices(id) ON DELETE CASCADE,
+            ha_url TEXT NOT NULL,
+            access_token TEXT,
+            entity_id TEXT,
+            expose_states INTEGER NOT NULL DEFAULT 1,
+            expose_sensors INTEGER NOT NULL DEFAULT 0,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE TABLE IF NOT EXISTS desk_occupancy_config (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL UNIQUE REFERENCES devices(id) ON DELETE CASCADE,
+            break_remind_minutes INTEGER NOT NULL DEFAULT 60,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE TABLE IF NOT EXISTS desk_occupancy_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            event_type TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_desk_occupancy_events_device ON desk_occupancy_events(device_id, created_at)",
+        "CREATE TABLE IF NOT EXISTS monitor_configs (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL UNIQUE REFERENCES devices(id) ON DELETE CASCADE,
+            monitor_count INTEGER NOT NULL DEFAULT 2,
+            servo_pin INTEGER,
+            angle_map TEXT NOT NULL DEFAULT '{}',
+            detection_method TEXT NOT NULL DEFAULT 'manual',
+            enabled INTEGER NOT NULL DEFAULT 1,
+            active_monitor INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
     ];
 
     for sql in migrations {

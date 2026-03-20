@@ -120,13 +120,13 @@
 
 > The hookbot becomes the brain of your desk setup and connects to your smart home.
 
-- [ ] **Desk lighting sync** — Control Philips Hue / WLED strips: red for errors, green for passing tests, ambient for focus mode
-- [ ] **Spotify / Apple Music integration** — Auto-pause music on meetings, show now-playing on e-ink, focus playlists by state
-- [ ] **Standing desk integration** — Track sit/stand time, remind to switch, hookbot does a little celebration when you stand
-- [ ] **Stream Deck plugin** — Custom buttons for hookbot actions: change state, trigger animations, deploy OTA
-- [ ] **Home Assistant integration** — Expose hookbot as HA entity: use in automations, voice control via Alexa/Google
-- [ ] **Desk occupancy analytics** — Track desk usage patterns, suggest optimal break times, weekly desk health report
-- [ ] **Multi-monitor awareness** — Detect active monitor via USB, point servo-driven hookbot head toward the screen you're using
+- [x] **Desk lighting sync** — Control Philips Hue / WLED strips: red for errors, green for passing tests, ambient for focus mode
+- [x] **Spotify / Apple Music integration** — Auto-pause music on meetings, show now-playing on e-ink, focus playlists by state
+- [x] **Standing desk integration** — Track sit/stand time, remind to switch, hookbot does a little celebration when you stand
+- [x] **Stream Deck plugin** — Custom buttons for hookbot actions: change state, trigger animations, deploy OTA
+- [x] **Home Assistant integration** — Expose hookbot as HA entity: use in automations, voice control via Alexa/Google
+- [x] **Desk occupancy analytics** — Track desk usage patterns, suggest optimal break times, weekly desk health report
+- [x] **Multi-monitor awareness** — Detect active monitor via USB, point servo-driven hookbot head toward the screen you're using
 
 ## Phase 9: Mini-Games & Easter Eggs
 

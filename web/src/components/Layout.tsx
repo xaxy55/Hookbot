@@ -59,6 +59,18 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    label: 'Desk Ecosystem',
+    items: [
+      { path: '/desk-lights', label: 'Desk Lighting', icon: DeskLightIcon },
+      { path: '/music', label: 'Music', icon: MusicNavIcon },
+      { path: '/standing-desk', label: 'Standing Desk', icon: DeskIcon },
+      { path: '/streamdeck', label: 'Stream Deck', icon: GridIcon },
+      { path: '/homeassistant', label: 'Home Assistant', icon: HomeIcon },
+      { path: '/desk-occupancy', label: 'Occupancy', icon: ChairIcon },
+      { path: '/monitors', label: 'Multi-Monitor', icon: MonitorIcon },
+    ],
+  },
+  {
     label: 'Settings',
     items: [
       { path: '/users', label: 'Users', icon: UsersIcon },
@@ -530,6 +542,74 @@ function ShareIcon({ active }: { active: boolean }) {
       <circle cx="4" cy="8" r="2" />
       <circle cx="12" cy="12" r="2" />
       <path d="M6 7l4-2M6 9l4 2" />
+    </svg>
+  );
+}
+
+function DeskLightIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M8 1v2M3 3l1.5 1.5M13 3l-1.5 1.5M1 8h2M13 8h2" />
+      <circle cx="8" cy="8" r="3" />
+      <path d="M6 12h4M7 14h2" />
+    </svg>
+  );
+}
+
+function MusicNavIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M6 13V3l8-2v10" />
+      <circle cx="4" cy="13" r="2" />
+      <circle cx="12" cy="11" r="2" />
+    </svg>
+  );
+}
+
+function DeskIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M2 10h12M4 10v4M12 10v4M6 10V6M10 10V6" />
+      <path d="M5 6h6" />
+    </svg>
+  );
+}
+
+function GridIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <rect x="1" y="1" width="5" height="5" rx="1" />
+      <rect x="10" y="1" width="5" height="5" rx="1" />
+      <rect x="1" y="10" width="5" height="5" rx="1" />
+      <rect x="10" y="10" width="5" height="5" rx="1" />
+    </svg>
+  );
+}
+
+function HomeIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M2 7l6-5 6 5v6a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" />
+      <path d="M6 14V9h4v5" />
+    </svg>
+  );
+}
+
+function ChairIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M4 2v6h8V2M3 8h10M5 8v2M11 8v2M4 12h8M4 10v2M12 10v2" />
+    </svg>
+  );
+}
+
+function MonitorIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <rect x="1" y="2" width="6" height="5" rx="0.5" />
+      <rect x="9" y="2" width="6" height="5" rx="0.5" />
+      <path d="M4 9v2M12 9v2M3 11h10" />
+      <path d="M8 13v2" />
     </svg>
   );
 }
