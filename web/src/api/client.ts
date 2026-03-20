@@ -775,3 +775,205 @@ export const sendGroupCommand = (groupId: string, endpoint: string, body: Record
     method: 'POST',
     body: JSON.stringify({ endpoint, body }),
   });
+
+// Plugin Sandboxing
+export interface PluginSandbox {
+  id: number;
+  plugin_id: string;
+  device_id: string;
+  allowed_apis: string[];
+  blocked_apis: string[];
+  max_calls_per_minute: number;
+  can_access_network: boolean;
+  can_modify_state: boolean;
+  can_send_notifications: boolean;
+  can_access_sensors: boolean;
+  enabled: boolean;
+  created_at: string;
+}
+
+export const getPluginSandboxes = (opts?: { deviceId?: string; pluginId?: string }) => {
+  const params = new URLSearchParams();
+  if (opts?.deviceId) params.set('device_id', opts.deviceId);
+  if (opts?.pluginId) params.set('plugin_id', opts.pluginId);
+  const qs = params.toString();
+  return request<PluginSandbox[]>(`/community/sandboxes${qs ? `?${qs}` : ''}`);
+};
+
+export const createPluginSandbox = (data: {
+  plugin_id: string;
+  device_id?: string;
+  allowed_apis?: string[];
+  blocked_apis?: string[];
+  max_calls_per_minute?: number;
+  can_access_network?: boolean;
+  can_modify_state?: boolean;
+  can_send_notifications?: boolean;
+  can_access_sensors?: boolean;
+}) => request<PluginSandbox>('/community/sandboxes', { method: 'POST', body: JSON.stringify(data) });
+
+export const updatePluginSandbox = (id: number, data: Partial<Omit<PluginSandbox, 'id' | 'plugin_id' | 'device_id' | 'created_at'>>) =>
+  request<{ ok: boolean }>(`/community/sandboxes/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deletePluginSandbox = (id: number) =>
+  request<{ ok: boolean }>(`/community/sandboxes/${id}`, { method: 'DELETE' });
+
+// Device-to-Device Links
+export interface DeviceLink {
+  id: string;
+  source_device_id: string;
+  target_device_id: string;
+  trigger_type: string;
+  trigger_config: Record<string, unknown>;
+  action_type: string;
+  action_config: Record<string, unknown>;
+  enabled: boolean;
+  cooldown_secs: number;
+  last_triggered_at: string | null;
+  created_at: string;
+  source_device_name: string | null;
+  target_device_name: string | null;
+}
+
+export const getDeviceLinks = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<DeviceLink[]>(`/device-links${params}`);
+};
+
+export const createDeviceLink = (data: {
+  source_device_id: string;
+  target_device_id: string;
+  trigger_type: string;
+  trigger_config?: Record<string, unknown>;
+  action_type: string;
+  action_config?: Record<string, unknown>;
+  cooldown_secs?: number;
+}) => request<DeviceLink>('/device-links', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateDeviceLink = (id: string, data: Partial<DeviceLink>) =>
+  request<DeviceLink>(`/device-links/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteDeviceLink = (id: string) =>
+  request<{ ok: boolean }>(`/device-links/${id}`, { method: 'DELETE' });
+
+// User Management
+export interface UserWithDevices {
+  id: string;
+  username: string;
+  display_name: string;
+  role: string;
+  last_login_at: string | null;
+  created_at: string;
+  device_ids: string[];
+}
+
+export const getUsers = () => request<UserWithDevices[]>('/users');
+
+export const createUser = (data: { username: string; display_name: string; password: string; role?: string }) =>
+  request<UserWithDevices>('/users', { method: 'POST', body: JSON.stringify(data) });
+
+export const getUser = (id: string) => request<UserWithDevices>(`/users/${id}`);
+
+export const updateUser = (id: string, data: { display_name?: string; password?: string; role?: string }) =>
+  request<UserWithDevices>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteUser = (id: string) =>
+  request<{ ok: boolean }>(`/users/${id}`, { method: 'DELETE' });
+
+export const assignDeviceToUser = (userId: string, deviceId: string, permissions?: string) =>
+  request<UserWithDevices>(`/users/${userId}/devices`, {
+    method: 'POST',
+    body: JSON.stringify({ device_id: deviceId, permissions }),
+  });
+
+export const unassignDeviceFromUser = (userId: string, deviceId: string) =>
+  request<{ ok: boolean }>(`/users/${userId}/devices/${deviceId}`, { method: 'DELETE' });
+
+// Tunnels / Remote Access
+export interface TunnelConfig {
+  id: string;
+  name: string;
+  tunnel_type: string;
+  hostname: string | null;
+  port: number;
+  status: string;
+  last_connected_at: string | null;
+  config: Record<string, unknown>;
+  created_at: string;
+}
+
+export const getTunnels = () => request<TunnelConfig[]>('/tunnels');
+
+export const createTunnel = (data: {
+  name: string;
+  tunnel_type?: string;
+  hostname?: string;
+  port?: number;
+  auth_token?: string;
+  config?: Record<string, unknown>;
+}) => request<TunnelConfig>('/tunnels', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateTunnel = (id: string, data: Partial<TunnelConfig>) =>
+  request<TunnelConfig>(`/tunnels/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteTunnel = (id: string) =>
+  request<{ ok: boolean }>(`/tunnels/${id}`, { method: 'DELETE' });
+
+export const startTunnel = (id: string) =>
+  request<{ ok: boolean; status: string; message: string; hostname: string | null }>(`/tunnels/${id}/start`, { method: 'POST' });
+
+export const stopTunnel = (id: string) =>
+  request<{ ok: boolean; status: string }>(`/tunnels/${id}/stop`, { method: 'POST' });
+
+// Mood Learning
+export interface MoodPreference {
+  id: number;
+  device_id: string;
+  state: string;
+  animation_id: string | null;
+  positive_responses: number;
+  negative_responses: number;
+  total_duration_secs: number;
+  score: number;
+  last_shown_at: string | null;
+}
+
+export interface MoodPattern {
+  device_id: string;
+  hour_of_day: number;
+  day_of_week: number;
+  preferred_state: string | null;
+  preferred_animation: string | null;
+  confidence: number;
+  sample_count: number;
+}
+
+export interface MoodSuggestion {
+  suggested_state: string | null;
+  suggested_animation: string | null;
+  confidence: number;
+  reason: string;
+}
+
+export const recordMoodFeedback = (data: {
+  device_id?: string;
+  state: string;
+  animation_id?: string;
+  feedback: 'positive' | 'negative';
+  duration_secs?: number;
+}) => request<{ ok: boolean }>('/mood/feedback', { method: 'POST', body: JSON.stringify(data) });
+
+export const getMoodPreferences = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<MoodPreference[]>(`/mood/preferences${params}`);
+};
+
+export const getMoodPatterns = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<MoodPattern[]>(`/mood/patterns${params}`);
+};
+
+export const getMoodSuggestion = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<MoodSuggestion>(`/mood/suggest${params}`);
+};

@@ -197,6 +197,43 @@ async fn main() {
         .route("/api/groups/{id}/command", post(routes::groups::send_group_command))
         .with_state(pool.clone());
 
+    // Sandbox routes (plugin permission scoping)
+    let sandbox_routes = Router::new()
+        .route("/api/community/sandboxes", get(routes::sandbox::list_sandboxes).post(routes::sandbox::create_sandbox))
+        .route("/api/community/sandboxes/{id}", put(routes::sandbox::update_sandbox).delete(routes::sandbox::delete_sandbox))
+        .route("/api/community/sandboxes/check", post(routes::sandbox::check_permission))
+        .with_state(pool.clone());
+
+    // Device-to-device communication routes
+    let device_link_routes = Router::new()
+        .route("/api/device-links", get(routes::device_links::list_links).post(routes::device_links::create_link))
+        .route("/api/device-links/{id}", put(routes::device_links::update_link).delete(routes::device_links::delete_link))
+        .with_state(pool.clone());
+
+    // User management routes
+    let user_routes = Router::new()
+        .route("/api/users", get(routes::users::list_users).post(routes::users::create_user))
+        .route("/api/users/{id}", get(routes::users::get_user).put(routes::users::update_user).delete(routes::users::delete_user))
+        .route("/api/users/{id}/devices", post(routes::users::assign_device))
+        .route("/api/users/{id}/devices/{device_id}", delete(routes::users::unassign_device))
+        .with_state(pool.clone());
+
+    // Tunnel / remote access routes
+    let tunnel_routes = Router::new()
+        .route("/api/tunnels", get(routes::tunnels::list_tunnels).post(routes::tunnels::create_tunnel))
+        .route("/api/tunnels/{id}", get(routes::tunnels::get_tunnel).put(routes::tunnels::update_tunnel).delete(routes::tunnels::delete_tunnel))
+        .route("/api/tunnels/{id}/start", post(routes::tunnels::start_tunnel))
+        .route("/api/tunnels/{id}/stop", post(routes::tunnels::stop_tunnel))
+        .with_state(pool.clone());
+
+    // Mood learning routes
+    let mood_learning_routes = Router::new()
+        .route("/api/mood/feedback", post(routes::mood_learning::record_feedback))
+        .route("/api/mood/preferences", get(routes::mood_learning::get_preferences))
+        .route("/api/mood/patterns", get(routes::mood_learning::get_patterns))
+        .route("/api/mood/suggest", get(routes::mood_learning::get_suggestion))
+        .with_state(pool.clone());
+
     // Auth management routes (protected — require current API key)
     let auth_mgmt_routes = Router::new()
         .route("/api/auth/rotate-key", post(auth::rotate_api_key));
@@ -212,6 +249,11 @@ async fn main() {
         .merge(community_routes)
         .merge(project_route_routes)
         .merge(group_routes)
+        .merge(sandbox_routes)
+        .merge(device_link_routes)
+        .merge(user_routes)
+        .merge(tunnel_routes)
+        .merge(mood_learning_routes)
         .merge(auth_mgmt_routes)
         .route_layer(middleware::from_fn(auth::require_auth));
 

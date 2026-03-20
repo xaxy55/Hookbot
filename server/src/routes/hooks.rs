@@ -137,6 +137,16 @@ pub async fn handle_hook(
         }
     }
 
+    // Evaluate device-to-device links for this state change
+    if let Some(ref did) = device_id {
+        let link_db = db.clone();
+        let did_clone = did.clone();
+        let state_clone = state.to_string();
+        tokio::spawn(async move {
+            super::device_links::evaluate_device_links(&link_db, &did_clone, &state_clone).await;
+        });
+    }
+
     Ok(Json(json!({
         "ok": true,
         "state": state,
