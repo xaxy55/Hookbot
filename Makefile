@@ -7,7 +7,8 @@ test: ## Run Playwright tests
 	npx playwright test
 
 server: ## Start backend dev server (port 3000, debug logging)
-	cd server && RUST_LOG=debug ADMIN_PASSWORD=d77083c22db2f3e2f01981e7ae9c2c5f87471134c4b5018c cargo run
+	ADMIN_PASSWORD ?= $(shell grep '^ADMIN_PASSWORD=' .env 2>/dev/null | cut -d= -f2)
+	cd server && RUST_LOG=debug ADMIN_PASSWORD=$(ADMIN_PASSWORD) cargo run
 
 web: ## Start frontend dev server (port 5173)
 	cd web && npm run dev

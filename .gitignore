@@ -70,3 +70,9 @@ infra/terraform.tfvars
 infra/.terraform.tfstate.lock.info
 *.tfvars
 !*.tfvars.example
+
+# Cert
+*.pem
+*.key
+*.crt
+

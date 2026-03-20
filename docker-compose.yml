@@ -8,7 +8,7 @@ services:
       - DATABASE_URL=/app/data/hookbot.db
       - FIRMWARE_DIR=/app/data/firmware
       - BIND_ADDR=0.0.0.0:3000
-      - ADMIN_PASSWORD=d77083c22db2f3e2f01981e7ae9c2c5f87471134c4b5018c
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     restart: unless-stopped
 
   web:
