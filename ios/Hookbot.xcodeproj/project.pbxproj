@@ -87,6 +87,7 @@
 		03397893315BCC3E84C561BE /* AvatarRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarRenderer.swift; sourceTree = "<group>"; };
 		B2D3E4F5A6B7C8D9E0F1A2B3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		D4E5F6A7B8C9D0E1F2A3B4C5 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		E5F6A7B8C9D0E1F2A3B4C5D6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		046CFAEC7691D754A8190D98 /* DESKBOTUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DESKBOTUITests.swift; sourceTree = "<group>"; };
 		0B9AE980C2B59FAFAD453E4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		151A6E66A879D9F121E3EB91 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
@@ -255,6 +256,7 @@
 			children = (
 				2C3CE9DB464C7E911F7F18C0 /* Assets.xcassets */,
 				5EFA7C0FF72A2EE9E044D48B /* Hookbot.entitlements */,
+				E5F6A7B8C9D0E1F2A3B4C5D6 /* Info.plist */,
 				8A03C8999E692EEE93D0A597 /* App */,
 				06CBB800FED0EF03CF145128 /* Services */,
 				3C05CF566F178449FBE7D2CF /* Views */,
@@ -510,6 +512,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Hookbot/Hookbot.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				HOOKBOT_SERVER_URL = "https://hookbot.mr-ai.no";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
@@ -663,6 +666,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Hookbot/Hookbot.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				HOOKBOT_SERVER_URL = "https://hookbot.mr-ai.no";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Hookbot/Info.plist;
