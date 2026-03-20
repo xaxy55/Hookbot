@@ -977,3 +977,48 @@ export const getMoodSuggestion = (deviceId?: string) => {
   const params = deviceId ? `?device_id=${deviceId}` : '';
   return request<MoodSuggestion>(`/mood/suggest${params}`);
 };
+
+// Voice Control & TTS
+export interface VoiceCommandResponse {
+  ok: boolean;
+  action: string;
+  detail: string;
+  executed: boolean;
+}
+
+export interface VoiceStatus {
+  enabled: boolean;
+  wake_word: string;
+  last_command: string | null;
+  last_command_at: string | null;
+  total_commands: number;
+}
+
+export interface TtsResponse {
+  ok: boolean;
+  text: string;
+  sent_to_device: boolean;
+}
+
+export const sendVoiceCommand = (data: {
+  transcript: string;
+  device_id?: string;
+  confidence?: number;
+}) => request<VoiceCommandResponse>('/voice/command', { method: 'POST', body: JSON.stringify(data) });
+
+export const getVoiceStatus = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<VoiceStatus>(`/voice/status${params}`);
+};
+
+export const sendTts = (data: {
+  text: string;
+  device_id?: string;
+  voice?: string;
+}) => request<TtsResponse>('/voice/speak', { method: 'POST', body: JSON.stringify(data) });
+
+export const sendAnnouncement = (data: {
+  device_id?: string;
+  announcement_type?: string;
+  text?: string;
+}) => request<TtsResponse>('/voice/announce', { method: 'POST', body: JSON.stringify(data) });

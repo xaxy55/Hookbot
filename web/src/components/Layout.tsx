@@ -52,6 +52,12 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    label: 'AI & Voice',
+    items: [
+      { path: '/voice', label: 'Voice Control', icon: MicIcon },
+    ],
+  },
+  {
     label: 'Connect',
     items: [
       { path: '/integrations', label: 'Integrations', icon: PlugIcon },
@@ -459,6 +465,15 @@ function BrainIcon({ active }: { active: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
       <path d="M8 14V7M8 7c0-2-1.5-4-4-4S1 4 1 6c0 1.5 1 2.5 2 3 0 1.5 1.5 3 3 3h2M8 7c0-2 1.5-4 4-4s3 1 3 3c0 1.5-1 2.5-2 3 0 1.5-1.5 3-3 3H8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function MicIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" />
+      <path d="M3 7.5a5 5 0 0010 0M8 12.5v2M6 14.5h4" strokeLinecap="round" />
     </svg>
   );
 }

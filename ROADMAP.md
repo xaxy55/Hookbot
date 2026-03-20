@@ -86,8 +86,8 @@
 
 - [x] **Claude API integration** — Hookbot can ask Claude for status summaries, generate witty status messages
 - [x] **Context-aware reactions** — Analyze tool patterns: lots of grep = "searching", many edits = "refactoring", test failures = escalating frustration
-- [ ] **Voice control** — I2S microphone + wake word detection, send commands to Claude
-- [ ] **Text-to-speech** — I2S DAC speaker, Claude speaks responses through the hookbot
+- [x] **Voice control** — I2S microphone + wake word detection, send commands to Claude
+- [x] **Text-to-speech** — I2S DAC speaker, Claude speaks responses through the hookbot
 - [x] **Smart notifications** — AI decides priority: suppress low-importance Teams messages during deep work, escalate urgent ones
 - [x] **Mood learning** — Track which states/animations the user responds to, adapt personality over time
 - [x] **Meeting awareness** — Calendar integration: go quiet during meetings, show countdown to next meeting

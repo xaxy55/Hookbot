@@ -234,6 +234,14 @@ async fn main() {
         .route("/api/mood/suggest", get(routes::mood_learning::get_suggestion))
         .with_state(pool.clone());
 
+    // Voice control & TTS routes
+    let voice_routes = Router::new()
+        .route("/api/voice/command", post(routes::voice::process_command))
+        .route("/api/voice/status", get(routes::voice::get_voice_status))
+        .route("/api/voice/speak", post(routes::voice::speak))
+        .route("/api/voice/announce", post(routes::voice::announce))
+        .with_state((pool.clone(), (*config).clone()));
+
     // Auth management routes (protected — require current API key)
     let auth_mgmt_routes = Router::new()
         .route("/api/auth/rotate-key", post(auth::rotate_api_key));
@@ -254,6 +262,7 @@ async fn main() {
         .merge(user_routes)
         .merge(tunnel_routes)
         .merge(mood_learning_routes)
+        .merge(voice_routes)
         .merge(auth_mgmt_routes)
         .route_layer(middleware::from_fn(auth::require_auth));
 
