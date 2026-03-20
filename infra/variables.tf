@@ -58,3 +58,27 @@ variable "cloudflare_pages_project" {
   type        = string
   default     = "hookbot-web"
 }
+
+variable "vite_api_base_url" {
+  description = "Vite api base url"
+  type        = string
+  default     = ""
+}
+
+variable "workos_domain" {
+  description = "work os doamin url"
+  type        = string
+  default     = ""
+}
+
+variable "domain_name" {
+  description = "Domain name"
+  type        = string
+  default     = ""
+}
+
+variable "frontend_sub_domain" {
+  description = "Sub domain for the frontend"
+  type        = string
+  default     = ""
+}
