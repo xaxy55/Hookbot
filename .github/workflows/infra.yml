@@ -50,21 +50,21 @@ jobs:
 
       - name: Import existing resources
         run: |
-          # Import resources that already exist in GCP — safe to run repeatedly
-          terraform import google_artifact_registry_repository.hookbot \
-            "projects/$TF_VAR_gcp_project_id/locations/us-central1/repositories/hookbot" 2>/dev/null || true
-          terraform import google_service_account.hookbot_vm \
-            "projects/$TF_VAR_gcp_project_id/serviceAccounts/hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" 2>/dev/null || true
-          terraform import google_compute_address.hookbot \
-            "projects/$TF_VAR_gcp_project_id/regions/us-central1/addresses/hookbot-ip" 2>/dev/null || true
-          terraform import google_compute_firewall.hookbot_http \
-            "projects/$TF_VAR_gcp_project_id/global/firewalls/hookbot-allow-http" 2>/dev/null || true
-          terraform import google_project_iam_member.hookbot_ar_reader \
-            "$TF_VAR_gcp_project_id roles/artifactregistry.reader serviceAccount:hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" 2>/dev/null || true
-          terraform import google_compute_instance.hookbot \
-            "projects/$TF_VAR_gcp_project_id/zones/us-central1-a/instances/hookbot-server" 2>/dev/null || true
-          terraform import cloudflare_pages_project.hookbot_web \
-            "$TF_VAR_cloudflare_account_id/hookbot-web" 2>/dev/null || true
+          # Import resources not yet in state — already-imported resources return "already managed" and || true handles it
+          terraform import -input=false google_artifact_registry_repository.hookbot \
+            "projects/$TF_VAR_gcp_project_id/locations/us-central1/repositories/hookbot" || true
+          terraform import -input=false google_service_account.hookbot_vm \
+            "projects/$TF_VAR_gcp_project_id/serviceAccounts/hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" || true
+          terraform import -input=false google_compute_address.hookbot \
+            "projects/$TF_VAR_gcp_project_id/regions/us-central1/addresses/hookbot-ip" || true
+          terraform import -input=false google_compute_firewall.hookbot_http \
+            "projects/$TF_VAR_gcp_project_id/global/firewalls/hookbot-allow-http" || true
+          terraform import -input=false 'google_project_iam_member.hookbot_ar_reader' \
+            "$TF_VAR_gcp_project_id/roles/artifactregistry.reader/serviceAccount:hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" || true
+          terraform import -input=false google_compute_instance.hookbot \
+            "projects/$TF_VAR_gcp_project_id/zones/us-central1-a/instances/hookbot-server" || true
+          terraform import -input=false cloudflare_pages_project.hookbot_web \
+            "$TF_VAR_cloudflare_account_id/hookbot-web" || true
 
       - name: Terraform Plan
         id: plan
@@ -109,21 +109,21 @@ jobs:
 
       - name: Import existing resources
         run: |
-          # Import resources that already exist in GCP — safe to run repeatedly
-          terraform import google_artifact_registry_repository.hookbot \
-            "projects/$TF_VAR_gcp_project_id/locations/us-central1/repositories/hookbot" 2>/dev/null || true
-          terraform import google_service_account.hookbot_vm \
-            "projects/$TF_VAR_gcp_project_id/serviceAccounts/hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" 2>/dev/null || true
-          terraform import google_compute_address.hookbot \
-            "projects/$TF_VAR_gcp_project_id/regions/us-central1/addresses/hookbot-ip" 2>/dev/null || true
-          terraform import google_compute_firewall.hookbot_http \
-            "projects/$TF_VAR_gcp_project_id/global/firewalls/hookbot-allow-http" 2>/dev/null || true
-          terraform import google_project_iam_member.hookbot_ar_reader \
-            "$TF_VAR_gcp_project_id roles/artifactregistry.reader serviceAccount:hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" 2>/dev/null || true
-          terraform import google_compute_instance.hookbot \
-            "projects/$TF_VAR_gcp_project_id/zones/us-central1-a/instances/hookbot-server" 2>/dev/null || true
-          terraform import cloudflare_pages_project.hookbot_web \
-            "$TF_VAR_cloudflare_account_id/hookbot-web" 2>/dev/null || true
+          # Import resources not yet in state — already-imported resources return "already managed" and || true handles it
+          terraform import -input=false google_artifact_registry_repository.hookbot \
+            "projects/$TF_VAR_gcp_project_id/locations/us-central1/repositories/hookbot" || true
+          terraform import -input=false google_service_account.hookbot_vm \
+            "projects/$TF_VAR_gcp_project_id/serviceAccounts/hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" || true
+          terraform import -input=false google_compute_address.hookbot \
+            "projects/$TF_VAR_gcp_project_id/regions/us-central1/addresses/hookbot-ip" || true
+          terraform import -input=false google_compute_firewall.hookbot_http \
+            "projects/$TF_VAR_gcp_project_id/global/firewalls/hookbot-allow-http" || true
+          terraform import -input=false 'google_project_iam_member.hookbot_ar_reader' \
+            "$TF_VAR_gcp_project_id/roles/artifactregistry.reader/serviceAccount:hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" || true
+          terraform import -input=false google_compute_instance.hookbot \
+            "projects/$TF_VAR_gcp_project_id/zones/us-central1-a/instances/hookbot-server" || true
+          terraform import -input=false cloudflare_pages_project.hookbot_web \
+            "$TF_VAR_cloudflare_account_id/hookbot-web" || true
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
