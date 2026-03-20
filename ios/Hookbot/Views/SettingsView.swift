@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     @EnvironmentObject var network: NetworkService
+    var auth: AuthService?
     @State private var soundEnabled: Bool = true
     @State private var serverURL: String = ""
     @State private var apiKey: String = ""
@@ -114,6 +115,26 @@ struct SettingsView: View {
                     if let ip = NetworkService.localIPAddress() {
                         LabeledContent("Local IP") {
                             Text(ip).font(.system(.body, design: .monospaced))
+                        }
+                    }
+                }
+
+                if auth != nil {
+                    Section {
+                        Button(role: .destructive) {
+                            engine.config.apiKey = ""
+                            engine.config.deviceId = ""
+                            if let data = try? JSONEncoder().encode(engine.config) {
+                                UserDefaults.standard.set(data, forKey: "hookbot_config")
+                            }
+                            network.stop()
+                            auth?.logout()
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                Text("Sign Out")
+                            }
                         }
                     }
                 }

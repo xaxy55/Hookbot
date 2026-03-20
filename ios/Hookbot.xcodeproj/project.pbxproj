@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1C2D3E4F5A6B7C8D9E0F1A2 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D3E4F5A6B7C8D9E0F1A2B3 /* AuthService.swift */; };
+		C3D4E5F6A7B8C9D0E1F2A3B4 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F6A7B8C9D0E1F2A3B4C5 /* LoginView.swift */; };
 		059E26B7DE33F1D35D4E3D76 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* PetCareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C7D8E9F0A1B2C3 /* PetCareView.swift */; };
 		073508FD8742148770DFAE1F /* HookbotWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF8AD9DCE1B38800DA1ACAA /* HookbotWidget.swift */; };
@@ -83,6 +85,8 @@
 /* Begin PBXFileReference section */
 		007B5E84C28B4F2FAD647E7F /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		03397893315BCC3E84C561BE /* AvatarRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarRenderer.swift; sourceTree = "<group>"; };
+		B2D3E4F5A6B7C8D9E0F1A2B3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		D4E5F6A7B8C9D0E1F2A3B4C5 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		046CFAEC7691D754A8190D98 /* DESKBOTUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DESKBOTUITests.swift; sourceTree = "<group>"; };
 		0B9AE980C2B59FAFAD453E4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		151A6E66A879D9F121E3EB91 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
@@ -122,6 +126,7 @@
 		06CBB800FED0EF03CF145128 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				B2D3E4F5A6B7C8D9E0F1A2B3 /* AuthService.swift */,
 				007B5E84C28B4F2FAD647E7F /* HapticManager.swift */,
 				64E4ED6FDD298958EA1DB744 /* NetworkService.swift */,
 				68548CC1A6546E161E55B81D /* SoundManager.swift */,
@@ -145,6 +150,7 @@
 			children = (
 				151A6E66A879D9F121E3EB91 /* AvatarView.swift */,
 				766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */,
+				D4E5F6A7B8C9D0E1F2A3B4C5 /* LoginView.swift */,
 				6FEFC46D0D53977D14F910B1 /* MainView.swift */,
 				D2E3F4A5B6C7D8E9F0A1B2C3 /* PetCareView.swift */,
 				9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */,
@@ -407,6 +413,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1C2D3E4F5A6B7C8D9E0F1A2 /* AuthService.swift in Sources */,
 				B74A9C85770C5DDF74DF7DB7 /* AvatarEngine.swift in Sources */,
 				F156A3AF2CC4A7BA2413911A /* AvatarRenderer.swift in Sources */,
 				B217C2B121308687C0468A8A /* AvatarTypes.swift in Sources */,
@@ -414,6 +421,7 @@
 				059E26B7DE33F1D35D4E3D76 /* ControlPanelView.swift in Sources */,
 				69BE7ECCBB8C64D610ED5831 /* DeskBotApp.swift in Sources */,
 				83D3838B6D8A2585F9BBAD6E /* HapticManager.swift in Sources */,
+				C3D4E5F6A7B8C9D0E1F2A3B4 /* LoginView.swift in Sources */,
 				E121B6972428789C62702CCD /* MainView.swift in Sources */,
 				C935543D379DAE0399A03D44 /* NetworkService.swift in Sources */,
 				A1B2C3D4E5F6A7B8C9D0E1F2 /* PetCareView.swift in Sources */,
@@ -505,6 +513,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_FILE = Hookbot/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSBonjourServices = (
@@ -656,6 +665,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Hookbot/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";

@@ -513,11 +513,18 @@ pub async fn rotate_api_key(
 #[derive(Deserialize)]
 pub struct CallbackQuery {
     pub code: String,
+    pub state: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct LoginQuery {
+    pub mobile_redirect: Option<String>,
 }
 
 /// GET /auth/login - redirect to WorkOS AuthKit
 pub async fn workos_login(
     Extension(config): Extension<Arc<AppConfig>>,
+    Query(params): Query<LoginQuery>,
 ) -> Response {
     let client_id = match &config.workos_client_id {
         Some(id) => id,
@@ -535,11 +542,22 @@ pub async fn workos_login(
         .as_deref()
         .unwrap_or("http://localhost:3000/auth/callback");
 
-    let url = format!(
+    // Pass mobile_redirect via state parameter so it survives the OAuth round-trip
+    let state = params
+        .mobile_redirect
+        .as_deref()
+        .map(|r| format!("mobile:{}", r))
+        .unwrap_or_default();
+
+    let mut url = format!(
         "https://api.workos.com/user_management/authorize?client_id={}&redirect_uri={}&response_type=code&provider=authkit",
         urlencoding(client_id),
         urlencoding(redirect_uri),
     );
+
+    if !state.is_empty() {
+        url.push_str(&format!("&state={}", urlencoding(&state)));
+    }
 
     Redirect::temporary(&url).into_response()
 }
@@ -672,7 +690,37 @@ pub async fn workos_callback(
         }
     };
 
-    // Create session cookie with user_id
+    // Check if this is a mobile OAuth flow via the state parameter
+    let mobile_redirect = params
+        .state
+        .as_deref()
+        .and_then(|s| s.strip_prefix("mobile:"))
+        .map(|s| s.to_string());
+
+    if let Some(mobile_url) = mobile_redirect {
+        // Mobile flow: redirect to app's custom URL scheme with the user's API key
+        let user_api_key = {
+            let conn = db.lock().unwrap();
+            conn.query_row(
+                "SELECT api_key FROM users WHERE id = ?1",
+                [&user_id],
+                |row| row.get::<_, String>(0),
+            )
+            .unwrap_or_default()
+        };
+
+        let redirect = format!(
+            "{}?api_key={}&email={}",
+            mobile_url,
+            urlencoding(&user_api_key),
+            urlencoding(&email),
+        );
+
+        return (StatusCode::FOUND, [(header::LOCATION, redirect)])
+            .into_response();
+    }
+
+    // Web flow: set session cookie and redirect to frontend
     let tls_enabled = config.tls_cert_path.is_some();
     let token = create_workos_session_token(&user_id, &config.session_secret);
     let cookie = build_session_cookie(&token, SESSION_MAX_AGE_SECS, tls_enabled, config.cookie_domain.as_deref());

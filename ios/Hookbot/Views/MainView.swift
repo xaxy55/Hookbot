@@ -5,6 +5,7 @@ struct MainView: View {
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @State private var showSettings = false
     @State private var showPetCare = false
+    var auth: AuthService?
 
     var isLandscape: Bool { verticalSizeClass == .compact }
 
@@ -84,7 +85,7 @@ struct MainView: View {
                 .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView()
+                SettingsView(auth: auth)
                     .environmentObject(engine)
             }
         }
