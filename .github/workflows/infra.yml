@@ -13,6 +13,15 @@ defaults:
   run:
     working-directory: infra
 
+env:
+  TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  TF_VAR_hookbot_api_key: ${{ secrets.HOOKBOT_API_KEY }}
+  TF_VAR_hookbot_admin_password: ${{ secrets.HOOKBOT_ADMIN_PASSWORD }}
+  TF_VAR_workos_client_id: ${{ secrets.WORKOS_CLIENT_ID }}
+  TF_VAR_workos_api_key: ${{ secrets.WORKOS_API_KEY }}
+
 jobs:
   plan:
     if: github.event_name == 'pull_request'
@@ -34,20 +43,37 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Create state bucket if needed
+        run: |
+          gcloud storage buckets describe gs://hookbot-tfstate 2>/dev/null || \
+          gcloud storage buckets create gs://hookbot-tfstate \
+            --location=us-central1 \
+            --uniform-bucket-level-access
+
       - name: Terraform Init
         run: terraform init
+
+      - name: Import existing resources
+        run: |
+          # Import resources that already exist in GCP — safe to run repeatedly
+          terraform import google_artifact_registry_repository.hookbot \
+            "projects/$TF_VAR_gcp_project_id/locations/us-central1/repositories/hookbot" 2>/dev/null || true
+          terraform import google_service_account.hookbot_vm \
+            "projects/$TF_VAR_gcp_project_id/serviceAccounts/hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" 2>/dev/null || true
+          terraform import google_compute_address.hookbot \
+            "projects/$TF_VAR_gcp_project_id/regions/us-central1/addresses/hookbot-ip" 2>/dev/null || true
+          terraform import google_compute_firewall.hookbot_http \
+            "projects/$TF_VAR_gcp_project_id/global/firewalls/hookbot-allow-http" 2>/dev/null || true
+          terraform import google_project_iam_member.hookbot_ar_reader \
+            "$TF_VAR_gcp_project_id roles/artifactregistry.reader serviceAccount:hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" 2>/dev/null || true
+          terraform import google_compute_instance.hookbot \
+            "projects/$TF_VAR_gcp_project_id/zones/us-central1-a/instances/hookbot-server" 2>/dev/null || true
+          terraform import cloudflare_pages_project.hookbot_web \
+            "$TF_VAR_cloudflare_account_id/hookbot-web" 2>/dev/null || true
 
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -input=false
-        env:
-          TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          TF_VAR_hookbot_api_key: ${{ secrets.HOOKBOT_API_KEY }}
-          TF_VAR_hookbot_admin_password: ${{ secrets.HOOKBOT_ADMIN_PASSWORD }}
-          TF_VAR_workos_client_id: ${{ secrets.WORKOS_CLIENT_ID }}
-          TF_VAR_workos_api_key: ${{ secrets.WORKOS_API_KEY }}
 
       - name: Comment Plan on PR
         uses: actions/github-script@v7
@@ -83,16 +109,33 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Create state bucket if needed
+        run: |
+          gcloud storage buckets describe gs://hookbot-tfstate 2>/dev/null || \
+          gcloud storage buckets create gs://hookbot-tfstate \
+            --location=us-central1 \
+            --uniform-bucket-level-access
+
       - name: Terraform Init
         run: terraform init
 
+      - name: Import existing resources
+        run: |
+          # Import resources that already exist in GCP — safe to run repeatedly
+          terraform import google_artifact_registry_repository.hookbot \
+            "projects/$TF_VAR_gcp_project_id/locations/us-central1/repositories/hookbot" 2>/dev/null || true
+          terraform import google_service_account.hookbot_vm \
+            "projects/$TF_VAR_gcp_project_id/serviceAccounts/hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" 2>/dev/null || true
+          terraform import google_compute_address.hookbot \
+            "projects/$TF_VAR_gcp_project_id/regions/us-central1/addresses/hookbot-ip" 2>/dev/null || true
+          terraform import google_compute_firewall.hookbot_http \
+            "projects/$TF_VAR_gcp_project_id/global/firewalls/hookbot-allow-http" 2>/dev/null || true
+          terraform import google_project_iam_member.hookbot_ar_reader \
+            "$TF_VAR_gcp_project_id roles/artifactregistry.reader serviceAccount:hookbot-vm@$TF_VAR_gcp_project_id.iam.gserviceaccount.com" 2>/dev/null || true
+          terraform import google_compute_instance.hookbot \
+            "projects/$TF_VAR_gcp_project_id/zones/us-central1-a/instances/hookbot-server" 2>/dev/null || true
+          terraform import cloudflare_pages_project.hookbot_web \
+            "$TF_VAR_cloudflare_account_id/hookbot-web" 2>/dev/null || true
+
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
-        env:
-          TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          TF_VAR_hookbot_api_key: ${{ secrets.HOOKBOT_API_KEY }}
-          TF_VAR_hookbot_admin_password: ${{ secrets.HOOKBOT_ADMIN_PASSWORD }}
-          TF_VAR_workos_client_id: ${{ secrets.WORKOS_CLIENT_ID }}
-          TF_VAR_workos_api_key: ${{ secrets.WORKOS_API_KEY }}
