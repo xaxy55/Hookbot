@@ -576,9 +576,9 @@ pub async fn workos_callback(
     let client = reqwest::Client::new();
     let resp = client
         .post("https://api.workos.com/user_management/authenticate")
-        .header("Authorization", format!("Bearer {}", api_key))
         .json(&serde_json::json!({
             "client_id": client_id,
+            "client_secret": api_key,
             "code": params.code,
             "grant_type": "authorization_code",
         }))
