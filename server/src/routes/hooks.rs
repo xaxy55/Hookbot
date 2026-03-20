@@ -1,7 +1,8 @@
-use axum::extract::State;
+use axum::extract::{Request, State};
 use axum::Json;
 use serde_json::json;
 
+use crate::auth::UserId;
 use crate::db::DbPool;
 use crate::error::AppError;
 use crate::models::*;
@@ -10,8 +11,16 @@ use super::gamification::record_tool_use_and_xp;
 
 pub async fn handle_hook(
     State(db): State<DbPool>,
-    Json(input): Json<HookEvent>,
+    req: Request,
 ) -> Result<Json<serde_json::Value>, AppError> {
+    let user_id = req.extensions().get::<UserId>().and_then(|u| u.0.clone());
+
+    let body_bytes = axum::body::to_bytes(req.into_body(), 1024 * 64)
+        .await
+        .map_err(|_| AppError::BadRequest("Invalid request body".to_string()))?;
+    let input: HookEvent = serde_json::from_slice(&body_bytes)
+        .map_err(|e| AppError::BadRequest(format!("Invalid JSON: {}", e)))?;
+
     let state = match input.event.as_str() {
         "PreToolUse" => "thinking",
         "PostToolUse" => {
@@ -34,13 +43,21 @@ pub async fn handle_hook(
     let (device_ip, device_id): (Option<String>, Option<String>) = {
         let conn = db.lock().unwrap();
 
-        // Try project-based routing first
+        // Try project-based routing first (scoped to user if multi-tenant)
         let routed_device_id: Option<String> = input.project.as_ref().and_then(|project| {
-            conn.query_row(
-                "SELECT device_id FROM project_routes WHERE project_path = ?1",
-                [project],
-                |row| row.get(0),
-            ).ok()
+            if let Some(ref uid) = user_id {
+                conn.query_row(
+                    "SELECT device_id FROM project_routes WHERE project_path = ?1 AND (user_id = ?2 OR user_id IS NULL)",
+                    rusqlite::params![project, uid],
+                    |row| row.get(0),
+                ).ok()
+            } else {
+                conn.query_row(
+                    "SELECT device_id FROM project_routes WHERE project_path = ?1",
+                    [project],
+                    |row| row.get(0),
+                ).ok()
+            }
         });
 
         let effective_device_id = routed_device_id.or_else(|| input.device_id.clone());
@@ -52,10 +69,19 @@ pub async fn handle_hook(
             ).ok();
             (ip, Some(did.clone()))
         } else {
-            let result: Option<(String, String)> = conn.query_row(
-                "SELECT id, ip_address FROM devices ORDER BY created_at LIMIT 1", [],
-                |row| Ok((row.get(0)?, row.get(1)?)),
-            ).ok();
+            // First device fallback - scoped to user if multi-tenant
+            let result: Option<(String, String)> = if let Some(ref uid) = user_id {
+                conn.query_row(
+                    "SELECT id, ip_address FROM devices WHERE user_id = ?1 ORDER BY created_at LIMIT 1",
+                    [uid],
+                    |row| Ok((row.get(0)?, row.get(1)?)),
+                ).ok()
+            } else {
+                conn.query_row(
+                    "SELECT id, ip_address FROM devices ORDER BY created_at LIMIT 1", [],
+                    |row| Ok((row.get(0)?, row.get(1)?)),
+                ).ok()
+            };
             match result {
                 Some((id, ip)) => (Some(ip), Some(id)),
                 None => (None, None),

@@ -93,7 +93,9 @@ async fn main() {
         }))
         .route("/api/auth/login", post(auth::login))
         .route("/api/auth/logout", post(auth::logout))
-        .route("/api/auth/status", get(auth::auth_status));
+        .route("/api/auth/status", get(auth::auth_status))
+        .route("/auth/login", get(auth::workos_login))
+        .route("/auth/callback", get(auth::workos_callback));
 
     // Device routes use just the pool
     let device_routes = Router::new()
@@ -199,7 +201,8 @@ async fn main() {
 
     // Auth management routes (protected — require current API key)
     let auth_mgmt_routes = Router::new()
-        .route("/api/auth/rotate-key", post(auth::rotate_api_key));
+        .route("/api/auth/rotate-key", post(auth::rotate_api_key))
+        .route("/api/auth/me", get(auth::get_me));
 
     // Protected routes — require API key or session cookie
     let protected_routes = Router::new()
@@ -218,6 +221,7 @@ async fn main() {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .layer(Extension(pool.clone()))
         .layer(Extension(login_rate_limiter))
         .layer(Extension(config.clone()))
         .layer(cors);

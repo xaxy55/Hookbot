@@ -1,7 +1,8 @@
-use axum::extract::{Path, State};
+use axum::extract::{Path, Request, State};
 use axum::Json;
 use serde_json::json;
 
+use crate::auth::UserId;
 use crate::db::DbPool;
 use crate::error::AppError;
 use crate::models::*;
@@ -45,28 +46,53 @@ pub struct ExportRule {
     pub cooldown_secs: i64,
 }
 
-pub async fn list_devices(State(db): State<DbPool>) -> Result<Json<Vec<DeviceWithStatus>>, AppError> {
+pub async fn list_devices(
+    State(db): State<DbPool>,
+    req: Request,
+) -> Result<Json<Vec<DeviceWithStatus>>, AppError> {
+    let user_id = req.extensions().get::<UserId>().and_then(|u| u.0.clone());
     let conn = db.lock().unwrap();
-    let mut stmt = conn.prepare(
-        "SELECT d.id, d.name, d.hostname, d.ip_address, d.purpose, d.personality,
-                d.created_at, d.updated_at, d.device_type,
-                s.state, s.uptime_ms, s.free_heap, s.recorded_at
-         FROM devices d
-         LEFT JOIN (
-             SELECT device_id, state, uptime_ms, free_heap, recorded_at,
-                    ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY recorded_at DESC) as rn
-             FROM status_log
-         ) s ON s.device_id = d.id AND s.rn = 1
-         ORDER BY d.name",
-    )?;
 
-    let devices = stmt.query_map([], |row| {
-        let state: Option<String> = row.get(9)?;
+    let (sql, params): (String, Vec<Box<dyn rusqlite::types::ToSql>>) = if let Some(ref uid) = user_id {
+        (
+            "SELECT d.id, d.name, d.hostname, d.ip_address, d.purpose, d.personality,
+                    d.created_at, d.updated_at, d.device_type, d.user_id,
+                    s.state, s.uptime_ms, s.free_heap, s.recorded_at
+             FROM devices d
+             LEFT JOIN (
+                 SELECT device_id, state, uptime_ms, free_heap, recorded_at,
+                        ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY recorded_at DESC) as rn
+                 FROM status_log
+             ) s ON s.device_id = d.id AND s.rn = 1
+             WHERE d.user_id = ?1
+             ORDER BY d.name".to_string(),
+            vec![Box::new(uid.clone()) as Box<dyn rusqlite::types::ToSql>],
+        )
+    } else {
+        (
+            "SELECT d.id, d.name, d.hostname, d.ip_address, d.purpose, d.personality,
+                    d.created_at, d.updated_at, d.device_type, d.user_id,
+                    s.state, s.uptime_ms, s.free_heap, s.recorded_at
+             FROM devices d
+             LEFT JOIN (
+                 SELECT device_id, state, uptime_ms, free_heap, recorded_at,
+                        ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY recorded_at DESC) as rn
+                 FROM status_log
+             ) s ON s.device_id = d.id AND s.rn = 1
+             ORDER BY d.name".to_string(),
+            vec![],
+        )
+    };
+
+    let mut stmt = conn.prepare(&sql)?;
+    let param_refs: Vec<&dyn rusqlite::types::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+    let devices = stmt.query_map(param_refs.as_slice(), |row| {
+        let state: Option<String> = row.get(10)?;
         let latest_status = state.map(|s| StatusSnapshot {
             state: s,
-            uptime_ms: row.get(10).unwrap_or(0),
-            free_heap: row.get(11).unwrap_or(0),
-            recorded_at: row.get(12).unwrap_or_default(),
+            uptime_ms: row.get(11).unwrap_or(0),
+            free_heap: row.get(12).unwrap_or(0),
+            recorded_at: row.get(13).unwrap_or_default(),
         });
 
         let online = latest_status.as_ref().map_or(false, |s| {
@@ -89,6 +115,7 @@ pub async fn list_devices(State(db): State<DbPool>) -> Result<Json<Vec<DeviceWit
                 device_type: row.get(8)?,
                 created_at: row.get(6)?,
                 updated_at: row.get(7)?,
+                user_id: row.get(9)?,
             },
             latest_status,
             online,
@@ -101,15 +128,23 @@ pub async fn list_devices(State(db): State<DbPool>) -> Result<Json<Vec<DeviceWit
 
 pub async fn create_device(
     State(db): State<DbPool>,
-    Json(input): Json<CreateDevice>,
+    req: Request,
 ) -> Result<Json<Device>, AppError> {
+    let user_id = req.extensions().get::<UserId>().and_then(|u| u.0.clone());
+
+    let body_bytes = axum::body::to_bytes(req.into_body(), 1024 * 64)
+        .await
+        .map_err(|_| AppError::BadRequest("Invalid request body".to_string()))?;
+    let input: CreateDevice = serde_json::from_slice(&body_bytes)
+        .map_err(|e| AppError::BadRequest(format!("Invalid JSON: {}", e)))?;
+
     let id = uuid::Uuid::new_v4().to_string();
     let conn = db.lock().unwrap();
 
     conn.execute(
-        "INSERT INTO devices (id, name, hostname, ip_address, purpose, personality, device_type)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-        rusqlite::params![id, input.name, input.hostname, input.ip_address, input.purpose, input.personality, input.device_type],
+        "INSERT INTO devices (id, name, hostname, ip_address, purpose, personality, device_type, user_id)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        rusqlite::params![id, input.name, input.hostname, input.ip_address, input.purpose, input.personality, input.device_type, user_id],
     )?;
 
     conn.execute(
@@ -118,7 +153,7 @@ pub async fn create_device(
     )?;
 
     let device = conn.query_row(
-        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type
+        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type, user_id
          FROM devices WHERE id = ?1",
         [&id],
         |row| {
@@ -132,6 +167,7 @@ pub async fn create_device(
                 device_type: row.get(8)?,
                 created_at: row.get(6)?,
                 updated_at: row.get(7)?,
+                user_id: row.get(9)?,
             })
         },
     )?;
@@ -141,7 +177,7 @@ pub async fn create_device(
 
 fn query_device(conn: &rusqlite::Connection, id: &str) -> Result<Device, AppError> {
     conn.query_row(
-        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type
+        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type, user_id
          FROM devices WHERE id = ?1",
         [id],
         |row| {
@@ -155,6 +191,7 @@ fn query_device(conn: &rusqlite::Connection, id: &str) -> Result<Device, AppErro
                 device_type: row.get(8)?,
                 created_at: row.get(6)?,
                 updated_at: row.get(7)?,
+                user_id: row.get(9)?,
             })
         },
     ).map_err(|_| AppError::NotFound(format!("Device {id} not found")))

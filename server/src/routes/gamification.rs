@@ -1,8 +1,9 @@
-use axum::extract::{Query, State};
+use axum::extract::{Query, Request, State};
 use axum::Json;
 use serde::Deserialize;
 use serde_json::json;
 
+use crate::auth::UserId;
 use crate::db::DbPool;
 use crate::error::AppError;
 use crate::models::*;
@@ -81,18 +82,38 @@ pub struct AnalyticsQuery {
 
 // --- Route handlers ---
 
+/// Helper: build a SQL IN clause for user's device IDs, or None if legacy/no user
+fn user_device_ids(conn: &rusqlite::Connection, user_id: &Option<String>) -> Option<Vec<String>> {
+    let uid = user_id.as_ref()?;
+    let mut stmt = conn.prepare("SELECT id FROM devices WHERE user_id = ?1").ok()?;
+    let ids = stmt.query_map([uid], |r| r.get(0)).ok()?
+        .collect::<Result<Vec<String>, _>>().ok()?;
+    Some(ids)
+}
+
 /// GET /api/gamification/stats
 pub async fn get_stats(
     State(db): State<DbPool>,
     Query(q): Query<DeviceQuery>,
+    req: Request,
 ) -> Result<Json<GamificationStats>, AppError> {
+    let user_id = req.extensions().get::<UserId>().and_then(|u| u.0.clone());
     let conn = db.lock().unwrap();
 
+    // If device_id specified, use it; otherwise scope to user's devices
     let total_xp: i64 = if let Some(ref did) = q.device_id {
         conn.query_row(
             "SELECT COALESCE(SUM(amount), 0) FROM xp_ledger WHERE device_id = ?1",
             [did], |r| r.get(0),
         )?
+    } else if let Some(ref ids) = user_device_ids(&conn, &user_id) {
+        if ids.is_empty() { 0 } else {
+            let placeholders: Vec<String> = ids.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect();
+            let sql = format!("SELECT COALESCE(SUM(amount), 0) FROM xp_ledger WHERE device_id IN ({})", placeholders.join(","));
+            let mut stmt = conn.prepare(&sql)?;
+            let params: Vec<&dyn rusqlite::types::ToSql> = ids.iter().map(|s| s as &dyn rusqlite::types::ToSql).collect();
+            stmt.query_row(params.as_slice(), |r| r.get(0))?
+        }
     } else {
         conn.query_row(
             "SELECT COALESCE(SUM(amount), 0) FROM xp_ledger", [],
@@ -105,6 +126,14 @@ pub async fn get_stats(
             "SELECT COUNT(*) FROM tool_uses WHERE device_id = ?1",
             [did], |r| r.get(0),
         )?
+    } else if let Some(ref ids) = user_device_ids(&conn, &user_id) {
+        if ids.is_empty() { 0 } else {
+            let placeholders: Vec<String> = ids.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect();
+            let sql = format!("SELECT COUNT(*) FROM tool_uses WHERE device_id IN ({})", placeholders.join(","));
+            let mut stmt = conn.prepare(&sql)?;
+            let params: Vec<&dyn rusqlite::types::ToSql> = ids.iter().map(|s| s as &dyn rusqlite::types::ToSql).collect();
+            stmt.query_row(params.as_slice(), |r| r.get(0))?
+        }
     } else {
         conn.query_row("SELECT COUNT(*) FROM tool_uses", [], |r| r.get(0))?
     };
@@ -114,6 +143,15 @@ pub async fn get_stats(
             "SELECT COALESCE(current_streak, 0), COALESCE(longest_streak, 0) FROM streaks WHERE device_id = ?1",
             [did], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?)),
         ).unwrap_or((0, 0))
+    } else if let Some(ref ids) = user_device_ids(&conn, &user_id) {
+        if ids.is_empty() { (0, 0) } else {
+            let placeholders: Vec<String> = ids.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect();
+            let sql = format!("SELECT COALESCE(MAX(current_streak), 0), COALESCE(MAX(longest_streak), 0) FROM streaks WHERE device_id IN ({})", placeholders.join(","));
+            let mut stmt = conn.prepare(&sql)?;
+            let params: Vec<&dyn rusqlite::types::ToSql> = ids.iter().map(|s| s as &dyn rusqlite::types::ToSql).collect();
+            stmt.query_row(params.as_slice(), |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?)))
+                .unwrap_or((0, 0))
+        }
     } else {
         conn.query_row(
             "SELECT COALESCE(MAX(current_streak), 0), COALESCE(MAX(longest_streak), 0) FROM streaks",
@@ -126,6 +164,14 @@ pub async fn get_stats(
             "SELECT COUNT(*) FROM achievements WHERE device_id = ?1",
             [did], |r| r.get(0),
         )?
+    } else if let Some(ref ids) = user_device_ids(&conn, &user_id) {
+        if ids.is_empty() { 0 } else {
+            let placeholders: Vec<String> = ids.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect();
+            let sql = format!("SELECT COUNT(DISTINCT badge_id) FROM achievements WHERE device_id IN ({})", placeholders.join(","));
+            let mut stmt = conn.prepare(&sql)?;
+            let params: Vec<&dyn rusqlite::types::ToSql> = ids.iter().map(|s| s as &dyn rusqlite::types::ToSql).collect();
+            stmt.query_row(params.as_slice(), |r| r.get(0))?
+        }
     } else {
         conn.query_row("SELECT COUNT(DISTINCT badge_id) FROM achievements", [], |r| r.get(0))?
     };
@@ -354,29 +400,55 @@ pub async fn get_achievements(
 /// GET /api/gamification/leaderboard
 pub async fn get_leaderboard(
     State(db): State<DbPool>,
+    req: Request,
 ) -> Result<Json<Vec<LeaderboardEntry>>, AppError> {
+    let user_id = req.extensions().get::<UserId>().and_then(|u| u.0.clone());
     let conn = db.lock().unwrap();
 
-    let mut stmt = conn.prepare(
+    let sql = if user_id.is_some() {
+        "SELECT d.id, d.name,
+                COALESCE((SELECT SUM(amount) FROM xp_ledger WHERE device_id = d.id), 0) as total_xp,
+                COALESCE((SELECT current_streak FROM streaks WHERE device_id = d.id), 0) as streak,
+                COALESCE((SELECT COUNT(*) FROM achievements WHERE device_id = d.id), 0) as badges
+         FROM devices d
+         WHERE d.user_id = ?1
+         ORDER BY total_xp DESC"
+    } else {
         "SELECT d.id, d.name,
                 COALESCE((SELECT SUM(amount) FROM xp_ledger WHERE device_id = d.id), 0) as total_xp,
                 COALESCE((SELECT current_streak FROM streaks WHERE device_id = d.id), 0) as streak,
                 COALESCE((SELECT COUNT(*) FROM achievements WHERE device_id = d.id), 0) as badges
          FROM devices d
          ORDER BY total_xp DESC"
-    )?;
+    };
 
-    let entries = stmt.query_map([], |r| {
-        let total_xp: i64 = r.get(2)?;
-        Ok(LeaderboardEntry {
-            device_id: r.get(0)?,
-            device_name: r.get(1)?,
-            total_xp,
-            level: level_from_xp(total_xp),
-            current_streak: r.get(3)?,
-            achievements: r.get(4)?,
-        })
-    })?.collect::<Result<Vec<_>, _>>()?;
+    let mut stmt = conn.prepare(sql)?;
+
+    let entries = if let Some(ref uid) = user_id {
+        stmt.query_map([uid], |r| {
+            let total_xp: i64 = r.get(2)?;
+            Ok(LeaderboardEntry {
+                device_id: r.get(0)?,
+                device_name: r.get(1)?,
+                total_xp,
+                level: level_from_xp(total_xp),
+                current_streak: r.get(3)?,
+                achievements: r.get(4)?,
+            })
+        })?.collect::<Result<Vec<_>, _>>()?
+    } else {
+        stmt.query_map([], |r| {
+            let total_xp: i64 = r.get(2)?;
+            Ok(LeaderboardEntry {
+                device_id: r.get(0)?,
+                device_name: r.get(1)?,
+                total_xp,
+                level: level_from_xp(total_xp),
+                current_streak: r.get(3)?,
+                achievements: r.get(4)?,
+            })
+        })?.collect::<Result<Vec<_>, _>>()?
+    };
 
     Ok(Json(entries))
 }

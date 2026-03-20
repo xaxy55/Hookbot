@@ -57,6 +57,11 @@ fn run_migrations(conn: &Connection) {
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )",
         "CREATE INDEX IF NOT EXISTS idx_mood_journal_device ON mood_journal(device_id, created_at)",
+        // Multi-tenant: add user_id columns
+        "ALTER TABLE devices ADD COLUMN user_id TEXT REFERENCES users(id)",
+        "CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id)",
+        "ALTER TABLE device_groups ADD COLUMN user_id TEXT REFERENCES users(id)",
+        "ALTER TABLE project_routes ADD COLUMN user_id TEXT REFERENCES users(id)",
     ];
 
     for sql in migrations {
@@ -66,6 +71,17 @@ fn run_migrations(conn: &Connection) {
 }
 
 const SCHEMA: &str = r#"
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    workos_id TEXT UNIQUE NOT NULL,
+    email TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    api_key TEXT UNIQUE NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_users_workos_id ON users(workos_id);
+CREATE INDEX IF NOT EXISTS idx_users_api_key ON users(api_key);
+
 CREATE TABLE IF NOT EXISTS devices (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,

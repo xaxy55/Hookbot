@@ -29,6 +29,9 @@ pub struct AppConfig {
     pub allowed_origins: Vec<String>,
     pub login_rate_limit_max: u32,
     pub login_rate_limit_window_secs: u64,
+    pub workos_client_id: Option<String>,
+    pub workos_api_key: Option<String>,
+    pub workos_redirect_uri: Option<String>,
 }
 
 impl AppConfig {
@@ -99,6 +102,14 @@ impl AppConfig {
             .and_then(|v| v.parse().ok())
             .unwrap_or(300); // 5 minutes
 
+        // WorkOS multi-tenant auth
+        let workos_client_id = env::var("WORKOS_CLIENT_ID").ok().filter(|s| !s.is_empty());
+        let workos_api_key = env::var("WORKOS_API_KEY").ok().filter(|s| !s.is_empty());
+        let workos_redirect_uri = env::var("WORKOS_REDIRECT_URI").ok().filter(|s| !s.is_empty());
+        if workos_client_id.is_some() {
+            info!("WorkOS multi-tenant mode enabled");
+        }
+
         Self {
             database_url,
             firmware_dir,
@@ -116,6 +127,9 @@ impl AppConfig {
             allowed_origins,
             login_rate_limit_max,
             login_rate_limit_window_secs,
+            workos_client_id,
+            workos_api_key,
+            workos_redirect_uri,
         }
     }
 
