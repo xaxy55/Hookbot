@@ -45,7 +45,7 @@ export const logout = () =>
   request<{ ok: boolean }>('/auth/logout', { method: 'POST' });
 
 export const getAuthStatus = () =>
-  request<{ authenticated: boolean }>('/auth/status');
+  request<{ authenticated: boolean; workos_enabled?: boolean }>('/auth/status');
 
 // Devices
 export const getDevices = () => request<DeviceWithStatus[]>('/devices');
