@@ -23,6 +23,10 @@ env:
   TF_VAR_hookbot_admin_password: ${{ secrets.HOOKBOT_ADMIN_PASSWORD }}
   TF_VAR_workos_client_id: ${{ secrets.WORKOS_CLIENT_ID }}
   TF_VAR_workos_api_key: ${{ secrets.WORKOS_API_KEY }}
+  TF_VAR_vite_api_base_url: ${{ secrets.VITE_API_BASE_URL }}
+  TF_VAR_workos_domain: ${{ secrets.WORKOS_DOMAIN }}
+  TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
+  TF_VAR_frontend_sub_domain: ${{ secrets.FRONTEND_SUB_DOMAIN }}
 
 jobs:
   plan:

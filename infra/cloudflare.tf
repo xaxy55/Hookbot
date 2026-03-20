@@ -1,4 +1,4 @@
-resource "cloudflare_pages_project" "hookbot_web" "vite_api_base_url" {
+resource "cloudflare_pages_project" "hookbot_web" {
   account_id        = var.cloudflare_account_id
   name              = var.cloudflare_pages_project
   production_branch = "main"
