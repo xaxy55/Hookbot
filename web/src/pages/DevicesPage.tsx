@@ -22,7 +22,7 @@ const AVATAR_STATES = ['idle', 'thinking', 'waiting', 'success', 'taskcheck', 'e
 
 export default function DevicesPage() {
   const queryClient = useQueryClient();
-  const { data: devices, isLoading: devicesLoading } = useQuery({
+  const { data: devices, isLoading: devicesLoading, isError: devicesError } = useQuery({
     queryKey: ['devices'],
     queryFn: getDevices,
     refetchInterval: 5000,
@@ -398,7 +398,12 @@ export default function DevicesPage() {
       )}
 
       {/* Device Grid */}
-      {isLoading ? (
+      {devicesError ? (
+        <div className="text-center py-12">
+          <p className="text-subtle mb-2">Could not load devices</p>
+          <p className="text-dim text-sm">Check your connection and try refreshing the page.</p>
+        </div>
+      ) : isLoading ? (
         <p className="text-subtle text-sm">Loading devices...</p>
       ) : filteredDevices && filteredDevices.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

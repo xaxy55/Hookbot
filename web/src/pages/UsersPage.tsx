@@ -11,7 +11,7 @@ export default function UsersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { data: users = [], isLoading } = useQuery({ queryKey: ['users'], queryFn: getUsers });
+  const { data: users = [], isLoading, isError } = useQuery({ queryKey: ['users'], queryFn: getUsers });
   const { data: devices = [] } = useQuery({ queryKey: ['devices'], queryFn: getDevices });
 
   const [form, setForm] = useState({ username: '', display_name: '', password: '', role: 'user' });
@@ -101,7 +101,12 @@ export default function UsersPage() {
         </div>
       )}
 
-      {isLoading ? (
+      {isError ? (
+        <div className="text-center py-12 text-muted">
+          <p>Could not load users</p>
+          <p className="text-sm mt-1 text-dim">Check your connection and try refreshing.</p>
+        </div>
+      ) : isLoading ? (
         <p className="text-muted text-sm">Loading...</p>
       ) : users.length === 0 ? (
         <div className="text-center py-12 text-muted">

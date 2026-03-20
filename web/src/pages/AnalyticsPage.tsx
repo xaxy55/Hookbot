@@ -22,7 +22,7 @@ export default function AnalyticsPage() {
 
   const { data: devices } = useQuery({ queryKey: ['devices'], queryFn: getDevices });
 
-  const { data: analytics, isLoading } = useQuery({
+  const { data: analytics, isLoading, isError } = useQuery({
     queryKey: ['analytics', deviceFilter, days],
     queryFn: () => getAnalytics(days, deviceFilter || undefined),
     refetchInterval: 30000,
@@ -74,7 +74,12 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {isLoading ? (
+      {isError ? (
+        <div className="rounded-lg border border-edge bg-surface p-8 text-center">
+          <p className="text-subtle">Could not load analytics</p>
+          <p className="text-dim text-sm mt-1">Check your connection and try refreshing.</p>
+        </div>
+      ) : isLoading ? (
         <div className="text-subtle text-sm">Loading analytics...</div>
       ) : analytics ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

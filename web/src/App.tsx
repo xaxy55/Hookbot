@@ -31,6 +31,7 @@ import DeviceLinksPage from './pages/DeviceLinksPage';
 import UsersPage from './pages/UsersPage';
 import TunnelsPage from './pages/TunnelsPage';
 import MoodLearningPage from './pages/MoodLearningPage';
+import VoiceControlPage from './pages/VoiceControlPage';
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -43,15 +44,8 @@ function AuthGuard({ children }: { children: ReactNode }) {
 
   if (authed === null) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#0a0a0f',
-        color: '#888',
-      }}>
-        Loading...
+      <div className="min-h-screen flex items-center justify-center bg-canvas">
+        <div className="h-8 w-8 rounded-full border-2 border-brand/30 border-t-brand animate-spin" />
       </div>
     );
   }
@@ -93,6 +87,7 @@ export default function App() {
           <Route path="/users" element={<UsersPage />} />
           <Route path="/tunnels" element={<TunnelsPage />} />
           <Route path="/mood-learning" element={<MoodLearningPage />} />
+          <Route path="/voice" element={<VoiceControlPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/logs" element={<LogsPage />} />

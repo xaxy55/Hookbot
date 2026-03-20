@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getHealth, getDevices } from '../api/client';
+import { getHealth, getDevices, logout } from '../api/client';
 import { useTheme } from '../hooks/useTheme';
 import { useKeyboardShortcuts, SHORTCUT_LIST } from '../hooks/useKeyboardShortcuts';
 
@@ -52,8 +52,9 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'Connect',
+    label: 'AI & Voice',
     items: [
+      { path: '/voice', label: 'Voice Control', icon: MicNavIcon },
       { path: '/integrations', label: 'Integrations', icon: PlugIcon },
     ],
   },
@@ -68,8 +69,38 @@ const NAV_SECTIONS = [
   },
 ];
 
+function NavSection({ label, defaultOpen, children }: { label: string; defaultOpen: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-md hover:bg-inset/40 transition-colors"
+      >
+        <span className="text-[11px] font-medium text-subtle uppercase tracking-wider">
+          {label}
+        </span>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          className={`text-dim transition-transform duration-200 ${open ? 'rotate-0' : '-rotate-90'}`}
+        >
+          <path d="M3 4.5L6 7.5L9 4.5" />
+        </svg>
+      </button>
+      {open && <div className="space-y-0.5 mb-2">{children}</div>}
+    </div>
+  );
+}
+
 export default function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [showShortcuts, setShowShortcuts] = useState(false);
 
@@ -100,21 +131,19 @@ export default function Layout() {
       <aside className="w-56 flex-shrink-0 border-r border-edge bg-surface light:shadow-[1px_0_8px_rgba(0,0,0,0.04)] flex flex-col">
         {/* Logo */}
         <div className="h-14 flex items-center gap-2 px-5 border-b border-edge">
-          <span className="text-lg font-bold text-brand tracking-wider">DESKBOT</span>
-          <span className="text-[10px] text-subtle font-medium tracking-widest">MGMT</span>
+          <span className="text-lg font-bold text-brand tracking-wider">Hookbot</span>
         </div>
 
         {/* Nav sections */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.label}>
-              <div className="flex items-center justify-between px-2 mb-1">
-                <span className="text-[11px] font-medium text-subtle uppercase tracking-wider">
-                  {section.label}
-                </span>
-                <span className="text-dim">-</span>
-              </div>
-              <div className="space-y-0.5">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+          {NAV_SECTIONS.map((section) => {
+            const sectionHasActive = section.items.some((item) => isActive(item.path));
+            return (
+              <NavSection
+                key={section.label}
+                label={section.label}
+                defaultOpen={sectionHasActive || ['Control', 'Firmware'].includes(section.label)}
+              >
                 {section.items.map((item) => {
                   const active = isActive(item.path);
                   return (
@@ -132,9 +161,9 @@ export default function Layout() {
                     </Link>
                   );
                 })}
-              </div>
-            </div>
-          ))}
+              </NavSection>
+            );
+          })}
         </nav>
       </aside>
 
@@ -210,6 +239,18 @@ export default function Layout() {
               <MoonIcon />
             </button>
           </div>
+
+          {/* Logout */}
+          <button
+            onClick={async () => {
+              await logout().catch(() => {});
+              navigate('/login', { replace: true });
+            }}
+            className="p-1.5 rounded-lg text-subtle hover:text-fg hover:bg-inset transition-colors"
+            title="Sign out"
+          >
+            <LogoutIcon />
+          </button>
         </header>
 
         {/* Page content */}
@@ -459,6 +500,25 @@ function BrainIcon({ active }: { active: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
       <path d="M8 14V7M8 7c0-2-1.5-4-4-4S1 4 1 6c0 1.5 1 2.5 2 3 0 1.5 1.5 3 3 3h2M8 7c0-2 1.5-4 4-4s3 1 3 3c0 1.5-1 2.5-2 3 0 1.5-1.5 3-3 3H8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function MicNavIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" />
+      <path d="M3 7.5a5 5 0 0010 0" />
+      <line x1="8" y1="13" x2="8" y2="15" />
+      <line x1="5.5" y1="15" x2="10.5" y2="15" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+      <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M11 12l3-4-3-4M14 8H6" />
     </svg>
   );
 }
