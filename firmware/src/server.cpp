@@ -6,6 +6,9 @@
 #ifndef NO_LED
 #include "led.h"
 #endif
+#ifndef NO_AUDIO
+#include "audio.h"
+#endif
 #include "animation_player.h"
 #include <WiFi.h>
 #include <WiFiMulti.h>
@@ -31,6 +34,7 @@ static String pendingOtaUrl;
 static NotificationData notifications[MAX_NOTIFICATIONS] = {};
 static int notificationCount = 0;
 static XpData xpData = {0, 0, 0, "Newbie"};
+static ProjectInfo projectInfo = {"", 0};
 
 static const char* stateToString(AvatarState s) {
     switch (s) {
@@ -316,6 +320,11 @@ void init(std::function<void(AvatarState)> onStateChange) {
         }
         doc["presence_away"] = Sensors::isPresenceAway();
 
+        // Active project
+        if (strlen(projectInfo.name) > 0) {
+            doc["project"] = projectInfo.name;
+        }
+
         String json;
         serializeJson(doc, json);
         req->send(200, "application/json", json);
@@ -346,6 +355,10 @@ void init(std::function<void(AvatarState)> onStateChange) {
         caps.add("buzzer");
 #endif
         caps.add("ota");
+#ifndef NO_AUDIO
+        caps.add("microphone");
+        caps.add("speaker");
+#endif
 #ifdef BOARD_ESP32_4848S040C
         caps.add("touch");
 #endif
@@ -609,6 +622,30 @@ void init(std::function<void(AvatarState)> onStateChange) {
         }
     );
     server.addHandler(xpHandler);
+
+    // POST /project - receive active project name from management server
+    AsyncCallbackJsonWebHandler* projectHandler = new AsyncCallbackJsonWebHandler(
+        "/project",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+
+            const char* name = body["name"] | "";
+            strncpy(projectInfo.name, name, MAX_PROJECT_LEN - 1);
+            projectInfo.name[MAX_PROJECT_LEN - 1] = '\0';
+            projectInfo.lastUpdatedAt = millis();
+
+            Serial.printf("[Server] Project: %s\n", projectInfo.name);
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["project"] = projectInfo.name;
+
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(projectHandler);
 
 #ifndef NO_SOUND
     // POST /sounds - set custom sound pack melodies
@@ -1013,6 +1050,131 @@ void init(std::function<void(AvatarState)> onStateChange) {
         req->send(200, "application/json", json);
     });
 
+#ifndef NO_AUDIO
+    // GET /audio/status - check audio subsystem state
+    server.on("/audio/status", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument doc;
+        doc["recording"] = Audio::isRecording();
+        doc["playing"] = Audio::isPlaying();
+        doc["has_audio"] = Audio::hasRecordedAudio();
+        doc["recorded_bytes"] = Audio::getRecordedSize();
+        doc["volume"] = Audio::getVolume();
+        doc["wake_enabled"] = true;  // always report capability
+
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
+    });
+
+    // POST /audio/record - start recording from I2S mic
+    server.on("/audio/record", HTTP_POST, [](AsyncWebServerRequest* req) {
+        if (Audio::isPlaying()) {
+            req->send(409, "application/json", "{\"error\":\"playback in progress\"}");
+            return;
+        }
+        bool ok = Audio::startRecording();
+        if (stateCallback) stateCallback(AvatarState::THINKING);
+        JsonDocument resp;
+        resp["ok"] = ok;
+        resp["msg"] = ok ? "recording started" : "failed to start recording";
+        String json;
+        serializeJson(resp, json);
+        req->send(ok ? 200 : 500, "application/json", json);
+    });
+
+    // POST /audio/stop - stop current recording
+    server.on("/audio/stop", HTTP_POST, [](AsyncWebServerRequest* req) {
+        Audio::stopRecording();
+        JsonDocument resp;
+        resp["ok"] = true;
+        resp["has_audio"] = Audio::hasRecordedAudio();
+        resp["recorded_bytes"] = Audio::getRecordedSize();
+        String json;
+        serializeJson(resp, json);
+        req->send(200, "application/json", json);
+    });
+
+    // GET /audio/data - download recorded audio as raw PCM (16-bit, 16kHz, mono)
+    server.on("/audio/data", HTTP_GET, [](AsyncWebServerRequest* req) {
+        if (!Audio::hasRecordedAudio()) {
+            req->send(404, "application/json", "{\"error\":\"no recorded audio\"}");
+            return;
+        }
+        const uint8_t* data = Audio::getRecordedData();
+        size_t size = Audio::getRecordedSize();
+        AsyncWebServerResponse* response = req->beginResponse_P(
+            200, "application/octet-stream", data, size);
+        response->addHeader("X-Audio-Rate", String(AUDIO_SAMPLE_RATE));
+        response->addHeader("X-Audio-Bits", String(AUDIO_BITS_PER_SAMPLE));
+        response->addHeader("X-Audio-Channels", String(AUDIO_CHANNELS));
+        req->send(response);
+    });
+
+    // POST /audio/play - receive raw PCM audio and play through I2S speaker
+    // Body: raw PCM data (16-bit, 16kHz, mono)
+    server.on("/audio/play", HTTP_POST,
+        [](AsyncWebServerRequest* req) {
+            // Response sent after body is received
+        },
+        NULL,
+        [](AsyncWebServerRequest* req, uint8_t* data, size_t len, size_t index, size_t total) {
+            // Accumulate body data into a static buffer
+            static uint8_t* ttsBuffer = nullptr;
+            static size_t ttsSize = 0;
+
+            if (index == 0) {
+                // First chunk: allocate buffer
+#if BOARD_HAS_PSRAM
+                ttsBuffer = (uint8_t*)ps_malloc(total);
+#else
+                ttsBuffer = (uint8_t*)malloc(total);
+#endif
+                ttsSize = 0;
+                if (!ttsBuffer) {
+                    req->send(500, "application/json", "{\"error\":\"out of memory\"}");
+                    return;
+                }
+            }
+
+            if (ttsBuffer && index + len <= total) {
+                memcpy(ttsBuffer + index, data, len);
+                ttsSize = index + len;
+            }
+
+            if (ttsSize == total && ttsBuffer) {
+                // All data received, start playback
+                bool ok = Audio::startPlayback(ttsBuffer, ttsSize);
+                JsonDocument resp;
+                resp["ok"] = ok;
+                resp["bytes"] = ttsSize;
+                String json;
+                serializeJson(resp, json);
+                req->send(ok ? 200 : 500, "application/json", json);
+                // Note: buffer must persist until playback completes.
+                // Audio module references it directly.
+            }
+        }
+    );
+
+    // POST /audio/volume - set speaker volume
+    AsyncCallbackJsonWebHandler* volHandler = new AsyncCallbackJsonWebHandler(
+        "/audio/volume",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+            uint8_t vol = body["volume"] | 80;
+            Audio::setVolume(vol);
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["volume"] = Audio::getVolume();
+            String json;
+            serializeJson(resp, json);
+            req->send(200, "application/json", json);
+        }
+    );
+    server.addHandler(volHandler);
+#endif // NO_AUDIO
+
     server.begin();
     Serial.println("[Server] HTTP server started on port 80");
 
@@ -1080,6 +1242,50 @@ int getNotificationCount() {
 
 XpData& getXpData() {
     return xpData;
+}
+
+ProjectInfo& getProject() {
+    return projectInfo;
+}
+
+void sendVoiceToServer(const uint8_t* data, size_t size) {
+#ifndef NO_AUDIO
+    if (strlen(runtimeConfig.mgmtServer) == 0 || !data || size == 0) return;
+
+    HTTPClient http;
+    String url = String(runtimeConfig.mgmtServer) + "/api/voice/transcribe";
+    http.begin(url);
+    http.addHeader("Content-Type", "application/octet-stream");
+    http.addHeader("X-Audio-Rate", String(AUDIO_SAMPLE_RATE));
+    http.addHeader("X-Audio-Bits", String(AUDIO_BITS_PER_SAMPLE));
+    http.addHeader("X-Device-Id", runtimeConfig.hostname);
+    if (strlen(runtimeConfig.apiKey) > 0) {
+        http.addHeader("X-API-Key", runtimeConfig.apiKey);
+    }
+
+    Serial.printf("[Server] Sending %d bytes of audio to %s\n", size, url.c_str());
+    int code = http.POST((uint8_t*)data, size);
+
+    if (code == 200) {
+        String response = http.getString();
+        Serial.printf("[Server] Voice response: %s\n", response.c_str());
+
+        JsonDocument doc;
+        if (deserializeJson(doc, response) == DeserializationError::Ok) {
+            if (!doc["state"].isNull()) {
+                const char* st = doc["state"];
+                AvatarState newState = stringToState(String(st));
+                if (stateCallback) stateCallback(newState);
+            }
+        }
+    } else {
+        Serial.printf("[Server] Voice upload failed: %d\n", code);
+        if (stateCallback) stateCallback(AvatarState::ERROR);
+    }
+    http.end();
+#else
+    (void)data; (void)size;
+#endif
 }
 
 } // namespace HookbotServer

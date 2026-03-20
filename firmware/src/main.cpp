@@ -17,6 +17,9 @@
 #include "servo.h"
 #include "sensors.h"
 #include "ble_prov.h"
+#ifndef NO_AUDIO
+#include "audio.h"
+#endif
 #ifdef BOARD_ESP32_4848S040C
 #include "touch_ui.h"
 #endif
@@ -140,6 +143,11 @@ void setup() {
     Servos::init();
     Serial.println("[Main] Sensors init...");
     Sensors::init();
+#ifndef NO_AUDIO
+    Serial.println("[Main] Audio init...");
+    Audio::init();
+    Audio::enableWakeDetection(true);
+#endif
 
 #ifndef NO_DISPLAY
     Screensaver::init();
@@ -228,6 +236,27 @@ void loop() {
     HookbotServer::update();
     ArduinoOTA.handle();
     BleProv::update();
+#ifndef NO_AUDIO
+    Audio::update(delta);
+    // Wake detection: when voice detected, notify server
+    if (Audio::isWakeDetected()) {
+        Audio::clearWakeFlag();
+        // Start recording automatically on wake
+        if (!Audio::isRecording() && !Audio::isPlaying()) {
+            Audio::startRecording();
+            setState(AvatarState::THINKING);
+            Serial.println("[Main] Voice wake -> recording");
+        }
+    }
+    // When recording finishes, send audio to management server for transcription
+    if (!Audio::isRecording() && Audio::hasRecordedAudio()) {
+        if (strlen(HookbotServer::getConfig().mgmtServer) > 0 && HookbotServer::isConnected()) {
+            HookbotServer::sendVoiceToServer(
+                Audio::getRecordedData(), Audio::getRecordedSize());
+        }
+        Audio::clearRecording();
+    }
+#endif
 
 #if defined(BOARD_ESP32_4848S040C) && !defined(NO_DISPLAY)
     handleTouch(delta);

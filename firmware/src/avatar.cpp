@@ -690,6 +690,20 @@ static void drawFace(DisplayCanvas* d) {
         d->fillCircle(cx, tieY, 2, COLOR_WHITE);
     }
 
+    // ─── Project name (top-left during non-idle states) ──────
+    if (currentState != AvatarState::IDLE) {
+        const ProjectInfo& proj = HookbotServer::getProject();
+        if (strlen(proj.name) > 0 && (millis() - proj.lastUpdatedAt) < 600000) {
+            d->setTextSize(1);
+            d->setTextColor(COLOR_WHITE);
+            d->setCursor(2, 2);
+            char truncName[14];
+            strncpy(truncName, proj.name, 13);
+            truncName[13] = '\0';
+            d->print(truncName);
+        }
+    }
+
     // ─── Tool display (bottom of screen) ──────
     if ((currentState == AvatarState::THINKING || currentState == AvatarState::TASKCHECK)
         && strlen(HookbotServer::getCurrentTool().name) > 0) {
@@ -973,22 +987,51 @@ static void drawIdleInfo(DisplayCanvas* d) {
 
     int16_t x = 2;
     int16_t y = 2;
+    int16_t line = 0;
 
-    // Line 1: IP address (when connected, no mgmt server)
+    // Line 1: Active project (if set recently — fade after 10 minutes)
+    const ProjectInfo& proj = HookbotServer::getProject();
+    bool hasProject = strlen(proj.name) > 0
+        && (millis() - proj.lastUpdatedAt) < 600000;  // 10 min timeout
+    if (hasProject) {
+        d->setCursor(x, y + line * 10);
+        // Folder icon: small open bracket shape
+        d->drawPixel(x, y + line * 10 + 1, COLOR_WHITE);
+        d->drawPixel(x, y + line * 10 + 2, COLOR_WHITE);
+        d->drawPixel(x, y + line * 10 + 3, COLOR_WHITE);
+        d->drawPixel(x, y + line * 10 + 4, COLOR_WHITE);
+        d->drawPixel(x, y + line * 10 + 5, COLOR_WHITE);
+        d->drawPixel(x + 1, y + line * 10, COLOR_WHITE);
+        d->drawPixel(x + 2, y + line * 10, COLOR_WHITE);
+        d->drawPixel(x + 1, y + line * 10 + 6, COLOR_WHITE);
+        d->drawPixel(x + 2, y + line * 10 + 6, COLOR_WHITE);
+        // Project name (truncated to fit left side of screen)
+        d->setCursor(x + 5, y + line * 10);
+        // Truncate to ~10 chars on 128px OLED (leave room for face)
+        char truncName[12];
+        strncpy(truncName, proj.name, 11);
+        truncName[11] = '\0';
+        d->print(truncName);
+        line++;
+    }
+
+    // IP address (when connected, no mgmt server)
     if (HookbotServer::isConnected()) {
         const RuntimeConfig& cfg = HookbotServer::getConfig();
         if (strlen(cfg.mgmtServer) == 0) {
             String ip = ::_hookbot_get_ip();
-            d->setCursor(x, y);
+            d->setCursor(x, y + line * 10);
             d->print(ip.c_str());
+            line++;
         }
     }
 
-    // Line 2: Firmware version
-    d->setCursor(x, y + 10);
+    // Firmware version
+    d->setCursor(x, y + line * 10);
     d->print("FW v" FIRMWARE_VERSION);
+    line++;
 
-    // Line 3: Uptime
+    // Uptime
     unsigned long ms = millis();
     unsigned long totalSec = ms / 1000;
     unsigned long minutes = (totalSec / 60) % 60;
@@ -1003,7 +1046,7 @@ static void drawIdleInfo(DisplayCanvas* d) {
     } else {
         snprintf(uptimeStr, sizeof(uptimeStr), "Up %lum", minutes);
     }
-    d->setCursor(x, y + 20);
+    d->setCursor(x, y + line * 10);
     d->print(uptimeStr);
 }
 

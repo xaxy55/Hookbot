@@ -34,6 +34,13 @@ struct NotificationData {
 
 #define MAX_NOTIFICATIONS 4
 
+// Active project info
+#define MAX_PROJECT_LEN 24
+struct ProjectInfo {
+    char name[MAX_PROJECT_LEN];
+    uint32_t lastUpdatedAt;  // millis() when last set
+};
+
 // XP / Level data from management server
 struct XpData {
     int level;
@@ -84,4 +91,6 @@ namespace HookbotServer {
     NotificationData* getNotifications();
     int getNotificationCount();
     XpData& getXpData();
+    ProjectInfo& getProject();
+    void sendVoiceToServer(const uint8_t* data, size_t size);
 }

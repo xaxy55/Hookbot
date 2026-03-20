@@ -1,7 +1,7 @@
 #pragma once
 
 // ─── Firmware Version ─────────────────────────────────────────────
-#define FIRMWARE_VERSION "0.3.1"
+#define FIRMWARE_VERSION "0.4.0"
 
 // ─── WiFi Configuration ───────────────────────────────────────────
 // WiFi is provisioned via BLE at first boot. The device advertises as
@@ -53,6 +53,11 @@
 #ifndef NO_SOUND
   #define BUZZER_PIN 25
 #endif
+
+// ─── I2S Audio (Voice Control & TTS) ────────────────────────────
+// Define NO_AUDIO to disable I2S audio support (mic + speaker)
+// Requires INMP441 microphone and MAX98357A DAC amplifier
+// Pin assignments in audio.h
 
 // ─── Animation Settings ──────────────────────────────────────────
 #define TARGET_FPS        30

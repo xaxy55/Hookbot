@@ -135,6 +135,17 @@ pub async fn handle_hook(
             let _ = proxy::forward_json(&format!("http://{}/tasks", ip), &tasks_body).await;
         }
 
+        // Push active project name to device for OLED display
+        if let Some(ref project_path) = input.project {
+            // Extract just the folder name from the full path
+            let project_name = std::path::Path::new(project_path)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(project_path);
+            let project_body = json!({ "name": project_name });
+            let _ = proxy::forward_json(&format!("http://{}/project", ip), &project_body).await;
+        }
+
         // Push XP/level update to device for OLED display
         if let Some(ref did) = device_id {
             let total_xp: i64 = {
