@@ -7,10 +7,6 @@ on:
         description: 'Simulator to use'
         required: false
         default: 'iPhone 16 Pro Max'
-  push:
-    branches: [main]
-    paths:
-      - 'ios/**'
 
 jobs:
   screenshots:
