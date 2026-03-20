@@ -57,6 +57,94 @@ fn run_migrations(conn: &Connection) {
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )",
         "CREATE INDEX IF NOT EXISTS idx_mood_journal_device ON mood_journal(device_id, created_at)",
+        // Plugin sandboxing
+        "CREATE TABLE IF NOT EXISTS plugin_sandboxes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plugin_id TEXT NOT NULL REFERENCES community_plugins(id) ON DELETE CASCADE,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            allowed_apis TEXT NOT NULL DEFAULT '[]',
+            blocked_apis TEXT NOT NULL DEFAULT '[]',
+            max_calls_per_minute INTEGER NOT NULL DEFAULT 60,
+            can_access_network INTEGER NOT NULL DEFAULT 0,
+            can_modify_state INTEGER NOT NULL DEFAULT 0,
+            can_send_notifications INTEGER NOT NULL DEFAULT 0,
+            can_access_sensors INTEGER NOT NULL DEFAULT 0,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE(plugin_id, device_id)
+        )",
+        // Device-to-device communication
+        "CREATE TABLE IF NOT EXISTS device_links (
+            id TEXT PRIMARY KEY,
+            source_device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            target_device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            trigger_type TEXT NOT NULL,
+            trigger_config TEXT NOT NULL DEFAULT '{}',
+            action_type TEXT NOT NULL,
+            action_config TEXT NOT NULL DEFAULT '{}',
+            enabled INTEGER NOT NULL DEFAULT 1,
+            cooldown_secs INTEGER NOT NULL DEFAULT 30,
+            last_triggered_at TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_device_links_source ON device_links(source_device_id)",
+        "CREATE INDEX IF NOT EXISTS idx_device_links_target ON device_links(target_device_id)",
+        // Multi-user support
+        "CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            username TEXT NOT NULL UNIQUE,
+            display_name TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user',
+            api_token TEXT UNIQUE,
+            last_login_at TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE TABLE IF NOT EXISTS user_device_assignments (
+            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            permissions TEXT NOT NULL DEFAULT 'full',
+            assigned_at TEXT NOT NULL DEFAULT (datetime('now')),
+            PRIMARY KEY (user_id, device_id)
+        )",
+        // Remote access / tunnels
+        "CREATE TABLE IF NOT EXISTS tunnel_configs (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            tunnel_type TEXT NOT NULL DEFAULT 'cloudflare',
+            hostname TEXT,
+            port INTEGER NOT NULL DEFAULT 3000,
+            auth_token TEXT,
+            status TEXT NOT NULL DEFAULT 'stopped',
+            last_connected_at TEXT,
+            config TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        // Mood learning
+        "CREATE TABLE IF NOT EXISTS mood_preferences (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            state TEXT NOT NULL,
+            animation_id TEXT,
+            positive_responses INTEGER NOT NULL DEFAULT 0,
+            negative_responses INTEGER NOT NULL DEFAULT 0,
+            total_duration_secs INTEGER NOT NULL DEFAULT 0,
+            last_shown_at TEXT,
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_mood_prefs_device_state ON mood_preferences(device_id, state, animation_id)",
+        "CREATE TABLE IF NOT EXISTS mood_patterns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            hour_of_day INTEGER NOT NULL,
+            day_of_week INTEGER NOT NULL,
+            preferred_state TEXT,
+            preferred_animation TEXT,
+            confidence REAL NOT NULL DEFAULT 0.0,
+            sample_count INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE(device_id, hour_of_day, day_of_week)
+        )",
         // Multi-tenant: add user_id columns
         "ALTER TABLE devices ADD COLUMN user_id TEXT REFERENCES users(id)",
         "CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id)",

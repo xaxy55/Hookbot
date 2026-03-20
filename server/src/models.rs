@@ -508,6 +508,206 @@ pub struct CreateVerifiedPublisher {
     pub badge_type: Option<String>,
 }
 
+// --- Plugin Sandbox types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginSandbox {
+    pub id: i64,
+    pub plugin_id: String,
+    pub device_id: String,
+    pub allowed_apis: Vec<String>,
+    pub blocked_apis: Vec<String>,
+    pub max_calls_per_minute: i64,
+    pub can_access_network: bool,
+    pub can_modify_state: bool,
+    pub can_send_notifications: bool,
+    pub can_access_sensors: bool,
+    pub enabled: bool,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreatePluginSandbox {
+    pub plugin_id: String,
+    pub device_id: Option<String>,
+    pub allowed_apis: Option<Vec<String>>,
+    pub blocked_apis: Option<Vec<String>>,
+    pub max_calls_per_minute: Option<i64>,
+    pub can_access_network: Option<bool>,
+    pub can_modify_state: Option<bool>,
+    pub can_send_notifications: Option<bool>,
+    pub can_access_sensors: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdatePluginSandbox {
+    pub allowed_apis: Option<Vec<String>>,
+    pub blocked_apis: Option<Vec<String>>,
+    pub max_calls_per_minute: Option<i64>,
+    pub can_access_network: Option<bool>,
+    pub can_modify_state: Option<bool>,
+    pub can_send_notifications: Option<bool>,
+    pub can_access_sensors: Option<bool>,
+    pub enabled: Option<bool>,
+}
+
+// --- Device Link types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeviceLink {
+    pub id: String,
+    pub source_device_id: String,
+    pub target_device_id: String,
+    pub trigger_type: String,
+    pub trigger_config: serde_json::Value,
+    pub action_type: String,
+    pub action_config: serde_json::Value,
+    pub enabled: bool,
+    pub cooldown_secs: i64,
+    pub last_triggered_at: Option<String>,
+    pub created_at: String,
+    pub source_device_name: Option<String>,
+    pub target_device_name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDeviceLink {
+    pub source_device_id: String,
+    pub target_device_id: String,
+    pub trigger_type: String,
+    pub trigger_config: Option<serde_json::Value>,
+    pub action_type: String,
+    pub action_config: Option<serde_json::Value>,
+    pub cooldown_secs: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateDeviceLink {
+    pub trigger_type: Option<String>,
+    pub trigger_config: Option<serde_json::Value>,
+    pub action_type: Option<String>,
+    pub action_config: Option<serde_json::Value>,
+    pub enabled: Option<bool>,
+    pub cooldown_secs: Option<i64>,
+}
+
+// --- User types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct User {
+    pub id: String,
+    pub username: String,
+    pub display_name: String,
+    pub role: String,
+    pub last_login_at: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateUser {
+    pub username: String,
+    pub display_name: String,
+    pub password: String,
+    pub role: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateUser {
+    pub display_name: Option<String>,
+    pub password: Option<String>,
+    pub role: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct UserWithDevices {
+    #[serde(flatten)]
+    pub user: User,
+    pub device_ids: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AssignDevice {
+    pub device_id: String,
+    pub permissions: Option<String>,
+}
+
+// --- Tunnel types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TunnelConfig {
+    pub id: String,
+    pub name: String,
+    pub tunnel_type: String,
+    pub hostname: Option<String>,
+    pub port: i64,
+    pub status: String,
+    pub last_connected_at: Option<String>,
+    pub config: serde_json::Value,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTunnel {
+    pub name: String,
+    pub tunnel_type: Option<String>,
+    pub hostname: Option<String>,
+    pub port: Option<i64>,
+    pub auth_token: Option<String>,
+    pub config: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTunnel {
+    pub name: Option<String>,
+    pub hostname: Option<String>,
+    pub port: Option<i64>,
+    pub auth_token: Option<String>,
+    pub config: Option<serde_json::Value>,
+}
+
+// --- Mood Learning types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MoodPreference {
+    pub id: i64,
+    pub device_id: String,
+    pub state: String,
+    pub animation_id: Option<String>,
+    pub positive_responses: i64,
+    pub negative_responses: i64,
+    pub total_duration_secs: i64,
+    pub score: f64,
+    pub last_shown_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MoodPattern {
+    pub device_id: String,
+    pub hour_of_day: i64,
+    pub day_of_week: i64,
+    pub preferred_state: Option<String>,
+    pub preferred_animation: Option<String>,
+    pub confidence: f64,
+    pub sample_count: i64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RecordMoodFeedback {
+    pub device_id: Option<String>,
+    pub state: String,
+    pub animation_id: Option<String>,
+    pub feedback: String, // "positive" or "negative"
+    pub duration_secs: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct MoodSuggestion {
+    pub suggested_state: Option<String>,
+    pub suggested_animation: Option<String>,
+    pub confidence: f64,
+    pub reason: String,
+}
+
 // --- Context types ---
 
 #[derive(Debug, Serialize)]

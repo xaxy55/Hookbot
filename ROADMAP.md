@@ -65,7 +65,7 @@
 - [x] **Asset ratings** — Rate and sort shared assets by popularity
 - [x] **Community Store page** — Frontend browse/search/install UI for community plugins
 - [x] **Asset Sharing page** — Frontend browse/upload/install UI for shared avatars & animations
-- [ ] **Plugin sandboxing** — Run community plugins in isolated contexts with permission scoping
+- [x] **Plugin sandboxing** — Run community plugins in isolated contexts with permission scoping
 - [x] **Verified publishers** — Badge system for trusted community plugin authors
 
 ## Phase 4: Multi-Device & Collaboration
@@ -74,11 +74,11 @@
 
 - [x] **Per-project device routing** — `.hookbot` config maps workspaces to specific devices (already partially built)
 - [x] **Device groups** — Tag devices, send commands to groups ("all calendar bots")
-- [ ] **Device-to-device communication** — One bot's state change triggers another (e.g. "error on build bot" -> "alert on notification bot")
-- [ ] **Shared animation library** — Upload/download community animations, sync across devices
-- [ ] **Multi-user support** — User accounts, per-user device assignments, auth tokens
-- [ ] **Remote access** — Tunnel/proxy for controlling hookbots outside LAN (Cloudflare Tunnel or similar)
-- [ ] **Mobile app** — React Native companion for quick state changes and notifications on the go
+- [x] **Device-to-device communication** — One bot's state change triggers another (e.g. "error on build bot" -> "alert on notification bot")
+- [x] **Shared animation library** — Upload/download community animations, sync across devices
+- [x] **Multi-user support** — User accounts, per-user device assignments, auth tokens
+- [x] **Remote access** — Tunnel/proxy for controlling hookbots outside LAN (Cloudflare Tunnel or similar)
+- [x] **Mobile app** — Native iOS companion (iPhone + Apple Watch) for quick state changes and notifications on the go
 
 ## Phase 5: AI & Intelligence
 
@@ -89,7 +89,7 @@
 - [ ] **Voice control** — I2S microphone + wake word detection, send commands to Claude
 - [ ] **Text-to-speech** — I2S DAC speaker, Claude speaks responses through the hookbot
 - [x] **Smart notifications** — AI decides priority: suppress low-importance Teams messages during deep work, escalate urgent ones
-- [ ] **Mood learning** — Track which states/animations the user responds to, adapt personality over time
+- [x] **Mood learning** — Track which states/animations the user responds to, adapt personality over time
 - [x] **Meeting awareness** — Calendar integration: go quiet during meetings, show countdown to next meeting
 
 ## Phase 6: Hardware V2

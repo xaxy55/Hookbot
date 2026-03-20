@@ -45,6 +45,13 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    label: 'Multi-Device',
+    items: [
+      { path: '/device-links', label: 'Device Links', icon: LinkIcon },
+      { path: '/tunnels', label: 'Remote Access', icon: GlobeIcon },
+    ],
+  },
+  {
     label: 'Connect',
     items: [
       { path: '/integrations', label: 'Integrations', icon: PlugIcon },
@@ -53,6 +60,8 @@ const NAV_SECTIONS = [
   {
     label: 'Settings',
     items: [
+      { path: '/users', label: 'Users', icon: UsersIcon },
+      { path: '/mood-learning', label: 'Mood Learning', icon: BrainIcon },
       { path: '/settings', label: 'Config', icon: GearIcon },
       { path: '/logs', label: 'Logs', icon: ListIcon },
     ],
@@ -414,6 +423,42 @@ function HeartIcon({ active }: { active: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
       <path d="M8 14s-5.5-3.5-5.5-7A3 3 0 018 4.5 3 3 0 0113.5 7C13.5 10.5 8 14 8 14z" fill={active ? 'currentColor' : 'none'} />
+    </svg>
+  );
+}
+
+function LinkIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M6.5 9.5l3-3M4.5 7.5l-1 1a2.83 2.83 0 004 4l1-1M11.5 8.5l1-1a2.83 2.83 0 00-4-4l-1 1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function GlobeIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <circle cx="8" cy="8" r="6" />
+      <path d="M2 8h12M8 2c-2 2-2 4-2 6s0 4 2 6M8 2c2 2 2 4 2 6s0 4-2 6" />
+    </svg>
+  );
+}
+
+function UsersIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <circle cx="6" cy="5" r="2.5" />
+      <path d="M1.5 13c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5" />
+      <circle cx="11.5" cy="5.5" r="2" />
+      <path d="M14.5 13c0-2 -1.5-3.5-3-3.5" />
+    </svg>
+  );
+}
+
+function BrainIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <path d="M8 14V7M8 7c0-2-1.5-4-4-4S1 4 1 6c0 1.5 1 2.5 2 3 0 1.5 1.5 3 3 3h2M8 7c0-2 1.5-4 4-4s3 1 3 3c0 1.5-1 2.5-2 3 0 1.5-1.5 3-3 3H8" strokeLinecap="round" />
     </svg>
   );
 }

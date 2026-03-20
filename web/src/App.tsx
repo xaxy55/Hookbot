@@ -27,6 +27,10 @@ import PomodoroPage from './pages/PomodoroPage';
 import SoundBoardPage from './pages/SoundBoardPage';
 import LightShowPage from './pages/LightShowPage';
 import LoginPage from './pages/LoginPage';
+import DeviceLinksPage from './pages/DeviceLinksPage';
+import UsersPage from './pages/UsersPage';
+import TunnelsPage from './pages/TunnelsPage';
+import MoodLearningPage from './pages/MoodLearningPage';
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -85,6 +89,10 @@ export default function App() {
           <Route path="/store" element={<StorePage />} />
           <Route path="/community" element={<CommunityStorePage />} />
           <Route path="/shared-assets" element={<AssetSharingPage />} />
+          <Route path="/device-links" element={<DeviceLinksPage />} />
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/tunnels" element={<TunnelsPage />} />
+          <Route path="/mood-learning" element={<MoodLearningPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/logs" element={<LogsPage />} />
