@@ -55,7 +55,8 @@ ios/screenshots/
 *.xcresult
 
 # Claude Code
-.claude/
+.claude/*
+!.claude/launch.json
 
 # GCP service account key (never commit)
 gcp-sa-key.json
