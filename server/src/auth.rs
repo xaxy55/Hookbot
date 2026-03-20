@@ -590,7 +590,7 @@ pub async fn workos_callback(
         Err(e) => {
             tracing::error!("WorkOS authenticate request failed: {}", e);
             return (
-                StatusCode::BAD_GATEWAY,
+                StatusCode::SERVICE_UNAVAILABLE,
                 Json(serde_json::json!({ "error": "Failed to contact WorkOS" })),
             )
                 .into_response();
@@ -602,7 +602,7 @@ pub async fn workos_callback(
         let body = resp.text().await.unwrap_or_default();
         tracing::error!("WorkOS authenticate error {}: {}", status, body);
         return (
-            StatusCode::BAD_GATEWAY,
+            StatusCode::UNAUTHORIZED,
             Json(serde_json::json!({ "error": format!("WorkOS error: {}", status) })),
         )
             .into_response();
@@ -613,7 +613,7 @@ pub async fn workos_callback(
         Err(e) => {
             tracing::error!("WorkOS response parse error: {}", e);
             return (
-                StatusCode::BAD_GATEWAY,
+                StatusCode::INTERNAL_SERVER_ERROR,
                 Json(serde_json::json!({ "error": "Invalid WorkOS response" })),
             )
                 .into_response();
@@ -629,7 +629,7 @@ pub async fn workos_callback(
 
     if workos_user_id.is_empty() || email.is_empty() {
         return (
-            StatusCode::BAD_GATEWAY,
+            StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({ "error": "WorkOS returned incomplete user data" })),
         )
             .into_response();
