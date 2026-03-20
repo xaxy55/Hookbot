@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getTunnels, createTunnel, updateTunnel, deleteTunnel, startTunnel, stopTunnel } from '../api/client';
+import { getTunnels, createTunnel, deleteTunnel, startTunnel, stopTunnel } from '../api/client';
 import { useToast } from '../hooks/useToast';
 
 export default function TunnelsPage() {
