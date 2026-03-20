@@ -108,13 +108,13 @@
 
 > Turn solo coding into a shared experience. Hookbots that interact across the internet.
 
-- [ ] **Buddy system** — Pair two hookbots over the internet: your bot mirrors your buddy's mood, see when they're coding
-- [ ] **Raid mode** — Send your avatar to "visit" a friend's hookbot OLED for 30 seconds with a custom message
-- [ ] **Shared streaks** — Collaborative streak challenges: both users must code daily to keep the streak alive
-- [ ] **Live coding indicator** — Hookbot glows when friends are actively coding, like a campfire you gather around
-- [ ] **Team dashboard** — Shared web view showing all team hookbots, who's in flow state, who needs help
-- [ ] **Hookbot reactions** — Send quick emoji reactions to someone's hookbot (fireworks for a deploy, skull for a crash)
-- [ ] **Global event wall** — Opt-in anonymous feed of hookbot milestones worldwide ("someone just hit level 50!")
+- [x] **Buddy system** — Pair two hookbots over the internet: your bot mirrors your buddy's mood, see when they're coding
+- [x] **Raid mode** — Send your avatar to "visit" a friend's hookbot OLED for 30 seconds with a custom message
+- [x] **Shared streaks** — Collaborative streak challenges: both users must code daily to keep the streak alive
+- [x] **Live coding indicator** — Hookbot glows when friends are actively coding, like a campfire you gather around
+- [x] **Team dashboard** — Shared web view showing all team hookbots, who's in flow state, who needs help
+- [x] **Hookbot reactions** — Send quick emoji reactions to someone's hookbot (fireworks for a deploy, skull for a crash)
+- [x] **Global event wall** — Opt-in anonymous feed of hookbot milestones worldwide ("someone just hit level 50!")
 
 ## Phase 8: Desk Ecosystem & Smart Home
 

@@ -171,6 +171,73 @@ fn run_migrations(conn: &Connection) {
             language TEXT NOT NULL DEFAULT 'en',
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         )",
+        // Phase 7: Social & Multiplayer — Buddy system
+        "CREATE TABLE IF NOT EXISTS buddies (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            buddy_device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            status TEXT NOT NULL DEFAULT 'pending',
+            mirror_mood INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            accepted_at TEXT,
+            UNIQUE(device_id, buddy_device_id)
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_buddies_device ON buddies(device_id)",
+        "CREATE INDEX IF NOT EXISTS idx_buddies_buddy ON buddies(buddy_device_id)",
+        // Phase 7: Raid mode
+        "CREATE TABLE IF NOT EXISTS raids (
+            id TEXT PRIMARY KEY,
+            from_device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            to_device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            message TEXT NOT NULL DEFAULT '',
+            avatar_state TEXT NOT NULL DEFAULT 'happy',
+            duration_secs INTEGER NOT NULL DEFAULT 30,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            expires_at TEXT NOT NULL
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_raids_to ON raids(to_device_id, status)",
+        // Phase 7: Shared streaks
+        "CREATE TABLE IF NOT EXISTS shared_streaks (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            device_ids TEXT NOT NULL DEFAULT '[]',
+            current_streak INTEGER NOT NULL DEFAULT 0,
+            longest_streak INTEGER NOT NULL DEFAULT 0,
+            last_active_date TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        // Phase 7: Live coding indicator
+        "CREATE TABLE IF NOT EXISTS coding_presence (
+            device_id TEXT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
+            is_coding INTEGER NOT NULL DEFAULT 0,
+            last_activity_at TEXT,
+            current_state TEXT NOT NULL DEFAULT 'idle',
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        // Phase 7: Hookbot reactions
+        "CREATE TABLE IF NOT EXISTS reactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            from_device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            to_device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            reaction TEXT NOT NULL,
+            message TEXT,
+            delivered INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_reactions_to ON reactions(to_device_id, delivered)",
+        // Phase 7: Global event wall
+        "CREATE TABLE IF NOT EXISTS global_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT REFERENCES devices(id) ON DELETE SET NULL,
+            event_type TEXT NOT NULL,
+            message TEXT NOT NULL,
+            anonymous INTEGER NOT NULL DEFAULT 1,
+            device_name TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_global_events_time ON global_events(created_at)",
     ];
 
     for sql in migrations {

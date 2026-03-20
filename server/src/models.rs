@@ -787,3 +787,154 @@ pub struct DeviceContext {
     pub confidence: f64,
     pub recent_tools: Vec<String>,
 }
+
+// --- Social & Multiplayer types (Phase 7) ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Buddy {
+    pub id: String,
+    pub device_id: String,
+    pub buddy_device_id: String,
+    pub status: String,
+    pub mirror_mood: bool,
+    pub created_at: String,
+    pub accepted_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub buddy_device_name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateBuddy {
+    pub device_id: String,
+    pub buddy_device_id: String,
+    pub mirror_mood: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Raid {
+    pub id: String,
+    pub from_device_id: String,
+    pub to_device_id: String,
+    pub message: String,
+    pub avatar_state: String,
+    pub duration_secs: i64,
+    pub status: String,
+    pub created_at: String,
+    pub expires_at: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from_device_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to_device_name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateRaid {
+    pub from_device_id: String,
+    pub to_device_id: String,
+    pub message: Option<String>,
+    pub avatar_state: Option<String>,
+    pub duration_secs: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SharedStreak {
+    pub id: String,
+    pub name: String,
+    pub device_ids: Vec<String>,
+    pub current_streak: i64,
+    pub longest_streak: i64,
+    pub last_active_date: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSharedStreak {
+    pub name: String,
+    pub device_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CodingPresence {
+    pub device_id: String,
+    pub is_coding: bool,
+    pub last_activity_at: Option<String>,
+    pub current_state: String,
+    pub updated_at: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdatePresence {
+    pub device_id: String,
+    pub is_coding: bool,
+    pub current_state: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Reaction {
+    pub id: i64,
+    pub from_device_id: String,
+    pub to_device_id: String,
+    pub reaction: String,
+    pub message: Option<String>,
+    pub delivered: bool,
+    pub created_at: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from_device_name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SendReaction {
+    pub from_device_id: String,
+    pub to_device_id: String,
+    pub reaction: String,
+    pub message: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GlobalEvent {
+    pub id: i64,
+    pub device_id: Option<String>,
+    pub event_type: String,
+    pub message: String,
+    pub anonymous: bool,
+    pub device_name: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateGlobalEvent {
+    pub device_id: Option<String>,
+    pub event_type: String,
+    pub message: String,
+    pub anonymous: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GlobalEventQuery {
+    pub limit: Option<i64>,
+    pub event_type: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TeamMember {
+    pub device_id: String,
+    pub device_name: String,
+    pub is_coding: bool,
+    pub current_state: String,
+    pub last_activity_at: Option<String>,
+    pub level: i64,
+    pub total_xp: i64,
+    pub current_streak: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TeamDashboard {
+    pub members: Vec<TeamMember>,
+    pub active_count: i64,
+    pub total_count: i64,
+}

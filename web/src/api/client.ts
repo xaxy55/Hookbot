@@ -1080,3 +1080,139 @@ export const getMoodSuggestion = (deviceId?: string) => {
   const params = deviceId ? `?device_id=${deviceId}` : '';
   return request<MoodSuggestion>(`/mood/suggest${params}`);
 };
+
+// ========================
+// Social & Multiplayer (Phase 7)
+// ========================
+
+export interface Buddy {
+  id: string;
+  device_id: string;
+  buddy_device_id: string;
+  status: string;
+  mirror_mood: boolean;
+  created_at: string;
+  accepted_at: string | null;
+  device_name?: string;
+  buddy_device_name?: string;
+}
+
+export interface Raid {
+  id: string;
+  from_device_id: string;
+  to_device_id: string;
+  message: string;
+  avatar_state: string;
+  duration_secs: number;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  from_device_name?: string;
+  to_device_name?: string;
+}
+
+export interface SharedStreak {
+  id: string;
+  name: string;
+  device_ids: string[];
+  current_streak: number;
+  longest_streak: number;
+  last_active_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CodingPresence {
+  device_id: string;
+  is_coding: boolean;
+  last_activity_at: string | null;
+  current_state: string;
+  updated_at: string;
+  device_name?: string;
+}
+
+export interface SocialReaction {
+  id: number;
+  from_device_id: string;
+  to_device_id: string;
+  reaction: string;
+  message: string | null;
+  delivered: boolean;
+  created_at: string;
+  from_device_name?: string;
+}
+
+export interface GlobalEvent {
+  id: number;
+  device_id: string | null;
+  event_type: string;
+  message: string;
+  anonymous: boolean;
+  device_name: string | null;
+  created_at: string;
+}
+
+export interface TeamMember {
+  device_id: string;
+  device_name: string;
+  is_coding: boolean;
+  current_state: string;
+  last_activity_at: string | null;
+  level: number;
+  total_xp: number;
+  current_streak: number;
+}
+
+export interface TeamDashboard {
+  members: TeamMember[];
+  active_count: number;
+  total_count: number;
+}
+
+// Buddy system
+export const getBuddies = () => request<Buddy[]>('/social/buddies');
+export const createBuddy = (data: { device_id: string; buddy_device_id: string; mirror_mood?: boolean }) =>
+  request<Buddy>('/social/buddies', { method: 'POST', body: JSON.stringify(data) });
+export const acceptBuddy = (id: string) =>
+  request<{ ok: boolean }>(`/social/buddies/${id}/accept`, { method: 'POST' });
+export const deleteBuddy = (id: string) =>
+  request<{ ok: boolean }>(`/social/buddies/${id}`, { method: 'DELETE' });
+
+// Raid mode
+export const getRaids = () => request<Raid[]>('/social/raids');
+export const createRaid = (data: { from_device_id: string; to_device_id: string; message?: string; avatar_state?: string; duration_secs?: number }) =>
+  request<Raid>('/social/raids', { method: 'POST', body: JSON.stringify(data) });
+
+// Shared streaks
+export const getSharedStreaks = () => request<SharedStreak[]>('/social/shared-streaks');
+export const createSharedStreak = (data: { name: string; device_ids: string[] }) =>
+  request<SharedStreak>('/social/shared-streaks', { method: 'POST', body: JSON.stringify(data) });
+export const deleteSharedStreak = (id: string) =>
+  request<{ ok: boolean }>(`/social/shared-streaks/${id}`, { method: 'DELETE' });
+
+// Live coding presence
+export const getPresence = () => request<CodingPresence[]>('/social/presence');
+export const updatePresence = (data: { device_id: string; is_coding: boolean; current_state?: string }) =>
+  request<{ ok: boolean }>('/social/presence', { method: 'POST', body: JSON.stringify(data) });
+
+// Team dashboard
+export const getTeamDashboard = () => request<TeamDashboard>('/social/team');
+
+// Reactions
+export const getReactions = (limit?: number) => {
+  const params = limit ? `?limit=${limit}` : '';
+  return request<SocialReaction[]>(`/social/reactions${params}`);
+};
+export const sendReaction = (data: { from_device_id: string; to_device_id: string; reaction: string; message?: string }) =>
+  request<SocialReaction>('/social/reactions', { method: 'POST', body: JSON.stringify(data) });
+
+// Global event wall
+export const getGlobalEvents = (limit?: number, eventType?: string) => {
+  const params = new URLSearchParams();
+  if (limit) params.set('limit', String(limit));
+  if (eventType) params.set('event_type', eventType);
+  const qs = params.toString();
+  return request<GlobalEvent[]>(`/social/events${qs ? `?${qs}` : ''}`);
+};
+export const createGlobalEvent = (data: { device_id?: string; event_type: string; message: string; anonymous?: boolean }) =>
+  request<GlobalEvent>('/social/events', { method: 'POST', body: JSON.stringify(data) });
