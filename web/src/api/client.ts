@@ -925,6 +925,69 @@ export const startTunnel = (id: string) =>
 export const stopTunnel = (id: string) =>
   request<{ ok: boolean; status: string }>(`/tunnels/${id}/stop`, { method: 'POST' });
 
+// Voice Control
+export interface VoiceCommand {
+  id: number;
+  device_id: string;
+  audio_size: number;
+  duration_secs: number;
+  transcript: string;
+  response: string;
+  status: string;
+  created_at: string;
+}
+
+export interface VoiceConfig {
+  device_id: string;
+  wake_word_enabled: boolean;
+  tts_enabled: boolean;
+  tts_voice: string;
+  volume: number;
+  language: string;
+}
+
+export interface VoiceResponse {
+  ok: boolean;
+  transcript: string;
+  response: string;
+  state: string | null;
+  tts_url: string | null;
+}
+
+export const getVoiceHistory = (deviceId?: string, limit?: number) => {
+  const params = new URLSearchParams();
+  if (deviceId) params.set('device_id', deviceId);
+  if (limit) params.set('limit', String(limit));
+  const qs = params.toString();
+  return request<VoiceCommand[]>(`/voice/history${qs ? `?${qs}` : ''}`);
+};
+
+export const getVoiceConfig = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<VoiceConfig>(`/voice/config${params}`);
+};
+
+export const updateVoiceConfig = (data: {
+  device_id?: string;
+  wake_word_enabled?: boolean;
+  tts_enabled?: boolean;
+  tts_voice?: string;
+  volume?: number;
+  language?: string;
+}) => request<{ ok: boolean }>('/voice/config', { method: 'PUT', body: JSON.stringify(data) });
+
+export const sendVoiceCommand = (text: string, deviceId?: string) =>
+  request<VoiceResponse>('/voice/command', {
+    method: 'POST',
+    body: JSON.stringify({ text, device_id: deviceId }),
+  });
+
+export const requestTts = (text: string, deviceId?: string, voice?: string) =>
+  request<{ ok: boolean; text: string; audio_url: string | null; duration_secs: number | null; format: string }>('/voice/tts', {
+    method: 'POST',
+    body: JSON.stringify({ text, device_id: deviceId, voice }),
+  });
+
 // Mood Learning
 export interface MoodPreference {
   id: number;

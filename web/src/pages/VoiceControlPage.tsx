@@ -7,6 +7,8 @@ import {
   getVoiceHistory,
   sendVoiceCommand,
   requestTts,
+  type VoiceCommand,
+  type VoiceResponse,
 } from '../api/client';
 import { useToast } from '../hooks/useToast';
 
@@ -50,7 +52,7 @@ export default function VoiceControlPage() {
 
   const commandMutation = useMutation({
     mutationFn: (text: string) => sendVoiceCommand(text, deviceId),
-    onSuccess: (data) => {
+    onSuccess: (data: VoiceResponse) => {
       refetchHistory();
       toast(data.response, 'success');
       if (data.state) {
@@ -62,7 +64,7 @@ export default function VoiceControlPage() {
 
   const ttsMutation = useMutation({
     mutationFn: (text: string) => requestTts(text, deviceId, config?.tts_voice),
-    onSuccess: (data) => {
+    onSuccess: (data: { ok: boolean; text: string; audio_url: string | null; duration_secs: number | null; format: string }) => {
       refetchHistory();
       toast(`Speaking: "${data.text}"`, 'success');
       setTtsText('');
@@ -397,7 +399,7 @@ export default function VoiceControlPage() {
         <h2 className="text-lg font-semibold text-fg mb-4">Command History</h2>
         {history && history.length > 0 ? (
           <div className="space-y-2">
-            {history.map(cmd => (
+            {history.map((cmd: VoiceCommand) => (
               <div key={cmd.id} className="flex items-start gap-3 bg-inset rounded-lg p-3">
                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
                   cmd.status === 'processed' ? 'bg-green-500' :
