@@ -71,6 +71,9 @@ resource "google_compute_instance" "hookbot" {
             { name = "API_KEY", value = var.hookbot_api_key },
             { name = "ADMIN_PASSWORD", value = var.hookbot_admin_password },
             { name = "ALLOWED_ORIGINS", value = "https://bot.mr-ai.no,https://hookbot-web.pages.dev" },
+            { name = "WORKOS_CLIENT_ID", value = var.workos_client_id },
+            { name = "WORKOS_API_KEY", value = var.workos_api_key },
+            { name = "WORKOS_REDIRECT_URI", value = "https://bot.mr-ai.no/auth/callback" },
           ]
           volumeMounts = [{
             name      = "hookbot-data"

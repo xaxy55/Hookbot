@@ -40,6 +40,19 @@ variable "hookbot_admin_password" {
   sensitive   = true
 }
 
+variable "workos_client_id" {
+  description = "WorkOS Client ID for multi-tenant auth"
+  type        = string
+  default     = ""
+}
+
+variable "workos_api_key" {
+  description = "WorkOS API key"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "cloudflare_pages_project" {
   description = "Cloudflare Pages project name"
   type        = string
