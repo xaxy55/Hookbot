@@ -104,6 +104,68 @@
 - [ ] **Haptic feedback** — Vibration motor for subtle alerts (desk vibration on error)
 - [ ] **NFC tag** — Tap phone to pair, change profiles, or trigger actions
 
+## Phase 7: Social & Multiplayer
+
+> Turn solo coding into a shared experience. Hookbots that interact across the internet.
+
+- [ ] **Buddy system** — Pair two hookbots over the internet: your bot mirrors your buddy's mood, see when they're coding
+- [ ] **Raid mode** — Send your avatar to "visit" a friend's hookbot OLED for 30 seconds with a custom message
+- [ ] **Shared streaks** — Collaborative streak challenges: both users must code daily to keep the streak alive
+- [ ] **Live coding indicator** — Hookbot glows when friends are actively coding, like a campfire you gather around
+- [ ] **Team dashboard** — Shared web view showing all team hookbots, who's in flow state, who needs help
+- [ ] **Hookbot reactions** — Send quick emoji reactions to someone's hookbot (fireworks for a deploy, skull for a crash)
+- [ ] **Global event wall** — Opt-in anonymous feed of hookbot milestones worldwide ("someone just hit level 50!")
+
+## Phase 8: Desk Ecosystem & Smart Home
+
+> The hookbot becomes the brain of your desk setup and connects to your smart home.
+
+- [ ] **Desk lighting sync** — Control Philips Hue / WLED strips: red for errors, green for passing tests, ambient for focus mode
+- [ ] **Spotify / Apple Music integration** — Auto-pause music on meetings, show now-playing on e-ink, focus playlists by state
+- [ ] **Standing desk integration** — Track sit/stand time, remind to switch, hookbot does a little celebration when you stand
+- [ ] **Stream Deck plugin** — Custom buttons for hookbot actions: change state, trigger animations, deploy OTA
+- [ ] **Home Assistant integration** — Expose hookbot as HA entity: use in automations, voice control via Alexa/Google
+- [ ] **Desk occupancy analytics** — Track desk usage patterns, suggest optimal break times, weekly desk health report
+- [ ] **Multi-monitor awareness** — Detect active monitor via USB, point servo-driven hookbot head toward the screen you're using
+
+## Phase 9: Mini-Games & Easter Eggs
+
+> Reward breaks, fight burnout, hide delightful surprises.
+
+- [ ] **Tamagotchi mode** — Feed your hookbot by coding, it gets sad if ignored, evolves into different forms based on your coding style
+- [ ] **OLED mini-games** — Snake, Pong, Tetris on the OLED during breaks, controlled via physical buttons or web UI
+- [ ] **Boss battle** — Weekly "boss bug" challenge: fix a puzzle bug to earn bonus XP, hookbot cheers you on
+- [ ] **Konami code** — Enter the classic code on physical buttons for a secret animation and hidden achievement
+- [ ] **Avatar evolution** — Your avatar visually evolves every 10 levels: egg → blob → robot → mech → cosmic entity
+- [ ] **Loot drops** — Random rare accessories and animations drop from normal coding activity
+- [ ] **Seasonal events** — Halloween spooky mode, holiday themes, April Fools chaos mode with inverted controls
+- [ ] **Typing speed mini-game** — Hookbot times your WPM during intense coding bursts, awards "speed demon" variants
+- [ ] **Idle animations** — Hookbot does progressively weirder things the longer you're AFK (juggles, naps, builds a tiny house)
+
+## Phase 10: Developer Analytics & Insights
+
+> Deep productivity intelligence. Understand your coding patterns like never before.
+
+- [ ] **Flow state detection** — ML model trained on your patterns: detect when you enter/exit flow, protect it aggressively
+- [ ] **Code quality correlation** — Track bug rate vs. time of day, sleep, breaks: find your optimal coding conditions
+- [ ] **Weekly AI digest** — Claude-generated weekly summary: what you shipped, patterns spotted, personalized tips
+- [ ] **Burnout early warning** — Detect overwork patterns (late nights, no breaks, declining streak quality) and alert gently
+- [ ] **Project time tracking** — Automatic per-project time tracking from hook data, exportable timesheets
+- [ ] **Pair programming stats** — Detect pairing sessions, track effectiveness, suggest optimal pairing schedules
+- [ ] **Retrospective generator** — Auto-generate sprint retro talking points from hookbot data
+
+## Phase 11: Advanced Hardware Mods
+
+> For the tinkerers who want to push the hardware to its limits.
+
+- [ ] **Motorized base** — Hookbot can rotate to face you using a stepper motor and presence detection
+- [ ] **Thermal printer** — Tiny receipt printer for daily standup notes, achievement certificates, or code snippets
+- [ ] **LED matrix face** — 32x32 RGB LED matrix as an alternative face: pixel art expressions, scrolling text
+- [ ] **Mechanical keyboard integration** — Custom key switch on hookbot: macro key for deploy, emergency stop, or celebration
+- [ ] **Desk fan control** — PWM-controlled fan that spins up when your code is "hot" (lots of errors) and slows on clean builds
+- [ ] **Modular snap-on accessories** — Magnetic mounts for swappable physical accessories: hats, arms, signs
+- [ ] **Wireless charging pad** — Qi charging built into the base, also charges your phone while hookbot sits on it
+
 ---
 
 ## Quick Wins (anytime)
@@ -117,3 +179,12 @@
 - [x] Webhook templates for common integrations (Slack, Discord, GitHub Actions)
 - [x] Sound pack system — upload custom melodies per state
 - [x] OLED screen saver — random animations after extended idle
+- [ ] Confetti animation on successful deploy
+- [ ] "Do Not Disturb" physical toggle switch
+- [ ] Git branch name on OLED when switching branches
+- [ ] Compile progress bar on OLED during builds
+- [ ] Random motivational quotes on idle screen
+- [ ] Customizable startup boot animation
+- [ ] Battery backup with low-power sleep mode
+- [ ] QR code display for quick device pairing
+- [ ] Desktop widget (macOS/Windows) showing hookbot status
