@@ -1,0 +1,18 @@
+[package]
+name = "hookbot-cli"
+version = "0.2.0"
+edition = "2021"
+description = "CLI tool for managing and auditing Hookbot instances"
+
+[[bin]]
+name = "hookbot"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive", "env"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "cookies"], default-features = false }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+colored = "2"
+chrono = "0.4"
