@@ -19,7 +19,8 @@ DIM    := \033[2m
         lint lint-fix lint-server lint-web \
         update update-server update-web \
         build-testflight screenshots \
-        gh-secrets cloud-secrets
+        gh-secrets cloud-secrets \
+        cli cli-build cli-security cli-config
 
 # ============================================================
 #  Default target
@@ -41,6 +42,9 @@ help: ## Show this help
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@printf "\n$(BOLD)$(YELLOW) Updates$(RESET)\n"
 	@grep -E '^update.*:.*?## .*$$' $(MAKEFILE_LIST) \
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
+	@printf "\n$(BOLD)$(YELLOW) CLI$(RESET)\n"
+	@grep -E '^cli.*:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@printf "\n$(BOLD)$(YELLOW) Secrets & CI$(RESET)\n"
 	@grep -E '^(gh-secrets|cloud-secrets):.*?## .*$$' $(MAKEFILE_LIST) \
@@ -142,6 +146,26 @@ update-server: ## Update Rust dependencies (cargo update)
 update-web: ## Update npm dependencies (npm update)
 	@printf "$(CYAN)>> Updating npm dependencies (web)...$(RESET)\n"
 	cd web && npm update
+
+# ============================================================
+#  CLI
+# ============================================================
+cli-build: ## Build hookbot CLI tool
+	@printf "$(BLUE)>> Building hookbot CLI...$(RESET)\n"
+	cd cli && cargo build --release
+	@printf "$(GREEN)>> CLI built: cli/target/release/hookbot$(RESET)\n"
+
+cli-security: cli-build ## Run OWASP security audit against live instance
+	@printf "$(RED)>> Running security audit...$(RESET)\n"
+	./cli/target/release/hookbot security --target https://bot.mr-ai.no --frontend https://hookbot.mr-ai.no
+
+cli-config: cli-build ## Validate local .env configuration
+	@printf "$(YELLOW)>> Auditing configuration...$(RESET)\n"
+	./cli/target/release/hookbot config
+
+cli-status: cli-build ## Check server health and device status
+	@printf "$(CYAN)>> Checking status...$(RESET)\n"
+	./cli/target/release/hookbot --url https://bot.mr-ai.no status
 
 # ============================================================
 #  Secrets & CI

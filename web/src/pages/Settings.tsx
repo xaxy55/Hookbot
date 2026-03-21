@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getDevices, getHealth, getServerSettings, updateServerSettings, getLogStats, pruneLogs, getProjectRoutes, createProjectRoute, updateProjectRoute, deleteProjectRoute, getVerifiedPublishers, addVerifiedPublisher, removeVerifiedPublisher } from '../api/client';
 import type { ProjectRoute, VerifiedPublisher } from '../api/client';
+import QRCode from '../components/QRCode';
 
 type HookMode = 'direct' | 'server';
 
@@ -294,6 +295,52 @@ export default function Settings() {
           <pre className="text-[11px] bg-inset rounded-md p-3 text-yellow-400 font-mono border border-edge">
             bash hooks/install.sh
           </pre>
+        </div>
+      </div>
+
+      {/* QR Code Quick Pair */}
+      <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-fg-2">Quick Pair</h2>
+            <p className="text-xs text-subtle mt-1">
+              Scan this QR code from your phone to open the Hookbot dashboard.
+            </p>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-subtle">
+            <rect x="1" y="1" width="5" height="5" rx="0.5" />
+            <rect x="10" y="1" width="5" height="5" rx="0.5" />
+            <rect x="1" y="10" width="5" height="5" rx="0.5" />
+            <rect x="11" y="11" width="4" height="4" rx="0.5" />
+            <path d="M10 10h1M14 10h1M10 14h1" />
+          </svg>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <div className="rounded-lg bg-white p-3 shrink-0">
+            <QRCode value={window.location.origin} size={140} fgColor="#000000" bgColor="#ffffff" />
+          </div>
+          <div className="space-y-3 text-xs">
+            <div>
+              <span className="text-subtle block mb-1">Dashboard URL</span>
+              <code className="text-green-400 bg-inset px-2 py-1 rounded text-[11px] font-mono block break-all">
+                {window.location.origin}
+              </code>
+            </div>
+            <p className="text-subtle leading-relaxed">
+              Point your phone camera at the QR code to open this dashboard. Make sure your phone is on the same network.
+            </p>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.origin);
+                setCopied('qr-url');
+                setTimeout(() => setCopied(''), 2000);
+              }}
+              className="px-3 py-1.5 text-xs border border-edge rounded-md text-subtle hover:text-fg hover:border-muted transition-colors"
+            >
+              {copied === 'qr-url' ? 'Copied!' : 'Copy URL'}
+            </button>
+          </div>
         </div>
       </div>
 
