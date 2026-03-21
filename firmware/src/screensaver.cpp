@@ -11,6 +11,7 @@ enum class Anim : uint8_t {
     MATRIX_RAIN,
     ORBITING_PARTICLES,
     WAVEFORM,
+    MOTIVATIONAL_QUOTE,
     NUM_ANIMS
 };
 
@@ -256,6 +257,89 @@ static void drawWaveform(DisplayCanvas* d) {
     }
 }
 
+// ─── Motivational Quote ─────────────────────────────────────────
+// Floating dev quotes with fade-in/fade-out effect
+
+static const char* const quoteList[] = {
+    "Ship it!",
+    "LGTM",
+    "git push -f",
+    "It works on\nmy machine",
+    "10x dev mode",
+    "Zero bugs\ntoday",
+    "Deploy Friday",
+    "Code > Sleep",
+    "sudo make\nme coffee",
+    "First try!",
+    "Stack\nOverflow",
+    "rm -rf\ndoubt",
+    "Keep\nshipping",
+    "The CEO\napproves",
+    "Merge\nconflict\nresolved"
+};
+static const uint8_t NUM_QUOTES = sizeof(quoteList) / sizeof(quoteList[0]);
+static uint8_t currentQuoteIdx = 0;
+
+static void initMotivationalQuote() {
+    currentQuoteIdx = esp_random() % NUM_QUOTES;
+}
+
+static void drawMotivationalQuote(DisplayCanvas* d) {
+    const char* quote = quoteList[currentQuoteIdx];
+
+    d->setTextSize(1);
+    d->setTextColor(COLOR_WHITE);
+
+    // Count lines and find the widest line (each char is 6px wide at size 1)
+    uint8_t numLines = 1;
+    uint8_t maxLineLen = 0;
+    uint8_t curLineLen = 0;
+    for (const char* p = quote; *p; p++) {
+        if (*p == '\n') {
+            numLines++;
+            if (curLineLen > maxLineLen) maxLineLen = curLineLen;
+            curLineLen = 0;
+        } else {
+            curLineLen++;
+        }
+    }
+    if (curLineLen > maxLineLen) maxLineLen = curLineLen;
+
+    // Each character is 6px wide, 8px tall at text size 1
+    int16_t textW = maxLineLen * 6;
+    int16_t textH = numLines * 8;
+
+    // Subtle floating animation using sin wave
+    float floatOffset = sinf((float)animTime / 800.0f) * 3.0f;
+
+    // Center on screen with float offset
+    int16_t startX = (SCREEN_WIDTH - textW) / 2;
+    int16_t startY = (SCREEN_HEIGHT - textH) / 2 + (int16_t)floatOffset;
+
+    // Draw each line centered individually
+    const char* lineStart = quote;
+    uint8_t lineIdx = 0;
+    for (const char* p = quote; ; p++) {
+        if (*p == '\n' || *p == '\0') {
+            uint8_t lineLen = (uint8_t)(p - lineStart);
+            int16_t lineW = lineLen * 6;
+            int16_t x = (SCREEN_WIDTH - lineW) / 2;
+            int16_t y = startY + lineIdx * 8;
+
+            d->setCursor(x, y);
+            // Print characters one by one up to the newline
+            for (const char* c = lineStart; c < p; c++) {
+                d->print(*c);
+            }
+
+            lineIdx++;
+            lineStart = p + 1;
+
+            if (*p == '\0') break;
+        }
+    }
+}
+
 // ─── Public API ─────────────────────────────────────────────────
 
 void init() {
@@ -277,6 +361,7 @@ void randomize() {
         case Anim::MATRIX_RAIN:        initMatrixRain(); break;
         case Anim::ORBITING_PARTICLES: initOrbitingParticles(); break;
         case Anim::WAVEFORM:           break;  // No state to init
+        case Anim::MOTIVATIONAL_QUOTE: initMotivationalQuote(); break;
         default: break;
     }
 
@@ -301,6 +386,7 @@ void draw() {
         case Anim::MATRIX_RAIN:        drawMatrixRain(d); break;
         case Anim::ORBITING_PARTICLES: drawOrbitingParticles(d); break;
         case Anim::WAVEFORM:           drawWaveform(d); break;
+        case Anim::MOTIVATIONAL_QUOTE: drawMotivationalQuote(d); break;
         default: break;
     }
 }

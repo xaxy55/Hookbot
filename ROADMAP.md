@@ -179,12 +179,12 @@
 - [x] Webhook templates for common integrations (Slack, Discord, GitHub Actions)
 - [x] Sound pack system — upload custom melodies per state
 - [x] OLED screen saver — random animations after extended idle
-- [ ] Confetti animation on successful deploy
-- [ ] "Do Not Disturb" physical toggle switch
-- [ ] Git branch name on OLED when switching branches
+- [x] Confetti animation on successful deploy
+- [x] "Do Not Disturb" toggle (software toggle in web UI + firmware)
+- [x] Git branch name on OLED when switching branches
 - [ ] Compile progress bar on OLED during builds
-- [ ] Random motivational quotes on idle screen
-- [ ] Customizable startup boot animation
+- [x] Random motivational quotes on idle screen
+- [x] Customizable startup boot animation
 - [ ] Battery backup with low-power sleep mode
 - [ ] QR code display for quick device pairing
 - [ ] Desktop widget (macOS/Windows) showing hookbot status

@@ -35,6 +35,7 @@ static NotificationData notifications[MAX_NOTIFICATIONS] = {};
 static int notificationCount = 0;
 static XpData xpData = {0, 0, 0, "Newbie"};
 static ProjectInfo projectInfo = {"", 0};
+static BranchInfo branchInfo = {"", 0};
 static PetData petData = {50, 50, 0, 0, 0, 0, 0, PetType::DOG, {true, false, false, false}};
 static PomodoroData pomodoroData = {
     PomodoroSession::FOCUS, PomodoroStatus::IDLE,
@@ -103,6 +104,10 @@ void loadConfigFromNVS() {
     runtimeConfig.autoBrightness = prefs.getBool("autoBright", false);
     // Screensaver timeout (default 15 minutes, 0 = disabled)
     runtimeConfig.screensaverMins = prefs.getInt("ssTimeout", 15);
+    // Boot animation (0=none, 1=classic, 2=matrix, 3=glitch)
+    runtimeConfig.bootAnimation = prefs.getInt("bootAnim", 1);
+    // Do Not Disturb
+    runtimeConfig.doNotDisturb = prefs.getBool("dnd", false);
     prefs.end();
     Serial.printf("[Server] Config loaded: brightness=%d, sound=%s, vol=%d, host=%s\n",
         runtimeConfig.ledBrightness,
@@ -134,6 +139,10 @@ void saveConfigToNVS() {
     prefs.putBool("autoBright", runtimeConfig.autoBrightness);
     // Screensaver timeout
     prefs.putInt("ssTimeout", runtimeConfig.screensaverMins);
+    // Boot animation
+    prefs.putInt("bootAnim", runtimeConfig.bootAnimation);
+    // Do Not Disturb
+    prefs.putBool("dnd", runtimeConfig.doNotDisturb);
     prefs.end();
     Serial.println("[Server] Config saved to NVS");
 }
@@ -470,6 +479,11 @@ void init(std::function<void(AvatarState)> onStateChange) {
             doc["project"] = projectInfo.name;
         }
 
+        // Git branch
+        if (strlen(branchInfo.name) > 0) {
+            doc["branch"] = branchInfo.name;
+        }
+
         String json;
         serializeJson(doc, json);
         req->send(200, "application/json", json);
@@ -633,6 +647,21 @@ void init(std::function<void(AvatarState)> onStateChange) {
                 Serial.printf("[Server] Screensaver timeout: %d min\n", runtimeConfig.screensaverMins);
             }
 
+            // Boot animation type
+            if (!body["boot_animation"].isNull()) {
+                runtimeConfig.bootAnimation = body["boot_animation"];
+                if (runtimeConfig.bootAnimation < 0 || runtimeConfig.bootAnimation > 3) {
+                    runtimeConfig.bootAnimation = 1;
+                }
+                Serial.printf("[Server] Boot animation: %d\n", runtimeConfig.bootAnimation);
+            }
+
+            // Do Not Disturb
+            if (!body["dnd"].isNull()) {
+                runtimeConfig.doNotDisturb = body["dnd"];
+                Serial.printf("[Server] DND: %s\n", runtimeConfig.doNotDisturb ? "on" : "off");
+            }
+
             // Auto-brightness from ambient light sensor
             if (!body["auto_brightness"].isNull()) {
                 runtimeConfig.autoBrightness = body["auto_brightness"];
@@ -653,6 +682,8 @@ void init(std::function<void(AvatarState)> onStateChange) {
             resp["hostname"] = runtimeConfig.hostname;
             resp["auto_brightness"] = runtimeConfig.autoBrightness;
             resp["screensaver_mins"] = runtimeConfig.screensaverMins;
+            resp["boot_animation"] = runtimeConfig.bootAnimation;
+            resp["dnd"] = runtimeConfig.doNotDisturb;
 
             String json;
             serializeJson(resp, json);
@@ -791,6 +822,21 @@ void init(std::function<void(AvatarState)> onStateChange) {
         }
     );
     server.addHandler(projectHandler);
+
+    // POST /branch - receive git branch name
+    AsyncCallbackJsonWebHandler* branchHandler = new AsyncCallbackJsonWebHandler(
+        "/branch",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+            const char* name = body["branch"] | "";
+            strncpy(branchInfo.name, name, MAX_BRANCH_LEN - 1);
+            branchInfo.name[MAX_BRANCH_LEN - 1] = '\0';
+            branchInfo.lastUpdatedAt = millis();
+            Serial.printf("[Server] Branch: %s\n", branchInfo.name);
+            req->send(200, "application/json", "{\"ok\":true}");
+        }
+    );
+    server.addHandler(branchHandler);
 
 #ifndef NO_SOUND
     // POST /sounds - set custom sound pack melodies
@@ -1622,6 +1668,10 @@ XpData& getXpData() {
 
 ProjectInfo& getProject() {
     return projectInfo;
+}
+
+BranchInfo& getBranch() {
+    return branchInfo;
 }
 
 PetData& getPetData() {

@@ -126,6 +126,18 @@ input[type="range"]::-webkit-slider-thumb {
   100% { opacity: 0; transform: translateY(-110vh) translateX(var(--drift, 0px)); }
 }
 
+/* ── Deploy confetti animation ───────────────────── */
+@keyframes confetti-fall {
+  0%   { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+@keyframes confetti-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(15px); }
+  50%      { transform: translateX(-15px); }
+  75%      { transform: translateX(10px); }
+}
+
 /* ── Select styling ────────────────────────────────── */
 select {
   appearance: none;

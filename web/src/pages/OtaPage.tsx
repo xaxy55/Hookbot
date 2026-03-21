@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFirmware, getDevices, getOtaJobs, deployOta, buildFirmware } from '../api/client';
 import type { BuildStatus } from '../api/client';
 import type { OtaJob } from '../types';
 import OtaUpload from '../components/OtaUpload';
 import FirmwareFlasher from '../components/FirmwareFlasher';
+
+const CONFETTI_COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
 
 /** Group OTA jobs into batches where created_at timestamps are within 5s of each other */
 function groupIntoBatches(jobs: OtaJob[]): OtaJob[][] {
@@ -38,6 +40,8 @@ export default function OtaPage() {
   const [buildVersion, setBuildVersion] = useState('');
   const [buildResult, setBuildResult] = useState<BuildStatus | null>(null);
   const [showBuildLog, setShowBuildLog] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevAllSuccessRef = useRef(false);
 
   const { data: firmwares } = useQuery({
     queryKey: ['firmware'],
@@ -111,8 +115,50 @@ export default function OtaPage() {
 
   const batches = useMemo(() => groupIntoBatches(jobs ?? []), [jobs]);
 
+  // Trigger confetti when the most recent batch transitions to all-success
+  useEffect(() => {
+    if (batches.length === 0) {
+      prevAllSuccessRef.current = false;
+      return;
+    }
+    const firstBatch = batches[0];
+    const allSuccess = firstBatch.every(j => j.status === 'success');
+    const batchAge = Date.now() - new Date(firstBatch[0].created_at).getTime();
+
+    if (allSuccess && !prevAllSuccessRef.current && batchAge < 30_000) {
+      setShowConfetti(true);
+      const timer = setTimeout(() => setShowConfetti(false), 3000);
+      prevAllSuccessRef.current = true;
+      return () => clearTimeout(timer);
+    }
+
+    prevAllSuccessRef.current = allSuccess;
+  }, [batches]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Deploy confetti */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+          {Array.from({ length: 30 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: `${Math.random() * 100}%`,
+                width: `${6 + Math.random() * 8}px`,
+                height: `${6 + Math.random() * 8}px`,
+                backgroundColor: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+                borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                animation: `confetti-fall ${2 + Math.random() * 1.5}s ease-in forwards, confetti-shake ${0.3 + Math.random() * 0.5}s ease-in-out infinite`,
+                animationDelay: `${Math.random() * 0.8}s`,
+                opacity: 0,
+              }}
+            />
+          ))}
+        </div>
+      )}
       <h1 className="text-xl font-bold text-fg">OTA Updates</h1>
 
       <OtaUpload />

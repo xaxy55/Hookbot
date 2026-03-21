@@ -704,6 +704,20 @@ static void drawFace(DisplayCanvas* d) {
         }
     }
 
+    // ─── Git branch name (bottom-left during non-idle states) ──────
+    if (currentState != AvatarState::IDLE) {
+        const BranchInfo& branch = HookbotServer::getBranch();
+        if (strlen(branch.name) > 0 && (millis() - branch.lastUpdatedAt) < 600000) {
+            d->setTextSize(1);
+            d->setTextColor(COLOR_WHITE);
+            d->setCursor(2, SCREEN_HEIGHT - 18);
+            char truncBranch[18];
+            strncpy(truncBranch, branch.name, 17);
+            truncBranch[17] = '\0';
+            d->print(truncBranch);
+        }
+    }
+
     // ─── Tool display (bottom of screen) ──────
     if ((currentState == AvatarState::THINKING || currentState == AvatarState::TASKCHECK)
         && strlen(HookbotServer::getCurrentTool().name) > 0) {
@@ -1015,6 +1029,27 @@ static void drawIdleInfo(DisplayCanvas* d) {
         line++;
     }
 
+    // Git branch name
+    const BranchInfo& branch = HookbotServer::getBranch();
+    bool hasBranch = strlen(branch.name) > 0
+        && (millis() - branch.lastUpdatedAt) < 600000;  // 10 min timeout
+    if (hasBranch) {
+        d->setCursor(x, y + line * 10);
+        // Branch icon: small ">" arrow
+        d->drawPixel(x, y + line * 10 + 1, COLOR_WHITE);
+        d->drawPixel(x + 1, y + line * 10 + 2, COLOR_WHITE);
+        d->drawPixel(x + 2, y + line * 10 + 3, COLOR_WHITE);
+        d->drawPixel(x + 1, y + line * 10 + 4, COLOR_WHITE);
+        d->drawPixel(x, y + line * 10 + 5, COLOR_WHITE);
+        // Branch name (truncated)
+        d->setCursor(x + 5, y + line * 10);
+        char truncBranch[12];
+        strncpy(truncBranch, branch.name, 11);
+        truncBranch[11] = '\0';
+        d->print(truncBranch);
+        line++;
+    }
+
     // IP address (when connected, no mgmt server)
     if (HookbotServer::isConnected()) {
         const RuntimeConfig& cfg = HookbotServer::getConfig();
@@ -1144,6 +1179,17 @@ static void drawXpBar(DisplayCanvas* d) {
     }
 }
 
+static void drawDndIndicator(DisplayCanvas* d) {
+    if (!HookbotServer::getConfig().doNotDisturb) return;
+    if (currentState != AvatarState::IDLE) return;
+
+    // Small "DND" text in the top-right corner
+    d->setTextSize(1);
+    d->setTextColor(0x781F); // purple-ish tint
+    d->setCursor(SCREEN_WIDTH - 22, 2);
+    d->print("DND");
+}
+
 void draw() {
     DisplayCanvas* d = Display::getCanvas();
     Display::clear();
@@ -1153,6 +1199,7 @@ void draw() {
     drawWifiStatus(d);
     drawIdleInfo(d);
     drawXpBar(d);
+    drawDndIndicator(d);
 }
 
 } // namespace Avatar

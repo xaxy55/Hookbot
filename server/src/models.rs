@@ -134,6 +134,7 @@ pub struct HookEvent {
     pub input_tokens: Option<i64>,
     pub output_tokens: Option<i64>,
     pub model: Option<String>,
+    pub git_branch: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

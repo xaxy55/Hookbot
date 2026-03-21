@@ -1,11 +1,13 @@
 #include <Arduino.h>
 #include <ArduinoOTA.h>
+#include <Preferences.h>
 #include "config.h"
 #ifndef NO_DISPLAY
 #include "display.h"
 #include "avatar.h"
 #include "screensaver.h"
 #include "animation_player.h"
+#include "boot_anim.h"
 #endif
 #ifndef NO_LED
 #include "led.h"
@@ -150,6 +152,14 @@ void setup() {
 #endif
 
 #ifndef NO_DISPLAY
+    // Boot animation (read setting directly from NVS before server init)
+    {
+        Preferences bootPrefs;
+        bootPrefs.begin("hookbot", true);
+        int bootAnimType = bootPrefs.getInt("bootAnim", 1);
+        bootPrefs.end();
+        BootAnim::play(bootAnimType);
+    }
     Screensaver::init();
     Avatar::draw();
     Display::flush();

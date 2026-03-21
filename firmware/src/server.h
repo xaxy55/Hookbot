@@ -88,6 +88,13 @@ struct ProjectInfo {
     uint32_t lastUpdatedAt;  // millis() when last set
 };
 
+// Git branch info
+#define MAX_BRANCH_LEN 24
+struct BranchInfo {
+    char name[MAX_BRANCH_LEN];
+    uint32_t lastUpdatedAt;  // millis() when last set
+};
+
 // XP / Level data from management server
 struct XpData {
     int level;
@@ -123,6 +130,10 @@ struct RuntimeConfig {
     bool autoBrightness;
     // Screensaver timeout in minutes (0 = disabled)
     int screensaverMins;
+    // Boot animation type (0=none, 1=classic, 2=matrix, 3=glitch)
+    int bootAnimation;
+    // Do Not Disturb mode
+    bool doNotDisturb;
 };
 
 // WiFi + HTTP API + mDNS subsystem
@@ -139,6 +150,7 @@ namespace HookbotServer {
     int getNotificationCount();
     XpData& getXpData();
     ProjectInfo& getProject();
+    BranchInfo& getBranch();
     void sendVoiceToServer(const uint8_t* data, size_t size);
     PetData& getPetData();
     PomodoroData& getPomodoro();

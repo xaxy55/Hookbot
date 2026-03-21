@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { getDevices, getOtaJobs, getFirmware, getGamificationStats } from '../api/client';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getDevices, getOtaJobs, getFirmware, getGamificationStats, getDeviceConfig, updateDeviceConfig } from '../api/client';
 import { Link } from 'react-router-dom';
 import StateIndicator from '../components/StateIndicator';
 
@@ -26,6 +27,33 @@ export default function Dashboard() {
     refetchInterval: 10000,
   });
 
+  // DND state: fetch config for the first device
+  const firstDeviceId = devices?.[0]?.id;
+  const queryClient = useQueryClient();
+  const { data: deviceConfig } = useQuery({
+    queryKey: ['device-config', firstDeviceId],
+    queryFn: () => getDeviceConfig(firstDeviceId!),
+    enabled: !!firstDeviceId,
+    refetchInterval: 10000,
+  });
+  const dndEnabled = !!(deviceConfig?.custom_data?.dnd);
+  const [dndToggling, setDndToggling] = useState(false);
+
+  const toggleDnd = useCallback(async () => {
+    if (!firstDeviceId || dndToggling) return;
+    setDndToggling(true);
+    try {
+      const newDnd = !dndEnabled;
+      const existingCustomData = deviceConfig?.custom_data ?? {};
+      await updateDeviceConfig(firstDeviceId, {
+        custom_data: { ...existingCustomData, dnd: newDnd },
+      });
+      queryClient.invalidateQueries({ queryKey: ['device-config', firstDeviceId] });
+    } finally {
+      setDndToggling(false);
+    }
+  }, [firstDeviceId, dndEnabled, dndToggling, deviceConfig, queryClient]);
+
   const onlineCount = devices?.filter((d) => d.online).length ?? 0;
   const totalCount = devices?.length ?? 0;
   const activeJobs = jobs?.filter((j) => j.status === 'pending' || j.status === 'in_progress').length ?? 0;
@@ -33,7 +61,23 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold text-fg">Overview</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-fg">Overview</h1>
+        {firstDeviceId && (
+          <button
+            onClick={toggleDnd}
+            disabled={dndToggling}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              dndEnabled
+                ? 'bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30'
+                : 'bg-surface border border-edge text-subtle hover:bg-inset'
+            }`}
+          >
+            <span>{dndEnabled ? '\u{1F319}' : '\u{1F514}'}</span>
+            <span>{dndEnabled ? 'DND On' : 'DND Off'}</span>
+          </button>
+        )}
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
