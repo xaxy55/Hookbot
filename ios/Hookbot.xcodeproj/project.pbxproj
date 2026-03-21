@@ -42,6 +42,10 @@
 		F156A3AF2CC4A7BA2413911A /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
 		F4F0D14584599DDB57D66845 /* WatchNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B84137B7C09B2C196A0D2896 /* WatchNetworkService.swift */; };
 		FF2350D11B46FB9A7B22EB30 /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
+		AA01BB02CC03DD04EE05FF06 /* MultipeerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122334455667788AABBCCDD /* MultipeerService.swift */; };
+		BB02CC03DD04EE05FF06AA01 /* ProximityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2233445566778899BBCCDDEE /* ProximityService.swift */; };
+		CC03DD04EE05FF06AA01BB02 /* SharedARView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3344556677889900CCDDEEFF /* SharedARView.swift */; };
+		DD04EE05FF06AA01BB02CC03 /* PongGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 445566778899AABBDDEEFF00 /* PongGameView.swift */; };
 		BB01A2B3C4D5E6F7A8B9C0D1 /* AvatarEvolutionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01B2C3D4E5F6A7B8C9D0E1 /* AvatarEvolutionEngine.swift */; };
 		BB02A3B4C5D6E7F8A9B0C1D2 /* BreakReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA02B3C4D5E6F7A8B9C0D1E2 /* BreakReminderManager.swift */; };
 		BB03A4B5C6D7E8F9A0B1C2D3 /* FocusModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA03B4C5D6E7F8A9B0C1D2E3 /* FocusModeManager.swift */; };
@@ -145,6 +149,10 @@
 		D8C1FD09F4BC65018E7A445D /* WatchTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTabView.swift; sourceTree = "<group>"; };
 		EB5F1894C33647E074AD0A11 /* WatchMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMainView.swift; sourceTree = "<group>"; };
 		EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
+		1122334455667788AABBCCDD /* MultipeerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerService.swift; sourceTree = "<group>"; };
+		2233445566778899BBCCDDEE /* ProximityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProximityService.swift; sourceTree = "<group>"; };
+		3344556677889900CCDDEEFF /* SharedARView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedARView.swift; sourceTree = "<group>"; };
+		445566778899AABBDDEEFF00 /* PongGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PongGameView.swift; sourceTree = "<group>"; };
 		AA01B2C3D4E5F6A7B8C9D0E1 /* AvatarEvolutionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEvolutionEngine.swift; sourceTree = "<group>"; };
 		AA02B3C4D5E6F7A8B9C0D1E2 /* BreakReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakReminderManager.swift; sourceTree = "<group>"; };
 		AA03B4C5D6E7F8A9B0C1D2E3 /* FocusModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeManager.swift; sourceTree = "<group>"; };
@@ -180,6 +188,9 @@
 				AA02B3C4D5E6F7A8B9C0D1E2 /* BreakReminderManager.swift */,
 				AA03B4C5D6E7F8A9B0C1D2E3 /* FocusModeManager.swift */,
 				007B5E84C28B4F2FAD647E7F /* HapticManager.swift */,
+				1122334455667788AABBCCDD /* MultipeerService.swift */,
+				64E4ED6FDD298958EA1DB744 /* NetworkService.swift */,
+				2233445566778899BBCCDDEE /* ProximityService.swift */,
 				AA04B5C6D7E8F9A0B1C2D3E4 /* HealthKitManager.swift */,
 				AA05B6C7D8E9F0A1B2C3D4E5 /* LiveActivityManager.swift */,
 				64E4ED6FDD298958EA1DB744 /* NetworkService.swift */,
@@ -213,7 +224,9 @@
 				D4E5F6A7B8C9D0E1F2A3B4C5 /* LoginView.swift */,
 				6FEFC46D0D53977D14F910B1 /* MainView.swift */,
 				D2E3F4A5B6C7D8E9F0A1B2C3 /* PetCareView.swift */,
+				445566778899AABBDDEEFF00 /* PongGameView.swift */,
 				9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */,
+				3344556677889900CCDDEEFF /* SharedARView.swift */,
 				8ECAA8CA141AD0D2360349F1 /* AchievementShowcaseView.swift */,
 				875796E4F37BD819E7C9CBE8 /* PomodoroView.swift */,
 				3790273532D9916C0570BD73 /* PhotoModeView.swift */,
@@ -506,8 +519,12 @@
 				C3D4E5F6A7B8C9D0E1F2A3B4 /* LoginView.swift in Sources */,
 				E121B6972428789C62702CCD /* MainView.swift in Sources */,
 				C935543D379DAE0399A03D44 /* NetworkService.swift in Sources */,
+				AA01BB02CC03DD04EE05FF06 /* MultipeerService.swift in Sources */,
 				A1B2C3D4E5F6A7B8C9D0E1F2 /* PetCareView.swift in Sources */,
+				DD04EE05FF06AA01BB02CC03 /* PongGameView.swift in Sources */,
+				BB02CC03DD04EE05FF06AA01 /* ProximityService.swift in Sources */,
 				4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */,
+				CC03DD04EE05FF06AA01BB02 /* SharedARView.swift in Sources */,
 				2F7D8DA5F1E23D87D838B732 /* SoundManager.swift in Sources */,
 				07BD3F555688C63668D7FA3F /* WatchBridge.swift in Sources */,
 				BB01A2B3C4D5E6F7A8B9C0D1 /* AvatarEvolutionEngine.swift in Sources */,
