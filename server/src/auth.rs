@@ -84,6 +84,11 @@ pub async fn require_auth(
     mut req: Request<Body>,
     next: Next,
 ) -> Response {
+    // Allow CORS preflight requests through without auth
+    if req.method() == axum::http::Method::OPTIONS {
+        return next.run(req).await;
+    }
+
     if config.workos_client_id.is_some() {
         // WorkOS multi-tenant mode
 
