@@ -517,6 +517,7 @@ pub async fn submit_typing_speed(
 // ── Idle Animations ─────────────────────────────────────────────
 
 #[derive(Debug, Serialize)]
+#[allow(dead_code)]
 pub struct IdleAnimation {
     pub stage: i64,        // 0-based, increases with AFK time
     pub name: String,

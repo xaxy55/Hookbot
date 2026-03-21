@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct User {
     pub id: String,
     pub workos_id: String,
@@ -869,6 +870,7 @@ pub struct NowPlaying {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct MusicAction {
     pub action: String, // "play", "pause", "next", "previous"
     pub playlist_id: Option<String>,
@@ -892,6 +894,7 @@ pub struct StandingDeskConfig {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct CreateStandingDeskConfig {
     pub device_id: Option<String>,
     pub sit_remind_minutes: Option<i64>,
@@ -1018,6 +1021,7 @@ pub struct DeskOccupancyConfig {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct CreateDeskOccupancyConfig {
     pub device_id: Option<String>,
     pub break_remind_minutes: Option<i64>,
@@ -1077,6 +1081,7 @@ pub struct MonitorConfig {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct CreateMonitorConfig {
     pub device_id: Option<String>,
     pub monitor_count: Option<i32>,
