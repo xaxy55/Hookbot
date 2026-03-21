@@ -12,7 +12,7 @@ const NAV_SECTIONS = [
       { path: '/', label: 'Overview', icon: BarChartIcon },
       { path: '/devices', label: 'Devices', icon: CpuIcon },
       { path: '/discovery', label: 'Discovery', icon: RadarIcon },
-      { path: '/ble-setup', label: 'BLE WiFi Setup', icon: BluetoothIcon },
+      { path: '/ble-setup', label: 'Bluetooth Setup', icon: BluetoothIcon },
       { path: '/avatar', label: 'Avatar Editor', icon: FaceIcon },
       { path: '/animations', label: 'Animations', icon: PlayIcon },
       { path: '/lights', label: 'Light Show', icon: SparkleIcon },

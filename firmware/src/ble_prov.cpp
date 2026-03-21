@@ -1,5 +1,6 @@
 #include "ble_prov.h"
 #include "server.h"
+#include "cloud_client.h"
 #include <WiFi.h>
 #include <Preferences.h>
 #include <BLEDevice.h>
@@ -11,17 +12,24 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define WIFI_CONFIG_UUID    "beb5483e-36e1-4688-b7f5-ea07361b26a8"  // Write SSID\nPASS
 #define STATUS_UUID         "beb5483e-36e1-4688-b7f5-ea07361b26a9"  // Read status
+#define CLAIM_INFO_UUID     "beb5483e-36e1-4688-b7f5-ea07361b26aa"  // Read claim info (JSON)
 
 namespace BleProv {
 
 static BLEServer* pServer = nullptr;
 static BLECharacteristic* pStatusChar = nullptr;
+static BLECharacteristic* pClaimInfoChar = nullptr;
 static bool bleActive = false;
 static bool deviceConnected = false;
 static bool wifiWasConnected = false;
 static String pendingSsid;
 static String pendingPass;
 static bool hasPendingCreds = false;
+
+// Whether BLE should stay active even with WiFi (for unclaimed cloud devices)
+static bool needsBlePairing() {
+    return CloudClient::isEnabled() && !CloudClient::isClaimed();
+}
 
 static void setStatus(const char* msg) {
     if (pStatusChar) {
@@ -31,6 +39,34 @@ static void setStatus(const char* msg) {
         }
     }
     Serial.printf("[BLE] Status: %s\n", msg);
+}
+
+static void updateClaimInfo() {
+    if (!pClaimInfoChar) return;
+
+    // Build simple JSON with claim info
+    String json = "{";
+    json += "\"claim_code\":\"";
+    json += CloudClient::getClaimCode();
+    json += "\",\"claimed\":";
+    json += CloudClient::isClaimed() ? "true" : "false";
+    json += ",\"cloud\":";
+    json += CloudClient::isEnabled() ? "true" : "false";
+    json += ",\"wifi\":";
+    json += (WiFi.status() == WL_CONNECTED) ? "true" : "false";
+
+    // Include device name
+    RuntimeConfig& config = HookbotServer::getConfig();
+    json += ",\"name\":\"";
+    json += config.hostname;
+    json += "\"";
+
+    json += "}";
+
+    pClaimInfoChar->setValue(json.c_str());
+    if (deviceConnected) {
+        pClaimInfoChar->notify();
+    }
 }
 
 // Save WiFi credentials to NVS
@@ -59,7 +95,12 @@ static bool saveWifiToNVS(const String& ssid, const String& pass) {
 class ServerCallbacks : public BLEServerCallbacks {
     void onConnect(BLEServer* s) override {
         deviceConnected = true;
-        setStatus("Connected. Send: SSID\\nPASSWORD");
+        if (WiFi.status() == WL_CONNECTED) {
+            setStatus("Connected. WiFi OK.");
+        } else {
+            setStatus("Connected. Send: SSID\\nPASSWORD");
+        }
+        updateClaimInfo();
         Serial.println("[BLE] Client connected");
     }
     void onDisconnect(BLEServer* s) override {
@@ -120,7 +161,8 @@ static void startBLE() {
     pServer = BLEDevice::createServer();
     pServer->setCallbacks(new ServerCallbacks());
 
-    BLEService* pService = pServer->createService(SERVICE_UUID);
+    // Use max handles to fit all characteristics (default 15 may not be enough)
+    BLEService* pService = pServer->createService(BLEUUID(SERVICE_UUID), 20);
 
     // WiFi config characteristic (write)
     BLECharacteristic* pWifiChar = pService->createCharacteristic(
@@ -136,6 +178,14 @@ static void startBLE() {
     );
     pStatusChar->addDescriptor(new BLE2902());
     pStatusChar->setValue("Waiting for WiFi credentials");
+
+    // Claim info characteristic (read + notify) — returns JSON with claim_code, claimed, etc.
+    pClaimInfoChar = pService->createCharacteristic(
+        CLAIM_INFO_UUID,
+        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY
+    );
+    pClaimInfoChar->addDescriptor(new BLE2902());
+    pClaimInfoChar->setValue("{\"claim_code\":\"\",\"claimed\":false,\"cloud\":false}");
 
     pService->start();
 
@@ -153,6 +203,8 @@ static void stopBLE() {
     BLEDevice::getAdvertising()->stop();
     BLEDevice::deinit(false);
     bleActive = false;
+    pStatusChar = nullptr;
+    pClaimInfoChar = nullptr;
     Serial.println("[BLE] Stopped");
 }
 
@@ -166,14 +218,28 @@ void init() {
 void update() {
     bool wifiNow = HookbotServer::isConnected();
 
-    // WiFi just connected -> stop BLE to save resources
     if (wifiNow && !wifiWasConnected) {
-        stopBLE();
+        // WiFi just connected — only stop BLE if device doesn't need pairing
+        if (!needsBlePairing()) {
+            stopBLE();
+        } else {
+            // WiFi connected but unclaimed: update status and keep BLE for pairing
+            setStatus("WiFi OK. Waiting for Bluetooth pairing...");
+            updateClaimInfo();
+        }
     }
 
-    // WiFi just disconnected -> start BLE
     if (!wifiNow && wifiWasConnected) {
+        // WiFi just disconnected -> start BLE
         startBLE();
+    }
+
+    // If cloud device just got claimed while BLE is active, stop BLE
+    if (wifiNow && bleActive && !needsBlePairing()) {
+        // Was kept alive for pairing, now claimed — shut down BLE
+        setStatus("Claimed! Stopping BLE...");
+        delay(500);
+        stopBLE();
     }
 
     wifiWasConnected = wifiNow;
@@ -188,6 +254,10 @@ void update() {
 
 bool isAdvertising() {
     return bleActive;
+}
+
+void refreshClaimInfo() {
+    updateClaimInfo();
 }
 
 } // namespace BleProv
