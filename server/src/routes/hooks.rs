@@ -102,6 +102,13 @@ pub async fn handle_hook(
         ).unwrap_or((0, vec![]))
     };
 
+    // Phase 9: Feed tamagotchi and check for loot drops
+    if let Some(ref did) = device_id {
+        let conn = db.lock().unwrap();
+        let _ = super::tamagotchi::on_coding_activity(&conn, did);
+        let _ = super::easter_eggs::maybe_drop_loot(&conn, did);
+    }
+
     // Record token usage if provided
     if input.input_tokens.is_some() || input.output_tokens.is_some() {
         let conn = db.lock().unwrap();

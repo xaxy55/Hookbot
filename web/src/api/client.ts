@@ -1080,3 +1080,192 @@ export const getMoodSuggestion = (deviceId?: string) => {
   const params = deviceId ? `?device_id=${deviceId}` : '';
   return request<MoodSuggestion>(`/mood/suggest${params}`);
 };
+
+// ── Phase 9: Mini-Games & Easter Eggs ────────────────────────────
+
+// Tamagotchi
+export interface TamagotchiState {
+  device_id: string;
+  name: string;
+  hunger: number;
+  happiness: number;
+  energy: number;
+  form: string;
+  coding_style: string;
+  personality_traits: string[];
+  age_hours: number;
+  total_interactions: number;
+  last_coding_at: string | null;
+  last_decay_at: string | null;
+  evolved_at: string | null;
+  mood: string;
+}
+
+export const getTamagotchiState = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<TamagotchiState>(`/tamagotchi${params}`);
+};
+
+export const tamagotchiInteract = (action: string, deviceId?: string) =>
+  request<{ ok: boolean; message: string; hunger: number; happiness: number; energy: number; mood: string }>('/tamagotchi/interact', {
+    method: 'POST',
+    body: JSON.stringify({ action, device_id: deviceId }),
+  });
+
+export const renameTamagotchi = (name: string, deviceId?: string) =>
+  request<{ ok: boolean; name: string }>('/tamagotchi/rename', {
+    method: 'POST',
+    body: JSON.stringify({ name, device_id: deviceId }),
+  });
+
+// Mini-games
+export interface GameInfo {
+  game: string;
+  total_plays: number;
+  global_best: number | null;
+  personal_best: number | null;
+  personal_plays: number;
+}
+
+export interface GameScore {
+  id: number;
+  device_id: string;
+  game: string;
+  score: number;
+  duration_secs: number;
+  played_at: string;
+}
+
+export interface GameLeaderboard {
+  game: string;
+  scores: GameScore[];
+  personal_best: number | null;
+}
+
+export const listGames = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<GameInfo[]>(`/games${params}`);
+};
+
+export const getGameScores = (game: string, deviceId?: string) => {
+  const params = new URLSearchParams({ game });
+  if (deviceId) params.set('device_id', deviceId);
+  return request<GameLeaderboard>(`/games/scores?${params}`);
+};
+
+export const submitGameScore = (game: string, score: number, durationSecs?: number, deviceId?: string) =>
+  request<{ ok: boolean; new_high_score: boolean; xp_earned: number; rank: number }>('/games/scores', {
+    method: 'POST',
+    body: JSON.stringify({ game, score, duration_secs: durationSecs, device_id: deviceId }),
+  });
+
+export const submitTypingSpeed = (wpm: number, accuracy: number, durationSecs: number, deviceId?: string) =>
+  request<{ ok: boolean; wpm: number; accuracy: number; xp_earned: number; personal_best_wpm: number; is_new_record: boolean; rank: string }>('/games/typing', {
+    method: 'POST',
+    body: JSON.stringify({ wpm, accuracy, duration_secs: durationSecs, device_id: deviceId }),
+  });
+
+// Boss battles
+export interface BossState {
+  boss_id: string;
+  boss_name: string;
+  challenge: string;
+  xp_reward: number;
+  week_number: number;
+  defeated: boolean;
+  defeated_at: string | null;
+  attempts: number;
+  global_defeats: number;
+  hint: string | null;
+}
+
+export const getCurrentBoss = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<BossState>(`/boss${params}`);
+};
+
+export const attemptBoss = (answer: string, deviceId?: string) =>
+  request<{ ok: boolean; correct: boolean; xp_earned: number; message: string; attempts: number }>('/boss/attempt', {
+    method: 'POST',
+    body: JSON.stringify({ answer, device_id: deviceId }),
+  });
+
+export const getBossHistory = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<Array<{ boss_id: string; boss_name: string; week_number: number; defeated: boolean; attempts: number; defeated_at: string | null }>>(`/boss/history${params}`);
+};
+
+// Easter eggs
+export const submitKonamiCode = (sequence: string[], deviceId?: string) =>
+  request<{ ok: boolean; valid: boolean; message: string; achievement_unlocked: boolean; secret_animation: string | null }>('/easter-eggs/konami', {
+    method: 'POST',
+    body: JSON.stringify({ sequence, device_id: deviceId }),
+  });
+
+// Evolution
+export interface EvolutionForm {
+  name: string;
+  level_required: number;
+  unlocked: boolean;
+  description: string;
+  avatar_config: Record<string, unknown>;
+}
+
+export interface EvolutionState {
+  device_id: string;
+  current_form: string;
+  current_level: number;
+  forms: EvolutionForm[];
+  next_evolution_level: number | null;
+  xp_to_next: number;
+}
+
+export const getEvolution = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<EvolutionState>(`/evolution${params}`);
+};
+
+// Loot drops
+export interface LootDrop {
+  id: number;
+  device_id: string;
+  item_type: string;
+  item_id: string;
+  item_name: string;
+  rarity: string;
+  dropped_at: string;
+  claimed: boolean;
+}
+
+export const getLootDrops = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<LootDrop[]>(`/loot${params}`);
+};
+
+export const claimLoot = (lootId: number) =>
+  request<{ ok: boolean }>('/loot/claim', {
+    method: 'POST',
+    body: JSON.stringify({ loot_id: lootId }),
+  });
+
+// Seasonal events
+export interface SeasonalEvent {
+  id: string;
+  name: string;
+  description: string;
+  theme: string;
+  active: boolean;
+  start_date: string;
+  end_date: string;
+  special_items: Array<{ id: string; name: string; type: string }>;
+  bonus_xp_multiplier: number;
+}
+
+export const getSeasonalEvents = () => request<SeasonalEvent[]>('/seasonal');
+export const getActiveSeasonalEvent = () => request<{ active: boolean; event?: { id: string; name: string; theme: string; bonus_xp_multiplier: number } }>('/seasonal/active');
+
+// Idle animations
+export const getIdleAnimation = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ idle: boolean; idle_minutes?: number; stage?: number; animation?: { name: string; description: string }; all_stages?: Array<{ stage: number; name: string; description: string; min_idle_minutes: number; unlocked: boolean }> }>(`/idle-animations${params}`);
+};
