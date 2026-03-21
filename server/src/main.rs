@@ -236,6 +236,17 @@ async fn main() {
         .route("/api/mood/suggest", get(routes::mood_learning::get_suggestion))
         .with_state(pool.clone());
 
+    // Developer analytics & insights routes
+    let insights_routes = Router::new()
+        .route("/api/insights/flow-state", get(routes::developer_insights::get_flow_states))
+        .route("/api/insights/code-quality", get(routes::developer_insights::get_code_quality))
+        .route("/api/insights/weekly-digest", get(routes::developer_insights::get_weekly_digest))
+        .route("/api/insights/burnout", get(routes::developer_insights::get_burnout_check))
+        .route("/api/insights/project-time", get(routes::developer_insights::get_project_time))
+        .route("/api/insights/pair-programming", get(routes::developer_insights::get_pair_programming))
+        .route("/api/insights/retrospective", get(routes::developer_insights::get_retrospective))
+        .with_state(pool.clone());
+
     // Voice control routes (need pool + config for API keys)
     let voice_routes = Router::new()
         .route("/api/voice/transcribe", post(routes::voice::transcribe))
@@ -267,6 +278,7 @@ async fn main() {
         .merge(tunnel_routes)
         .merge(mood_learning_routes)
         .merge(voice_routes)
+        .merge(insights_routes)
         .merge(auth_mgmt_routes)
         .route_layer(middleware::from_fn(auth::require_auth));
 

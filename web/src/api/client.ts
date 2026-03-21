@@ -1080,3 +1080,104 @@ export const getMoodSuggestion = (deviceId?: string) => {
   const params = deviceId ? `?device_id=${deviceId}` : '';
   return request<MoodSuggestion>(`/mood/suggest${params}`);
 };
+
+// Developer Insights (Phase 10)
+export interface FlowStateData {
+  flow_sessions: number;
+  total_sessions: number;
+  flow_rate_pct: number;
+  avg_flow_duration_min: number;
+  peak_flow_hours: { hour: number; count: number }[];
+}
+
+export interface CodeQualityData {
+  xp_by_hour: { hour: number; avg_xp: number; count: number }[];
+  by_day_of_week: { day: string; day_num: number; tool_uses: number; total_xp: number }[];
+  optimal_hour: number | null;
+}
+
+export interface WeeklyDigest {
+  period: string;
+  this_week: { tool_uses: number; xp_earned: number; sessions: number };
+  previous_week: { tool_uses: number; xp_earned: number };
+  change_pct: { tool_uses: number; xp: number };
+  top_tools: { tool: string; count: number }[];
+  most_active_day: { date: string; count: number } | null;
+  tips: string[];
+}
+
+export interface BurnoutCheck {
+  risk_score: number;
+  risk_level: string;
+  late_night_days: number;
+  weekend_work_days: number;
+  max_consecutive_days: number;
+  activity_trend_pct: number;
+  warnings: string[];
+}
+
+export interface ProjectTimeData {
+  projects: {
+    project: string;
+    tool_uses: number;
+    total_xp: number;
+    estimated_minutes: number;
+    first_active: string;
+    last_active: string;
+    active_days: number;
+  }[];
+  total_estimated_hours: number;
+  period_days: number;
+}
+
+export interface PairProgrammingData {
+  high_density_sessions: number;
+  total_sessions: number;
+  concurrent_device_sessions: number;
+  pair_rate_pct: number;
+}
+
+export interface RetrospectiveData {
+  sprint_days: number;
+  summary: {
+    total_tool_uses: number;
+    total_xp: number;
+    total_sessions: number;
+    active_days: number;
+    new_achievements: string[];
+  };
+  top_tools: { tool: string; count: number }[];
+  talking_points: {
+    went_well: string[];
+    to_improve: string[];
+  };
+}
+
+const insightsParams = (days?: number, deviceId?: string) => {
+  const p = new URLSearchParams();
+  if (deviceId) p.set('device_id', deviceId);
+  if (days) p.set('days', String(days));
+  const qs = p.toString();
+  return qs ? `?${qs}` : '';
+};
+
+export const getFlowStates = (days?: number, deviceId?: string) =>
+  request<FlowStateData>(`/insights/flow-state${insightsParams(days, deviceId)}`);
+
+export const getCodeQuality = (days?: number, deviceId?: string) =>
+  request<CodeQualityData>(`/insights/code-quality${insightsParams(days, deviceId)}`);
+
+export const getWeeklyDigest = (deviceId?: string) =>
+  request<WeeklyDigest>(`/insights/weekly-digest${insightsParams(undefined, deviceId)}`);
+
+export const getBurnoutCheck = (days?: number, deviceId?: string) =>
+  request<BurnoutCheck>(`/insights/burnout${insightsParams(days, deviceId)}`);
+
+export const getProjectTime = (days?: number, deviceId?: string) =>
+  request<ProjectTimeData>(`/insights/project-time${insightsParams(days, deviceId)}`);
+
+export const getPairProgramming = (days?: number, deviceId?: string) =>
+  request<PairProgrammingData>(`/insights/pair-programming${insightsParams(days, deviceId)}`);
+
+export const getRetrospective = (days?: number, deviceId?: string) =>
+  request<RetrospectiveData>(`/insights/retrospective${insightsParams(days, deviceId)}`);

@@ -25,3 +25,4 @@ pub mod store;
 pub mod tunnels;
 pub mod users;
 pub mod voice;
+pub mod developer_insights;
