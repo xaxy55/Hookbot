@@ -146,13 +146,13 @@
 
 > Deep productivity intelligence. Understand your coding patterns like never before.
 
-- [ ] **Flow state detection** — ML model trained on your patterns: detect when you enter/exit flow, protect it aggressively
-- [ ] **Code quality correlation** — Track bug rate vs. time of day, sleep, breaks: find your optimal coding conditions
-- [ ] **Weekly AI digest** — Claude-generated weekly summary: what you shipped, patterns spotted, personalized tips
-- [ ] **Burnout early warning** — Detect overwork patterns (late nights, no breaks, declining streak quality) and alert gently
-- [ ] **Project time tracking** — Automatic per-project time tracking from hook data, exportable timesheets
-- [ ] **Pair programming stats** — Detect pairing sessions, track effectiveness, suggest optimal pairing schedules
-- [ ] **Retrospective generator** — Auto-generate sprint retro talking points from hookbot data
+- [x] **Flow state detection** — Detects high-intensity coding sessions (10+ tool uses), tracks flow rate, peak flow hours, and average flow duration
+- [x] **Code quality correlation** — Tracks productivity by hour of day and day of week, identifies optimal coding hours from XP patterns
+- [x] **Weekly AI digest** — Weekly summary with tool use stats, XP trends, top tools, week-over-week comparisons, and personalized tips
+- [x] **Burnout early warning** — Detects late nights, weekend work, consecutive work days, and declining activity; generates risk score (0-100)
+- [x] **Project time tracking** — Automatic per-project time tracking from hook data with estimated hours, active days, and XP breakdown
+- [x] **Pair programming stats** — Detects high-density pairing sessions, concurrent multi-device sessions, and pair rate metrics
+- [x] **Retrospective generator** — Auto-generates sprint retro talking points with went-well/to-improve sections from hookbot data
 
 ## Phase 11: Advanced Hardware Mods
 

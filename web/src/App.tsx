@@ -42,6 +42,7 @@ import StreamDeckPage from './pages/StreamDeckPage';
 import HomeAssistantPage from './pages/HomeAssistantPage';
 import DeskOccupancyPage from './pages/DeskOccupancyPage';
 import MonitorsPage from './pages/MonitorsPage';
+import DeveloperInsightsPage from './pages/DeveloperInsightsPage';
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -108,6 +109,7 @@ export default function App() {
           <Route path="/homeassistant" element={<HomeAssistantPage />} />
           <Route path="/desk-occupancy" element={<DeskOccupancyPage />} />
           <Route path="/monitors" element={<MonitorsPage />} />
+          <Route path="/insights" element={<DeveloperInsightsPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/logs" element={<LogsPage />} />

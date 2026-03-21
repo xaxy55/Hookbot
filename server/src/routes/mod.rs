@@ -37,3 +37,4 @@ pub mod tamagotchi;
 pub mod mini_games;
 pub mod boss_battle;
 pub mod easter_eggs;
+pub mod developer_insights;

@@ -35,6 +35,7 @@ const NAV_SECTIONS = [
       { path: '/pet', label: 'Pet Care', icon: HeartIcon },
       { path: '/pomodoro', label: 'Focus Timer', icon: TimerIcon },
       { path: '/mood', label: 'Mood Journal', icon: JournalIcon },
+      { path: '/insights', label: 'Dev Insights', icon: InsightsIcon },
     ],
   },
   {
@@ -512,6 +513,16 @@ function UsersIcon({ active }: { active: boolean }) {
       <path d="M1.5 13c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5" />
       <circle cx="11.5" cy="5.5" r="2" />
       <path d="M14.5 13c0-2 -1.5-3.5-3-3.5" />
+    </svg>
+  );
+}
+
+function InsightsIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <circle cx="8" cy="8" r="6" />
+      <path d="M8 4v4l2.5 2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 2l1.5-1.5M4 2L2.5.5" strokeLinecap="round" />
     </svg>
   );
 }
