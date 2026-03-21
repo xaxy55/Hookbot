@@ -487,9 +487,27 @@ pub async fn rotate_api_key(
 ) -> Response {
     let new_key = uuid::Uuid::new_v4().to_string();
 
-    // Save to disk
-    let key_file = config.firmware_dir.parent().unwrap_or(&config.firmware_dir).join("api_key");
-    match std::fs::write(&key_file, &new_key) {
+    // Save to disk — resolve path to prevent traversal
+    let base_dir = config.firmware_dir.parent().unwrap_or(&config.firmware_dir);
+    let key_file = base_dir.join("api_key");
+    let canonical_base = match base_dir.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::error!("Failed to resolve base dir: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to resolve storage directory" })),
+            ).into_response();
+        }
+    };
+    let canonical_key_file = key_file.canonicalize().unwrap_or_else(|_| canonical_base.join("api_key"));
+    if !canonical_key_file.starts_with(&canonical_base) {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": "Invalid key file path" })),
+        ).into_response();
+    }
+    match std::fs::write(&canonical_key_file, &new_key) {
         Ok(_) => {
             tracing::info!("API key rotated, saved to {:?}", key_file);
             (

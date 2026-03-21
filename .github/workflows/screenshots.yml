@@ -8,6 +8,9 @@ on:
         required: false
         default: 'iPhone 16 Pro Max'
 
+permissions:
+  contents: read
+
 jobs:
   screenshots:
     name: Generate & Upload Screenshots

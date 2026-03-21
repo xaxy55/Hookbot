@@ -122,7 +122,15 @@ pub async fn build_firmware(
     // Save binary to firmware storage
     fs::create_dir_all(&config.firmware_dir).await
         .map_err(|e| AppError::Internal(format!("Failed to create firmware dir: {e}")))?;
-    fs::write(config.firmware_dir.join(&id), &data).await
+    let fw_path = config.firmware_dir.join(&id);
+    // Ensure the resolved path stays within firmware_dir (path traversal guard)
+    let canonical_dir = config.firmware_dir.canonicalize()
+        .map_err(|e| AppError::Internal(format!("Failed to resolve firmware dir: {e}")))?;
+    let canonical_fw = fw_path.canonicalize().unwrap_or_else(|_| canonical_dir.join(&id));
+    if !canonical_fw.starts_with(&canonical_dir) {
+        return Err(AppError::Internal("Invalid firmware storage path".into()));
+    }
+    fs::write(&canonical_fw, &data).await
         .map_err(|e| AppError::Internal(format!("Failed to save firmware: {e}")))?;
 
     // Store in database

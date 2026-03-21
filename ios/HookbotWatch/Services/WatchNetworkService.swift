@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Security
 import WidgetKit
 
 /// Independent network service for watchOS — polls the management server directly
@@ -22,8 +23,41 @@ final class WatchNetworkService: ObservableObject {
     }
     @Published var apiKey: String = "" {
         didSet {
-            UserDefaults.standard.set(apiKey, forKey: "hookbot_watch_api_key")
+            Self.saveToKeychain(key: "hookbot_watch_api_key", value: apiKey)
         }
+    }
+
+    // MARK: - Keychain helpers
+
+    private static let keychainService = "com.hookbot.watch"
+
+    private static func saveToKeychain(key: String, value: String) {
+        let data = Data(value.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: key,
+        ]
+        SecItemDelete(query as CFDictionary)
+        guard !value.isEmpty else { return }
+        var add = query
+        add[kSecValueData as String] = data
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        SecItemAdd(add as CFDictionary, nil)
+    }
+
+    private static func loadFromKeychain(key: String) -> String {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess, let data = result as? Data else { return "" }
+        return String(data: data, encoding: .utf8) ?? ""
     }
 
     private var pollTimer: Timer?
@@ -39,7 +73,7 @@ final class WatchNetworkService: ObservableObject {
 
         self.serverURL = UserDefaults.standard.string(forKey: "hookbot_watch_server") ?? ""
         self.deviceId = UserDefaults.standard.string(forKey: "hookbot_watch_device") ?? ""
-        self.apiKey = UserDefaults.standard.string(forKey: "hookbot_watch_api_key") ?? ""
+        self.apiKey = Self.loadFromKeychain(key: "hookbot_watch_api_key")
     }
 
     private func authedRequest(url: URL) -> URLRequest {

@@ -55,6 +55,13 @@ pub async fn upload_firmware(
     fs::create_dir_all(&config.firmware_dir).await
         .map_err(|e| AppError::Internal(format!("Failed to create firmware dir: {e}")))?;
     let file_path = config.firmware_dir.join(&id);
+    // Ensure the resolved path stays within firmware_dir (path traversal guard)
+    let canonical_dir = config.firmware_dir.canonicalize()
+        .map_err(|e| AppError::Internal(format!("Failed to resolve firmware dir: {e}")))?;
+    let canonical_file = file_path.canonicalize().unwrap_or_else(|_| canonical_dir.join(&id));
+    if !canonical_file.starts_with(&canonical_dir) {
+        return Err(AppError::BadRequest("Invalid firmware path".into()));
+    }
     fs::write(&file_path, &data).await
         .map_err(|e| AppError::Internal(format!("Failed to save firmware: {e}")))?;
 
@@ -107,8 +114,20 @@ pub async fn serve_firmware_binary(
     State((_db, config)): State<(DbPool, AppConfig)>,
     Path(id): Path<String>,
 ) -> Result<Body, AppError> {
+    // Validate id to prevent path traversal
+    if id.contains('/') || id.contains('\\') || id.contains("..") {
+        return Err(AppError::BadRequest("Invalid firmware id".into()));
+    }
     let file_path = config.firmware_dir.join(&id);
-    let data = fs::read(&file_path).await
+    // Ensure the resolved path stays within firmware_dir
+    let canonical_dir = config.firmware_dir.canonicalize()
+        .map_err(|_| AppError::Internal("Failed to resolve firmware dir".into()))?;
+    let canonical_file = file_path.canonicalize()
+        .map_err(|_| AppError::NotFound(format!("Firmware binary {id} not found")))?;
+    if !canonical_file.starts_with(&canonical_dir) {
+        return Err(AppError::BadRequest("Invalid firmware id".into()));
+    }
+    let data = fs::read(&canonical_file).await
         .map_err(|_| AppError::NotFound(format!("Firmware binary {id} not found")))?;
 
     Ok(Body::from(data))
