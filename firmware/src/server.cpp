@@ -336,6 +336,24 @@ button:active{transform:scale(0.95);opacity:0.8}
 .waiting{background:#b8860b}.success{background:#006400}
 .taskcheck{background:#005555}.error{background:#ff0000}
 #resp{margin-top:16px;font-size:0.8rem;color:#64748b;min-height:1.5em}
+.settings{margin-top:28px;width:100%;max-width:340px}
+.settings summary{cursor:pointer;color:#666;font-size:0.8rem;text-transform:uppercase;letter-spacing:2px;
+                  padding:8px 0;border-top:1px solid #222}
+.settings .field{margin:12px 0}
+.settings label{display:block;font-size:0.75rem;color:#666;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.settings input{width:100%;padding:10px 12px;border:1px solid #222;border-radius:8px;
+                background:#111;color:#eee;font-family:monospace;font-size:0.85rem}
+.settings input:focus{outline:none;border-color:#444}
+.settings .row{display:flex;gap:8px;align-items:end}
+.settings .row input{flex:1}
+.btn-sm{padding:10px 16px;font-size:0.8rem;border-radius:8px;background:#333;color:#eee;border:none;
+        cursor:pointer;white-space:nowrap}
+.btn-sm:hover{background:#444}
+.btn-sm.save{background:#006400}
+.btn-sm.save:hover{background:#007700}
+.info-row{display:flex;justify-content:space-between;padding:6px 0;font-size:0.8rem;color:#666;
+          border-bottom:1px solid #1a1a1a}
+.info-row span:last-child{color:#94a3b8;font-family:monospace}
 </style>
 </head>
 <body>
@@ -351,6 +369,25 @@ button:active{transform:scale(0.95);opacity:0.8}
 <button class="error" onclick="send('error')">DESTROY</button>
 </div>
 <div id="resp"></div>
+<details class="settings">
+<summary>Settings</summary>
+<div id="info"></div>
+<div class="field">
+<label>Management Server</label>
+<div class="row">
+<input type="text" id="mgmt" placeholder="http://server:3000">
+<button class="btn-sm save" onclick="saveCfg()">Save</button>
+</div>
+</div>
+<div class="field">
+<label>Hostname</label>
+<div class="row">
+<input type="text" id="hname" placeholder="hookbot-xxxx">
+<button class="btn-sm save" onclick="saveCfg()">Save</button>
+</div>
+</div>
+<div id="cfgResp" style="font-size:0.75rem;color:#64748b;margin-top:8px;min-height:1.2em"></div>
+</details>
 <script>
 async function send(state){
   document.getElementById('resp').textContent='Sending...';
@@ -372,7 +409,47 @@ async function refresh(){
       'Mood: '+j.state.toUpperCase()+' | Reign: '+up+'s | Power: '+j.freeHeap+'B | FW: '+j.firmware_version;
   }catch(e){}
 }
-refresh();setInterval(refresh,3000);
+function mkRow(label,value){
+  var d=document.createElement('div');d.className='info-row';
+  var s1=document.createElement('span');s1.textContent=label;
+  var s2=document.createElement('span');s2.textContent=value;
+  d.appendChild(s1);d.appendChild(s2);return d;
+}
+async function loadInfo(){
+  try{
+    const r=await fetch('/info');
+    const j=await r.json();
+    var el=document.getElementById('info');
+    el.textContent='';
+    el.appendChild(mkRow('Firmware',j.firmware_version));
+    el.appendChild(mkRow('Hostname',j.hostname));
+    el.appendChild(mkRow('IP',j.ip));
+    el.appendChild(mkRow('MAC',j.mac));
+    el.appendChild(mkRow('Chip',j.chip_model));
+    el.appendChild(mkRow('Type',j.device_type));
+    document.getElementById('hname').value=j.hostname;
+    const rc=await fetch('/config/get');
+    if(rc.ok){const c=await rc.json();document.getElementById('mgmt').value=c.mgmt_server||'';}
+  }catch(e){}
+}
+async function saveCfg(){
+  const mgmt=document.getElementById('mgmt').value.trim();
+  const hname=document.getElementById('hname').value.trim();
+  const body={};
+  if(mgmt!==undefined)body.mgmt_server=mgmt;
+  if(hname)body.hostname=hname;
+  try{
+    const r=await fetch('/config',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)});
+    const j=await r.json();
+    document.getElementById('cfgResp').textContent=j.ok?'Saved!':'Error';
+    document.getElementById('cfgResp').style.color=j.ok?'#22c55e':'#ff4444';
+    setTimeout(function(){document.getElementById('cfgResp').textContent=''},3000);
+    loadInfo();
+  }catch(e){document.getElementById('cfgResp').textContent='Error: '+e.message}
+}
+refresh();setInterval(refresh,3000);loadInfo();
 </script>
 </body>
 </html>
@@ -444,6 +521,22 @@ void init(std::function<void(AvatarState)> onStateChange) {
     // Routes
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* req) {
         req->send_P(200, "text/html", CONTROL_PAGE);
+    });
+
+    // GET /config/get - return current runtime config (for settings page)
+    server.on("/config/get", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument doc;
+        doc["mgmt_server"] = runtimeConfig.mgmtServer;
+        doc["hostname"] = runtimeConfig.hostname;
+        doc["led_brightness"] = runtimeConfig.ledBrightness;
+        doc["sound_enabled"] = runtimeConfig.soundEnabled;
+        doc["sound_volume"] = runtimeConfig.soundVolume;
+        doc["screensaver_mins"] = runtimeConfig.screensaverMins;
+        doc["auto_brightness"] = runtimeConfig.autoBrightness;
+        doc["dnd"] = runtimeConfig.doNotDisturb;
+        String json;
+        serializeJson(doc, json);
+        req->send(200, "application/json", json);
     });
 
     server.on("/status", HTTP_GET, [](AsyncWebServerRequest* req) {

@@ -1,7 +1,7 @@
 #pragma once
 
 // ─── Firmware Version ─────────────────────────────────────────────
-#define FIRMWARE_VERSION "0.7.0"
+#define FIRMWARE_VERSION "0.8.1"
 
 // ─── WiFi Configuration ───────────────────────────────────────────
 // WiFi is provisioned via BLE at first boot. The device advertises as

@@ -24,4 +24,8 @@ namespace CloudClient {
 
     /// Get the device token (empty if not registered).
     const char* getDeviceToken();
+
+    /// Reset cloud state: clears device token, claim code, claimed status.
+    /// Device will re-register on next heartbeat cycle.
+    void resetCloud();
 }
