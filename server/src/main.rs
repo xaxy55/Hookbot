@@ -294,6 +294,38 @@ async fn main() {
         .route("/api/monitors/active", post(routes::monitors::set_active_monitor))
         .with_state(pool.clone());
 
+    // Phase 9: Tamagotchi routes
+    let tamagotchi_routes = Router::new()
+        .route("/api/tamagotchi", get(routes::tamagotchi::get_state))
+        .route("/api/tamagotchi/interact", post(routes::tamagotchi::interact))
+        .route("/api/tamagotchi/rename", post(routes::tamagotchi::rename))
+        .with_state(pool.clone());
+
+    // Phase 9: Mini-games routes
+    let mini_game_routes = Router::new()
+        .route("/api/games", get(routes::mini_games::list_games))
+        .route("/api/games/scores", get(routes::mini_games::get_scores).post(routes::mini_games::submit_score))
+        .with_state(pool.clone());
+
+    // Phase 9: Boss battle routes
+    let boss_routes = Router::new()
+        .route("/api/boss", get(routes::boss_battle::get_current_boss))
+        .route("/api/boss/attempt", post(routes::boss_battle::attempt_boss))
+        .route("/api/boss/history", get(routes::boss_battle::get_history))
+        .with_state(pool.clone());
+
+    // Phase 9: Easter eggs & extras routes
+    let easter_egg_routes = Router::new()
+        .route("/api/easter-eggs/konami", post(routes::easter_eggs::konami_code))
+        .route("/api/evolution", get(routes::easter_eggs::get_evolution))
+        .route("/api/loot", get(routes::easter_eggs::get_loot))
+        .route("/api/loot/claim", post(routes::easter_eggs::claim_loot))
+        .route("/api/seasonal", get(routes::easter_eggs::get_events))
+        .route("/api/seasonal/active", get(routes::easter_eggs::get_active_event))
+        .route("/api/games/typing", post(routes::easter_eggs::submit_typing_speed))
+        .route("/api/idle-animations", get(routes::easter_eggs::get_idle_animation))
+        .with_state(pool.clone());
+
     // Voice control routes (need pool + config for API keys)
     let voice_routes = Router::new()
         .route("/api/voice/transcribe", post(routes::voice::transcribe))
@@ -333,6 +365,10 @@ async fn main() {
         .merge(homeassistant_routes)
         .merge(desk_occupancy_routes)
         .merge(monitor_routes)
+        .merge(tamagotchi_routes)
+        .merge(mini_game_routes)
+        .merge(boss_routes)
+        .merge(easter_egg_routes)
         .merge(auth_mgmt_routes)
         .route_layer(middleware::from_fn(auth::require_auth));
 

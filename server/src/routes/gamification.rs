@@ -59,6 +59,13 @@ pub const BADGE_DEFS: &[(&str, &str, &str, &str)] = &[
     ("level_10", "Level 10", "Reached level 10", "trophy"),
     ("level_20", "Level 20", "Reached level 20", "trophy"),
     ("all_states", "Shape Shifter", "Used all avatar states", "palette"),
+    ("konami_master", "Konami Master", "Entered the Konami code", "gamepad"),
+    ("typing_speed_demon", "Typing Speed Demon", "Typed over 100 WPM", "keyboard"),
+    ("boss_slayer", "Boss Slayer", "Defeated a weekly boss", "sword"),
+    ("loot_lucky", "Lucky Looter", "Found a rare or better loot drop", "dice"),
+    ("evolved_blob", "First Evolution", "Evolved to blob form", "egg"),
+    ("evolved_cosmic", "Cosmic Being", "Reached cosmic evolution form", "sparkles"),
+    ("game_master", "Game Master", "Scored 1000+ in any mini-game", "joystick"),
 ];
 
 // --- Query params ---

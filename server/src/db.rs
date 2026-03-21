@@ -334,6 +334,55 @@ fn run_migrations(conn: &Connection) {
             active_monitor INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )",
+        // Phase 9: Tamagotchi mode
+        "CREATE TABLE IF NOT EXISTS tamagotchi (
+            device_id TEXT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
+            name TEXT NOT NULL DEFAULT 'Hooky',
+            hunger INTEGER NOT NULL DEFAULT 50,
+            happiness INTEGER NOT NULL DEFAULT 50,
+            energy INTEGER NOT NULL DEFAULT 80,
+            form TEXT NOT NULL DEFAULT 'egg',
+            last_coding_at TEXT,
+            last_decay_at TEXT,
+            evolved_at TEXT,
+            total_interactions INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        // Phase 9: Mini-game scores
+        "CREATE TABLE IF NOT EXISTS game_scores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            game TEXT NOT NULL,
+            score INTEGER NOT NULL DEFAULT 0,
+            duration_secs INTEGER NOT NULL DEFAULT 0,
+            played_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_game_scores_device ON game_scores(device_id, game)",
+        "CREATE INDEX IF NOT EXISTS idx_game_scores_game ON game_scores(game, score DESC)",
+        // Phase 9: Boss battles
+        "CREATE TABLE IF NOT EXISTS boss_battles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            boss_id TEXT NOT NULL,
+            week_number INTEGER NOT NULL,
+            attempts INTEGER NOT NULL DEFAULT 0,
+            defeated INTEGER NOT NULL DEFAULT 0,
+            defeated_at TEXT,
+            UNIQUE(device_id, boss_id, week_number)
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_boss_battles_device ON boss_battles(device_id)",
+        // Phase 9: Loot drops
+        "CREATE TABLE IF NOT EXISTS loot_drops (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            item_type TEXT NOT NULL,
+            item_id TEXT NOT NULL,
+            item_name TEXT NOT NULL,
+            rarity TEXT NOT NULL DEFAULT 'common',
+            dropped_at TEXT NOT NULL DEFAULT (datetime('now')),
+            claimed INTEGER NOT NULL DEFAULT 0
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_loot_drops_device ON loot_drops(device_id, dropped_at DESC)",
     ];
 
     for sql in migrations {

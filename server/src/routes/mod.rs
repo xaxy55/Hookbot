@@ -33,3 +33,7 @@ pub mod tunnels;
 pub mod users;
 pub mod social;
 pub mod voice;
+pub mod tamagotchi;
+pub mod mini_games;
+pub mod boss_battle;
+pub mod easter_eggs;
