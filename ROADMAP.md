@@ -299,4 +299,4 @@
 - [x] Customizable startup boot animation
 - [ ] Battery backup with low-power sleep mode
 - [ ] QR code display for quick device pairing
-- [ ] Desktop widget (macOS/Windows) showing hookbot status
+- [x] Desktop widget (macOS/Windows) showing hookbot status

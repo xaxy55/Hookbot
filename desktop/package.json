@@ -1,0 +1,11 @@
+{
+  "name": "hookbot-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop widget showing Hookbot device status (macOS/Windows)",
+  "scripts": {
+    "tauri": "cargo tauri",
+    "dev": "cargo tauri dev",
+    "build": "cargo tauri build"
+  }
+}

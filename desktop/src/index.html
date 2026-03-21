@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hookbot Status</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --edge: #2a2d3a;
+      --fg: #e4e4e7;
+      --fg-2: #a1a1aa;
+      --dim: #52525b;
+      --green: #22c55e;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --yellow: #eab308;
+      --teal: #14b8a6;
+      --amber: #f59e0b;
+      --cyan: #06b6d4;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 13px;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid var(--edge);
+      user-select: none;
+    }
+
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--edge);
+      cursor: grab;
+    }
+
+    .titlebar:active { cursor: grabbing; }
+
+    .titlebar h1 {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--fg-2);
+    }
+
+    .server-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--dim);
+      transition: background 0.3s;
+    }
+
+    .server-dot.online { background: var(--green); }
+    .server-dot.offline { background: var(--red); }
+
+    .content {
+      padding: 12px;
+      overflow-y: auto;
+      max-height: 380px;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--edge);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.amber { color: var(--amber); }
+    .stat-value.cyan { color: var(--cyan); }
+    .stat-value.purple { color: var(--purple); }
+
+    /* XP Bar */
+    .xp-section {
+      background: var(--surface);
+      border: 1px solid var(--edge);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+
+    .xp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .xp-level {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--amber);
+    }
+
+    .xp-title {
+      font-size: 11px;
+      color: var(--fg-2);
+    }
+
+    .xp-bar-bg {
+      height: 6px;
+      background: var(--edge);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .xp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--amber), #f97316);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .xp-text {
+      font-size: 10px;
+      color: var(--dim);
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    /* Device list */
+    .section-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--dim);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .device-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .device-card {
+      background: var(--surface);
+      border: 1px solid var(--edge);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .device-online-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .device-online-dot.online { background: var(--green); }
+    .device-online-dot.offline { background: var(--dim); }
+
+    .device-info { flex: 1; min-width: 0; }
+
+    .device-name {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .device-ip {
+      font-size: 10px;
+      color: var(--dim);
+      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+    }
+
+    .device-state {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .device-state .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .state-idle { color: var(--blue); }
+    .state-idle .dot { background: var(--blue); }
+    .state-thinking { color: var(--purple); }
+    .state-thinking .dot { background: var(--purple); animation: pulse 1.5s infinite; }
+    .state-waiting { color: var(--yellow); }
+    .state-waiting .dot { background: var(--yellow); animation: pulse 1.5s infinite; }
+    .state-success { color: var(--green); }
+    .state-success .dot { background: var(--green); }
+    .state-taskcheck { color: var(--teal); }
+    .state-taskcheck .dot { background: var(--teal); animation: pulse 1.5s infinite; }
+    .state-error { color: var(--red); }
+    .state-error .dot { background: var(--red); animation: pulse 1.5s infinite; }
+
+    .device-type-badge {
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 6px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .badge-lcd { color: var(--cyan); border: 1px solid rgba(6, 182, 212, 0.3); }
+    .badge-oled { color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Empty / error states */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--dim);
+    }
+
+    .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+    .empty-state p { font-size: 12px; }
+
+    .settings-btn {
+      background: none;
+      border: 1px solid var(--edge);
+      color: var(--fg-2);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+
+    .settings-btn:hover {
+      background: var(--edge);
+      color: var(--fg);
+    }
+
+    /* Settings panel */
+    .settings-panel {
+      display: none;
+      padding: 12px;
+    }
+
+    .settings-panel.visible { display: block; }
+
+    .settings-panel label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--dim);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .settings-panel input {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--surface);
+      border: 1px solid var(--edge);
+      border-radius: 6px;
+      color: var(--fg);
+      font-size: 12px;
+      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    .settings-panel input:focus {
+      border-color: var(--blue);
+    }
+
+    .settings-panel button {
+      width: 100%;
+      padding: 8px;
+      background: var(--blue);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .settings-panel button:hover { opacity: 0.9; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+  <div class="titlebar" data-tauri-drag-region>
+    <h1>Hookbot</h1>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="server-dot" id="server-dot" title="Server status"></div>
+      <button class="settings-btn" id="settings-toggle" title="Settings">&#9881;</button>
+    </div>
+  </div>
+
+  <div class="settings-panel" id="settings-panel">
+    <label for="server-url">Server URL</label>
+    <input type="text" id="server-url" placeholder="http://localhost:3001" />
+    <label for="api-key">API Key (optional)</label>
+    <input type="password" id="api-key" placeholder="Leave blank if not set" />
+    <button id="save-settings">Save &amp; Reconnect</button>
+  </div>
+
+  <div class="content" id="main-content">
+    <div class="empty-state" id="loading-state">
+      <div class="icon">&#x1F916;</div>
+      <p>Connecting to Hookbot server...</p>
+    </div>
+  </div>
+
+  <script>
+    // Tauri IPC - works with withGlobalTauri
+    const { invoke } = window.__TAURI__.core;
+    const { listen } = window.__TAURI__.event;
+
+    const STATE_LABELS = {
+      idle: 'Idle',
+      thinking: 'Thinking',
+      waiting: 'Waiting',
+      success: 'Success',
+      taskcheck: 'Task Check',
+      error: 'Error',
+    };
+
+    function formatUptime(ms) {
+      const secs = Math.floor(ms / 1000);
+      if (secs < 60) return `${secs}s`;
+      const mins = Math.floor(secs / 60);
+      if (mins < 60) return `${mins}m`;
+      const hrs = Math.floor(mins / 60);
+      const remainMins = mins % 60;
+      return `${hrs}h ${remainMins}m`;
+    }
+
+    function renderStatus(data) {
+      const content = document.getElementById('main-content');
+      const serverDot = document.getElementById('server-dot');
+
+      serverDot.className = `server-dot ${data.server_online ? 'online' : 'offline'}`;
+      serverDot.title = data.server_online ? 'Server online' : 'Server offline';
+
+      if (!data.server_online && data.total_count === 0) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">&#x26A0;&#xFE0F;</div>
+            <p>Cannot reach Hookbot server</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+
+      // Stats row
+      html += '<div class="stats-row">';
+      html += `<div class="stat-card">
+        <div class="stat-label">Online</div>
+        <div class="stat-value green">${data.online_count}/${data.total_count}</div>
+      </div>`;
+
+      if (data.xp) {
+        html += `<div class="stat-card">
+          <div class="stat-label">Streak</div>
+          <div class="stat-value cyan">${data.xp.current_streak}d</div>
+        </div>`;
+      } else {
+        html += `<div class="stat-card">
+          <div class="stat-label">Devices</div>
+          <div class="stat-value purple">${data.total_count}</div>
+        </div>`;
+      }
+      html += '</div>';
+
+      // XP section
+      if (data.xp) {
+        const xpRange = data.xp.xp_for_next_level - data.xp.xp_for_current_level;
+        const xpProgress = xpRange > 0
+          ? ((data.xp.total_xp - data.xp.xp_for_current_level) / xpRange) * 100
+          : 100;
+
+        html += `<div class="xp-section">
+          <div class="xp-header">
+            <span class="xp-level">Level ${data.xp.level}</span>
+            <span class="xp-title">${data.xp.title}</span>
+          </div>
+          <div class="xp-bar-bg">
+            <div class="xp-bar-fill" style="width: ${Math.min(100, xpProgress)}%"></div>
+          </div>
+          <div class="xp-text">${data.xp.total_xp.toLocaleString()} XP</div>
+        </div>`;
+      }
+
+      // Device list
+      if (data.devices.length > 0) {
+        html += '<div class="section-label">Devices</div>';
+        html += '<div class="device-list">';
+        for (const d of data.devices) {
+          const state = d.latest_status?.state || 'idle';
+          const stateLabel = STATE_LABELS[state] || state;
+          const isLcd = d.device_type === 'esp32_4848s040c_lcd';
+          const typeBadge = d.device_type
+            ? `<span class="device-type-badge ${isLcd ? 'badge-lcd' : 'badge-oled'}">${isLcd ? 'LCD' : 'OLED'}</span>`
+            : '';
+          const uptime = d.latest_status ? formatUptime(d.latest_status.uptime_ms) : '';
+
+          html += `<div class="device-card">
+            <div class="device-online-dot ${d.online ? 'online' : 'offline'}"></div>
+            <div class="device-info">
+              <div class="device-name">${d.name} ${typeBadge}</div>
+              <div class="device-ip">${d.ip_address}${uptime ? ' &middot; ' + uptime : ''}</div>
+            </div>
+            <div class="device-state state-${state}">
+              <span class="dot"></span>
+              ${stateLabel}
+            </div>
+          </div>`;
+        }
+        html += '</div>';
+      }
+
+      content.innerHTML = html;
+    }
+
+    // Settings toggle
+    const settingsToggle = document.getElementById('settings-toggle');
+    const settingsPanel = document.getElementById('settings-panel');
+    const mainContent = document.getElementById('main-content');
+
+    settingsToggle.addEventListener('click', () => {
+      const visible = settingsPanel.classList.toggle('visible');
+      mainContent.style.display = visible ? 'none' : 'block';
+    });
+
+    // Save settings
+    document.getElementById('save-settings').addEventListener('click', async () => {
+      const url = document.getElementById('server-url').value.trim();
+      if (url) {
+        localStorage.setItem('hookbot_url', url);
+        await invoke('set_server_url', { url });
+      }
+      const key = document.getElementById('api-key').value.trim();
+      if (key) {
+        localStorage.setItem('hookbot_api_key', key);
+      }
+      settingsPanel.classList.remove('visible');
+      mainContent.style.display = 'block';
+      // Force refresh
+      try {
+        const data = await invoke('fetch_status');
+        renderStatus(data);
+      } catch (e) {
+        console.error('Failed to fetch:', e);
+      }
+    });
+
+    // Load saved settings
+    const savedUrl = localStorage.getItem('hookbot_url');
+    if (savedUrl) {
+      document.getElementById('server-url').value = savedUrl;
+    }
+
+    // Listen for status updates from Rust polling
+    listen('hookbot-status', (event) => {
+      renderStatus(event.payload);
+    });
+
+    // Initial fetch
+    (async () => {
+      try {
+        const data = await invoke('fetch_status');
+        renderStatus(data);
+      } catch (e) {
+        console.error('Initial fetch failed:', e);
+      }
+    })();
+  </script>
+</body>
+</html>
