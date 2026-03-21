@@ -273,7 +273,7 @@
 - [x] **BLE claim info characteristic** — New BLE characteristic exposes claim code, claimed status, WiFi state; BLE stays active for unclaimed cloud devices
 
 ### 14.5 Hardening
-- [ ] **HTTPS with cert pinning** — ESP32 validates server certificate
+- [x] **HTTPS with cert pinning** — ESP32 validates server cert against ISRG Root X1 CA (Let's Encrypt, valid to 2035); auto-detects HTTP vs HTTPS URLs
 - [x] **Heartbeat timeout detection** — Background task marks cloud devices offline if no heartbeat in 60s
 - [x] **Rate limiting** — Per-IP rate limiter on device API endpoints (60 req/min), with auto-cleanup
 - [x] **Device token rotation** — Server rotates device token every 24h via heartbeat response; firmware auto-updates stored token

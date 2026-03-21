@@ -155,7 +155,7 @@ final class PongScene: SKScene {
         smilePath.move(to: CGPoint(x: -4, y: -4))
         for i in 0...8 {
             let t = CGFloat(i) / 8.0
-            smilePath.addLine(to: CGPoint(x: -4 + t * 8, y: -4 + sinf(Float(t) * .pi) * 3))
+            smilePath.addLine(to: CGPoint(x: -4 + t * 8, y: -4 + CGFloat(sinf(Float(t) * .pi)) * 3))
         }
         let smile = SKShapeNode(path: smilePath)
         smile.strokeColor = .black

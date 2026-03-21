@@ -480,9 +480,9 @@ struct SharedARView: View {
                     for i in 0...20 {
                         let t = CGFloat(i) / 20.0
                         let x = cx - 12 + t * 24
-                        let y = cy + 8 + sinf(Float(t) * .pi) * 6
-                        if i == 0 { smile.move(to: CGPoint(x: x, y: CGFloat(y))) }
-                        else { smile.addLine(to: CGPoint(x: x, y: CGFloat(y))) }
+                        let y = cy + 8 + CGFloat(sinf(Float(t) * .pi)) * 6
+                        if i == 0 { smile.move(to: CGPoint(x: x, y: y)) }
+                        else { smile.addLine(to: CGPoint(x: x, y: y)) }
                     }
                     ctx.stroke(smile, with: .color(.white), lineWidth: 2)
                 }

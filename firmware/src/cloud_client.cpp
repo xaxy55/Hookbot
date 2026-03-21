@@ -1,9 +1,11 @@
 #include "cloud_client.h"
 #include "config.h"
 #include "server.h"
+#include "ca_cert.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
@@ -29,6 +31,25 @@ static uint32_t lastRegisterAttempt = 0;
 static const uint32_t HEARTBEAT_INTERVAL_MS    = 5000;   // 5 seconds
 static const uint32_t COMMAND_POLL_INTERVAL_MS  = 2000;   // 2 seconds (short poll)
 static const uint32_t REGISTER_RETRY_MS         = 15000;  // 15 seconds between retries
+
+// --- TLS support ---
+static WiFiClientSecure secureClient;
+static WiFiClient insecureClient;
+static bool tlsInitialized = false;
+
+/// Begin an HTTP connection with TLS cert pinning for HTTPS URLs.
+static void httpBeginSmart(HTTPClient& http, const String& url) {
+    if (url.startsWith("https://")) {
+        if (!tlsInitialized) {
+            secureClient.setCACert(ISRG_ROOT_X1_CA);
+            tlsInitialized = true;
+            Serial.println("[Cloud] TLS initialized with ISRG Root X1 CA cert");
+        }
+        http.begin(secureClient, url);
+    } else {
+        http.begin(insecureClient, url);
+    }
+}
 
 // --- Forward declarations ---
 static void loadCloudConfig();
@@ -121,7 +142,7 @@ static void attemptRegistration() {
 
     HTTPClient http;
     String url = String(config.mgmtServer) + "/api/device/register";
-    http.begin(url);
+    httpBeginSmart(http, url);
     http.addHeader("Content-Type", "application/json");
     http.setTimeout(10000);
 
@@ -176,7 +197,7 @@ static void sendHeartbeat() {
 
     HTTPClient http;
     String url = String(config.mgmtServer) + "/api/device/heartbeat";
-    http.begin(url);
+    httpBeginSmart(http, url);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("X-Device-Token", deviceToken);
     http.setTimeout(5000);
@@ -235,7 +256,7 @@ static void pollCommands() {
 
     HTTPClient http;
     String url = String(config.mgmtServer) + "/api/device/commands?wait=0";
-    http.begin(url);
+    httpBeginSmart(http, url);
     http.addHeader("X-Device-Token", deviceToken);
     http.setTimeout(5000);
 
@@ -258,7 +279,7 @@ static void pollCommands() {
                     HTTPClient ackHttp;
                     String ackUrl = String(config.mgmtServer) +
                         "/api/device/commands/" + String(cmdId) + "/ack";
-                    ackHttp.begin(ackUrl);
+                    httpBeginSmart(ackHttp, ackUrl);
                     ackHttp.addHeader("X-Device-Token", deviceToken);
                     ackHttp.addHeader("Content-Type", "application/json");
                     ackHttp.POST("{\"success\":true}");
