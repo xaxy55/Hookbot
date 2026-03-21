@@ -30,18 +30,6 @@
       "platform" : "ios",
       "size" : "1024x1024"
     },
-    {
-      "filename" : "AppIcon-mac512.png",
-      "idiom" : "mac",
-      "scale" : "1x",
-      "size" : "512x512"
-    },
-    {
-      "filename" : "AppIcon.png",
-      "idiom" : "mac",
-      "scale" : "2x",
-      "size" : "512x512"
-    }
   ],
   "info" : {
     "author" : "xcode",
