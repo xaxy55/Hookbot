@@ -52,6 +52,14 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    label: 'Social',
+    items: [
+      { path: '/social', label: 'Social Hub', icon: BuddyIcon },
+      { path: '/team', label: 'Team Dashboard', icon: TeamIcon },
+      { path: '/global-wall', label: 'Global Wall', icon: WallIcon },
+    ],
+  },
+  {
     label: 'AI & Voice',
     items: [
       { path: '/voice', label: 'Voice Control', icon: MicNavIcon },
@@ -530,6 +538,37 @@ function ShareIcon({ active }: { active: boolean }) {
       <circle cx="4" cy="8" r="2" />
       <circle cx="12" cy="12" r="2" />
       <path d="M6 7l4-2M6 9l4 2" />
+    </svg>
+  );
+}
+
+function BuddyIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <circle cx="5" cy="5" r="2.5" />
+      <circle cx="11" cy="5" r="2.5" />
+      <path d="M1 14c0-2.5 2-4 4-4M11 10c2 0 4 1.5 4 4" />
+      <path d="M6.5 12h3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TeamIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <circle cx="8" cy="4" r="2.5" />
+      <circle cx="3" cy="7" r="1.5" />
+      <circle cx="13" cy="7" r="1.5" />
+      <path d="M4 14c0-2.5 2-4 4-4s4 1.5 4 4M1 13c0-1.5 1-2.5 2-2.5M13 10.5c1 0 2 1 2 2.5" />
+    </svg>
+  );
+}
+
+function WallIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <rect x="2" y="2" width="12" height="12" rx="2" />
+      <path d="M2 6h12M2 10h12M6 2v12M10 2v12" opacity="0.5" />
     </svg>
   );
 }

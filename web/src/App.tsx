@@ -32,6 +32,9 @@ import UsersPage from './pages/UsersPage';
 import TunnelsPage from './pages/TunnelsPage';
 import MoodLearningPage from './pages/MoodLearningPage';
 import VoiceControlPage from './pages/VoiceControlPage';
+import SocialPage from './pages/SocialPage';
+import TeamDashboardPage from './pages/TeamDashboardPage';
+import GlobalWallPage from './pages/GlobalWallPage';
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -88,6 +91,9 @@ export default function App() {
           <Route path="/tunnels" element={<TunnelsPage />} />
           <Route path="/mood-learning" element={<MoodLearningPage />} />
           <Route path="/voice" element={<VoiceControlPage />} />
+          <Route path="/social" element={<SocialPage />} />
+          <Route path="/team" element={<TeamDashboardPage />} />
+          <Route path="/global-wall" element={<GlobalWallPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/logs" element={<LogsPage />} />

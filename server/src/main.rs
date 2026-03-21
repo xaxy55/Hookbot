@@ -236,6 +236,20 @@ async fn main() {
         .route("/api/mood/suggest", get(routes::mood_learning::get_suggestion))
         .with_state(pool.clone());
 
+    // Social & Multiplayer routes (Phase 7)
+    let social_routes = Router::new()
+        .route("/api/social/buddies", get(routes::social::list_buddies).post(routes::social::create_buddy))
+        .route("/api/social/buddies/{id}/accept", post(routes::social::accept_buddy))
+        .route("/api/social/buddies/{id}", delete(routes::social::delete_buddy))
+        .route("/api/social/raids", get(routes::social::list_raids).post(routes::social::create_raid))
+        .route("/api/social/shared-streaks", get(routes::social::list_shared_streaks).post(routes::social::create_shared_streak))
+        .route("/api/social/shared-streaks/{id}", delete(routes::social::delete_shared_streak))
+        .route("/api/social/presence", get(routes::social::list_presence).post(routes::social::update_presence))
+        .route("/api/social/team", get(routes::social::get_team_dashboard))
+        .route("/api/social/reactions", get(routes::social::list_reactions).post(routes::social::send_reaction))
+        .route("/api/social/events", get(routes::social::list_global_events).post(routes::social::create_global_event))
+        .with_state(pool.clone());
+
     // Voice control routes (need pool + config for API keys)
     let voice_routes = Router::new()
         .route("/api/voice/transcribe", post(routes::voice::transcribe))
@@ -267,6 +281,7 @@ async fn main() {
         .merge(tunnel_routes)
         .merge(mood_learning_routes)
         .merge(voice_routes)
+        .merge(social_routes)
         .merge(auth_mgmt_routes)
         .route_layer(middleware::from_fn(auth::require_auth));
 
