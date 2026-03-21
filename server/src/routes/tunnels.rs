@@ -46,7 +46,7 @@ pub async fn list_tunnels(
             "SELECT id, name, tunnel_type, hostname, port, status, last_connected_at, config, created_at \
              FROM tunnel_configs ORDER BY created_at DESC"
         )?;
-        stmt.query_map([], |row| {
+        let results = stmt.query_map([], |row| {
             Ok(TunnelConfig {
                 id: row.get(0)?,
                 name: row.get(1)?,
@@ -58,7 +58,8 @@ pub async fn list_tunnels(
                 config: serde_json::from_str(&row.get::<_, String>(7)?).unwrap_or(json!({})),
                 created_at: row.get(8)?,
             })
-        })?.filter_map(|r| r.ok()).collect::<Vec<_>>()
+        })?.filter_map(|r| r.ok()).collect::<Vec<_>>();
+        results
     };
 
     // Enrich with live process info
