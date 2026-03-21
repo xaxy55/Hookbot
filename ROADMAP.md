@@ -261,14 +261,16 @@
 
 ### 14.3 Device Claiming
 - [x] **Claim endpoint** — `POST /api/devices/claim` — User enters claim code to associate device with their account
-- [ ] **Claim UI in web dashboard** — "Add Device" button with claim code input field
+- [x] **Claim UI in web dashboard** — "Claim Device" button with claim code input on Devices page
+- [x] **Bluetooth claim flow** — BLE setup page reads claim code from device and offers one-click claiming
 - [ ] **Claim flow in iOS app** — Native claim flow with camera-based code scanning
 
 ### 14.4 Firmware Cloud Client
-- [ ] **Cloud client module** — `cloud_client.cpp/.h` — Heartbeat push, command polling, registration, command dispatch
-- [ ] **Production server URL** — `DEFAULT_MGMT_SERVER = "https://bot.mr-ai.no"` hardcoded for production builds
-- [ ] **Claim code display** — Show claim code on OLED/LCD until device is claimed
-- [ ] **Command dispatcher** — Execute received commands locally (state change, config, OTA, servos, etc.)
+- [x] **Cloud client module** — `cloud_client.cpp/.h` — Heartbeat push, command polling, registration, command dispatch
+- [x] **Production server URL** — `DEFAULT_MGMT_SERVER` overridable via build flags for production builds
+- [x] **Claim code display** — Show claim code on OLED/LCD until device is claimed
+- [x] **Command dispatcher** — Execute received commands locally (state change, config, OTA, tasks, etc.)
+- [x] **BLE claim info characteristic** — New BLE characteristic exposes claim code, claimed status, WiFi state; BLE stays active for unclaimed cloud devices
 
 ### 14.5 Hardening
 - [ ] **HTTPS with cert pinning** — ESP32 validates server certificate
