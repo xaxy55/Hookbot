@@ -1,5 +1,6 @@
 import HealthKit
 import Foundation
+import SwiftUI
 
 // HealthKit integration — step challenge, avatar gets energized at goal (Phase 13.6)
 

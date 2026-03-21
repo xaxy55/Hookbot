@@ -137,17 +137,3 @@ private extension Int {
     var nonZero: Int? { self == 0 ? nil : self }
 }
 
-// MARK: - NotificationManager extension
-
-extension NotificationManager {
-    func notifyBreakReminder() {
-        schedule(
-            id: "break-\(Date().timeIntervalSince1970)",
-            title: "Time for a break",
-            body: "You've been coding for a while. Your avatar is stretching.",
-            category: "hookbot.break",
-            threadId: "hookbot.break",
-            interruptionLevel: .passive
-        )
-    }
-}

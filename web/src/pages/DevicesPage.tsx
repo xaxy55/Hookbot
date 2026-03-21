@@ -9,6 +9,7 @@ import {
   addGroupMember,
   removeGroupMember,
   sendGroupState,
+  claimDevice,
   type DeviceGroup,
 } from '../api/client';
 import DeviceCard from '../components/DeviceCard';
@@ -41,6 +42,9 @@ export default function DevicesPage() {
   const [editColor, setEditColor] = useState('');
   const [managingGroup, setManagingGroup] = useState<DeviceGroup | null>(null);
   const [groupActionsOpen, setGroupActionsOpen] = useState<string | null>(null);
+  const [showClaimDevice, setShowClaimDevice] = useState(false);
+  const [claimCode, setClaimCode] = useState('');
+  const [claimName, setClaimName] = useState('');
 
   const createGroupMut = useMutation({
     mutationFn: (data: { name: string; color: string }) => createGroup(data),
@@ -86,6 +90,16 @@ export default function DevicesPage() {
       sendGroupState(groupId, state),
   });
 
+  const claimDeviceMut = useMutation({
+    mutationFn: (data: { claim_code: string; name?: string }) => claimDevice(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['devices'] });
+      setShowClaimDevice(false);
+      setClaimCode('');
+      setClaimName('');
+    },
+  });
+
   const filteredDevices = filterGroupId
     ? devices?.filter(d => {
         const group = groups?.find(g => g.id === filterGroupId);
@@ -97,7 +111,83 @@ export default function DevicesPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-fg mb-6">Devices</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-fg">Devices</h1>
+        <button
+          onClick={() => setShowClaimDevice(!showClaimDevice)}
+          className="text-xs px-3 py-1.5 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+        >
+          + Claim Device
+        </button>
+      </div>
+
+      {/* Claim Device Form */}
+      {showClaimDevice && (
+        <div className="mb-6 p-4 rounded-lg border border-edge bg-surface">
+          <h3 className="text-sm font-medium text-fg mb-3">Claim a Device</h3>
+          <p className="text-xs text-subtle mb-3">
+            Enter the 6-character claim code shown on your device screen to add it to your account.
+          </p>
+          <div className="flex items-end gap-3">
+            <div>
+              <label className="block text-xs text-subtle mb-1">Claim Code</label>
+              <input
+                type="text"
+                value={claimCode}
+                onChange={e => setClaimCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, '').slice(0, 6))}
+                placeholder="e.g. A3X9K2"
+                maxLength={6}
+                className="w-32 px-3 py-1.5 rounded-md border border-edge bg-inset text-fg text-sm font-mono tracking-widest placeholder:text-dim focus:outline-none focus:ring-1 focus:ring-green-500 uppercase"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs text-subtle mb-1">Device Name (optional)</label>
+              <input
+                type="text"
+                value={claimName}
+                onChange={e => setClaimName(e.target.value)}
+                placeholder="e.g. Office Bot"
+                className="w-full px-3 py-1.5 rounded-md border border-edge bg-inset text-fg text-sm placeholder:text-dim focus:outline-none focus:ring-1 focus:ring-green-500"
+              />
+            </div>
+            <button
+              onClick={() => {
+                if (claimCode.length === 6) {
+                  claimDeviceMut.mutate({
+                    claim_code: claimCode,
+                    ...(claimName.trim() ? { name: claimName.trim() } : {}),
+                  });
+                }
+              }}
+              disabled={claimCode.length !== 6 || claimDeviceMut.isPending}
+              className="px-4 py-1.5 rounded-md bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+            >
+              {claimDeviceMut.isPending ? 'Claiming...' : 'Claim'}
+            </button>
+            <button
+              onClick={() => {
+                setShowClaimDevice(false);
+                setClaimCode('');
+                setClaimName('');
+                claimDeviceMut.reset();
+              }}
+              className="px-3 py-1.5 rounded-md border border-edge text-subtle text-sm hover:bg-raised transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+          {claimDeviceMut.isError && (
+            <p className="mt-2 text-xs text-red-400">
+              Failed to claim device. Check the code and try again.
+            </p>
+          )}
+          {claimDeviceMut.isSuccess && (
+            <p className="mt-2 text-xs text-green-400">
+              Device claimed successfully!
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Groups Section */}
       <div className="mb-6">

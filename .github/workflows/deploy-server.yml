@@ -40,7 +40,14 @@ jobs:
           docker push "$IMAGE:latest"
 
       - name: Deploy to GCE
+        env:
+          ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          API_KEY: ${{ secrets.API_KEY }}
+          WORKOS_API_KEY: ${{ secrets.WORKOS_API_KEY }}
+          WORKOS_CLIENT_ID: ${{ secrets.WORKOS_CLIENT_ID }}
         run: |
           gcloud compute instances update-container hookbot-server \
             --zone=us-central1-a \
-            --container-image="$IMAGE:${{ github.sha }}"
+            --container-image="$IMAGE:${{ github.sha }}" \
+            --container-env="ALLOWED_ORIGINS=${ALLOWED_ORIGINS},ADMIN_PASSWORD=${ADMIN_PASSWORD},API_KEY=${API_KEY},WORKOS_API_KEY=${WORKOS_API_KEY},WORKOS_CLIENT_ID=${WORKOS_CLIENT_ID}"

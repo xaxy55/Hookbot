@@ -241,6 +241,41 @@
 - [x] **Eye strain alerts** — Reminds you to look away using the 20-20-20 rule; avatar covers its eyes as a visual cue
 - [x] **Sleep guardian** — If you're coding past your set bedtime, avatar gets progressively sleepier and eventually refuses to work (soft nudge to stop)
 
+## Phase 14: Hosted Mode — No Self-Hosting Required
+
+> Users who don't want to self-host can just buy a device, connect to WiFi, and sign up. ESPs and phones only need outbound connections to the public server — no port forwarding, no tunnels, no self-hosting.
+
+### 14.1 Server — Command Queue & Device API
+- [x] **Device command queue** — SQLite-backed command queue with long-poll notification support for delivering commands to cloud-connected devices
+- [x] **Device self-registration API** — `POST /api/device/register` — ESP sends MAC + hostname, gets device_id, device_token, and 6-char claim code
+- [x] **Device heartbeat API** — `POST /api/device/heartbeat` — Device pushes status to server (replaces server-side polling for cloud devices)
+- [x] **Device command polling** — `GET /api/device/commands?wait=30` — Long-poll endpoint for devices to fetch pending commands
+- [x] **Device token auth** — Separate auth flow for devices using `X-Device-Token` header (not user API keys)
+- [x] **Claim code generation** — 6-char alphanumeric codes (excluding confusing chars O/0/I/1/L)
+
+### 14.2 Server — Dual-Path Proxy
+- [x] **Connection mode field** — `connection_mode` column on devices table (`lan` or `cloud`) determines routing path
+- [x] **Dual-path forwarding** — All forward_* functions check connection_mode: LAN devices get direct HTTP proxy, cloud devices get command queue
+- [x] **Cloud-aware device poller** — Poller skips devices with `connection_mode = 'cloud'` (they push their own status)
+- [x] **Cloud-aware OTA** — Cloud devices receive OTA commands via queue; device pulls firmware binary from public URL
+
+### 14.3 Device Claiming
+- [x] **Claim endpoint** — `POST /api/devices/claim` — User enters claim code to associate device with their account
+- [ ] **Claim UI in web dashboard** — "Add Device" button with claim code input field
+- [ ] **Claim flow in iOS app** — Native claim flow with camera-based code scanning
+
+### 14.4 Firmware Cloud Client
+- [ ] **Cloud client module** — `cloud_client.cpp/.h` — Heartbeat push, command polling, registration, command dispatch
+- [ ] **Production server URL** — `DEFAULT_MGMT_SERVER = "https://bot.mr-ai.no"` hardcoded for production builds
+- [ ] **Claim code display** — Show claim code on OLED/LCD until device is claimed
+- [ ] **Command dispatcher** — Execute received commands locally (state change, config, OTA, servos, etc.)
+
+### 14.5 Hardening
+- [ ] **HTTPS with cert pinning** — ESP32 validates server certificate
+- [ ] **Heartbeat timeout detection** — Mark device offline if no heartbeat in 60s
+- [ ] **Rate limiting** — Throttle device API endpoints
+- [ ] **Device token rotation** — Periodic token refresh for security
+
 ---
 
 ## Quick Wins (anytime)

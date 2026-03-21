@@ -45,7 +45,7 @@ async fn poll_all_devices(db: &DbPool, default_retention_hours: u64, failures: &
 
     let devices: Vec<(String, String)> = {
         let conn = db.lock().unwrap();
-        let mut stmt = match conn.prepare("SELECT id, ip_address FROM devices") {
+        let mut stmt = match conn.prepare("SELECT id, ip_address FROM devices WHERE COALESCE(connection_mode, 'lan') != 'cloud'") {
             Ok(s) => s,
             Err(_) => return,
         };

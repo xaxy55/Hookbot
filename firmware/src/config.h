@@ -21,8 +21,12 @@
 // mDNS hostname (hookbot.local) - overridden by NVS if set
 #define MDNS_HOSTNAME "hookbot"
 
-// Management server URL (empty = disabled)
+// Management server URL (empty = disabled, set for hosted/cloud mode)
+// For production devices: "https://bot.mr-ai.no"
+// For self-hosted: "" (disabled) — set via BLE provisioning or POST /config
+#ifndef DEFAULT_MGMT_SERVER
 #define DEFAULT_MGMT_SERVER ""
+#endif
 
 // ─── Board-specific display configuration ─────────────────────────
 

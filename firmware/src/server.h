@@ -156,4 +156,5 @@ namespace HookbotServer {
     PomodoroData& getPomodoro();
     bool pomodoroJustCompleted();  // true once after a session completes
     void clearPomodoroCompleted();
+    void queueOtaUrl(const char* url);
 }

@@ -24,6 +24,12 @@ pub struct Device {
     pub updated_at: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user_id: Option<String>,
+    #[serde(default = "default_connection_mode")]
+    pub connection_mode: String,
+}
+
+fn default_connection_mode() -> String {
+    "lan".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
