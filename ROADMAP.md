@@ -166,6 +166,22 @@
 - [ ] **Modular snap-on accessories** — Magnetic mounts for swappable physical accessories: hats, arms, signs
 - [ ] **Wireless charging pad** — Qi charging built into the base, also charges your phone while hookbot sits on it
 
+## Phase 12: Native Cloudflare Tunnel Integration
+
+> Built-in tunnel management so hookbots are securely accessible from anywhere — no manual cloudflared setup, no port forwarding, no VPN.
+
+- [ ] **Embedded cloudflared daemon** — Server spawns and manages a `cloudflared` tunnel process as a child process, with auto-restart and health checks
+- [ ] **Tunnel provisioning API** — Server endpoints to create, start, stop, and delete tunnels; store tunnel credentials in SQLite
+- [ ] **Zero-config quick connect** — One-click "Make accessible from internet" button that provisions a tunnel with a generated `*.cfargotunnel.com` subdomain
+- [ ] **Custom domain mapping** — UI to map your own domain to the tunnel (CNAME setup guide + auto-verify)
+- [ ] **Tunnel status dashboard** — Real-time connection status, latency, active connections, bytes transferred, and uptime in the web UI
+- [ ] **Access policies** — Cloudflare Access integration: restrict tunnel to specific emails, SSO providers, or service tokens
+- [ ] **Per-device tunnels** — Optionally expose individual devices on separate subdomains (e.g. `desk-bot.yourdomain.com`)
+- [ ] **Tunnel health monitoring** — Server-side watchdog that detects tunnel degradation and auto-reconnects; surface alerts in frontend
+- [ ] **CLI tunnel commands** — `hookbot tunnel start`, `hookbot tunnel stop`, `hookbot tunnel status` for headless/server use
+- [ ] **Docker-aware mode** — Auto-detect Docker deployment and configure tunnel networking accordingly (compose service or sidecar)
+- [ ] **Tunnel logs & diagnostics** — Stream cloudflared logs in the existing Logs page, include tunnel info in diagnostics export
+
 ---
 
 ## Quick Wins (anytime)
