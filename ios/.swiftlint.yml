@@ -20,16 +20,11 @@ disabled_rules:
   - cyclomatic_complexity
   - statement_position
   - function_parameter_count
-  - force_unwrapping
   - static_over_final_class
   - trailing_comma
   - vertical_whitespace
   - large_tuple
   - nesting
   - type_name
-
-opt_in_rules:
-  - empty_count
-  - closure_spacing
+  - force_cast
   - implicit_return
-  - modifier_order

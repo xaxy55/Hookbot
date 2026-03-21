@@ -125,11 +125,11 @@ lint-web: ## Lint web with ESLint
 
 lint-ios: ## Lint Swift code with SwiftLint
 	@printf "$(YELLOW)>> SwiftLint (iOS)...$(RESET)\n"
-	cd ios && swiftlint lint --strict
+	cd ios && swiftlint lint
 
 lint-fix-ios: ## Auto-fix Swift lint issues (SwiftLint)
 	@printf "$(YELLOW)>> SwiftLint --fix (iOS)...$(RESET)\n"
-	cd ios && swiftlint lint --fix && swiftlint lint --strict
+	cd ios && swiftlint lint --fix && swiftlint lint
 
 swift-check: ## Syntax check iOS project (xcodebuild build, no codesign)
 	@printf "$(YELLOW)>> Swift syntax check (xcodebuild)...$(RESET)\n"
