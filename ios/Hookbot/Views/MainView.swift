@@ -363,6 +363,21 @@ struct SocialHubView: View {
                     }
                 }
 
+                Section("AR & Games") {
+                    NavigationLink {
+                        SharedARView()
+                            .environmentObject(engine)
+                    } label: {
+                        Label("Shared AR Space", systemImage: "arkit")
+                    }
+                    NavigationLink {
+                        PongGameView()
+                            .environmentObject(engine)
+                    } label: {
+                        Label("AR Pong", systemImage: "gamecontroller.fill")
+                    }
+                }
+
                 Section("Your Avatar") {
                     NavigationLink {
                         WardrobeView()
