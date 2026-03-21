@@ -34,6 +34,8 @@ pub struct AppConfig {
     pub workos_redirect_uri: Option<String>,
     pub cookie_domain: Option<String>,
     pub frontend_url: Option<String>,
+    pub cloudflared_path: String,
+    pub tunnel_auto_restart: bool,
 }
 
 impl AppConfig {
@@ -115,6 +117,14 @@ impl AppConfig {
             info!("WorkOS multi-tenant mode enabled");
         }
 
+        // Cloudflare Tunnel settings
+        let cloudflared_path = env::var("CLOUDFLARED_PATH")
+            .unwrap_or_else(|_| "cloudflared".to_string());
+        let tunnel_auto_restart = env::var("TUNNEL_AUTO_RESTART")
+            .ok()
+            .map(|v| v != "false" && v != "0")
+            .unwrap_or(true);
+
         Self {
             database_url,
             firmware_dir,
@@ -138,6 +148,8 @@ impl AppConfig {
             workos_redirect_uri,
             cookie_domain,
             frontend_url,
+            cloudflared_path,
+            tunnel_auto_restart,
         }
     }
 

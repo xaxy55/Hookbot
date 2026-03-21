@@ -30,6 +30,15 @@ async fn main() {
     // Start background services
     services::device_poller::start(pool.clone(), config.poll_interval_secs, config.log_retention_hours);
 
+    // Initialize tunnel manager
+    let tunnel_manager = services::tunnel_manager::TunnelManager::new(
+        pool.clone(),
+        config.cloudflared_path.clone(),
+        config.tunnel_auto_restart,
+    );
+    // Recover tunnels that were running before restart
+    tunnel_manager.recover_running_tunnels().await;
+
     // Auto-discover devices on startup
     let discover_db = pool.clone();
     let mdns_prefix = config.mdns_prefix.clone();
@@ -223,9 +232,12 @@ async fn main() {
     // Tunnel / remote access routes
     let tunnel_routes = Router::new()
         .route("/api/tunnels", get(routes::tunnels::list_tunnels).post(routes::tunnels::create_tunnel))
+        .route("/api/tunnels/quick-connect", post(routes::tunnels::quick_connect))
         .route("/api/tunnels/{id}", get(routes::tunnels::get_tunnel).put(routes::tunnels::update_tunnel).delete(routes::tunnels::delete_tunnel))
         .route("/api/tunnels/{id}/start", post(routes::tunnels::start_tunnel))
         .route("/api/tunnels/{id}/stop", post(routes::tunnels::stop_tunnel))
+        .route("/api/tunnels/{id}/logs", get(routes::tunnels::get_tunnel_logs))
+        .route("/api/tunnels/{id}/metrics", get(routes::tunnels::get_tunnel_metrics))
         .with_state(pool.clone());
 
     // Mood learning routes
@@ -390,6 +402,7 @@ async fn main() {
         .layer(Extension(pool.clone()))
         .layer(Extension(login_rate_limiter))
         .layer(Extension(config.clone()))
+        .layer(Extension(tunnel_manager))
         .layer(cors);
 
     // If TLS cert and key are provided, serve HTTPS on 443 + HTTP redirect on 80

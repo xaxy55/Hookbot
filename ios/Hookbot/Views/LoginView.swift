@@ -73,7 +73,7 @@ struct LoginView: View {
                             Image(systemName: "person.badge.key")
                         }
                         Text("Sign in with WorkOS")
-                            .font(.system(.body, weight: .semibold, design: .monospaced))
+                            .font(.system(size: 17, weight: .semibold, design: .monospaced))
                     }
                     .frame(maxWidth: .infinity)
                     .padding(14)
@@ -115,7 +115,7 @@ struct LoginView: View {
                             network.start(engine: engine)
                         } label: {
                             Text("Connect")
-                                .font(.system(.body, weight: .semibold, design: .monospaced))
+                                .font(.system(size: 17, weight: .semibold, design: .monospaced))
                                 .frame(maxWidth: .infinity)
                                 .padding(14)
                                 .background(Color(white: 0.2))

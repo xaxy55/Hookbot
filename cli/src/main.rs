@@ -2,6 +2,7 @@ mod security;
 mod status;
 mod devices;
 mod config;
+mod tunnels;
 
 use clap::{Parser, Subcommand};
 use colored::Colorize;
@@ -119,6 +120,12 @@ enum Commands {
         #[command(subcommand)]
         action: OtaAction,
     },
+
+    /// Manage Cloudflare Tunnels for remote access
+    Tunnel {
+        #[command(subcommand)]
+        action: CliTunnelAction,
+    },
 }
 
 #[derive(Subcommand)]
@@ -145,6 +152,37 @@ enum OtaAction {
     List,
     /// Show OTA job status
     Status,
+}
+
+#[derive(Subcommand)]
+enum CliTunnelAction {
+    /// List all tunnels
+    List,
+    /// Start a tunnel by ID
+    Start {
+        /// Tunnel ID (or first 8 chars)
+        id: String,
+    },
+    /// Stop a tunnel by ID
+    Stop {
+        /// Tunnel ID (or first 8 chars)
+        id: String,
+    },
+    /// Show tunnel status and metrics
+    Status {
+        /// Tunnel ID (omit to show all)
+        id: Option<String>,
+    },
+    /// Create a quick-connect tunnel (no Cloudflare account needed)
+    QuickConnect,
+    /// View tunnel process logs
+    Logs {
+        /// Tunnel ID
+        id: String,
+        /// Number of log lines to show
+        #[arg(short, long, default_value = "50")]
+        limit: u32,
+    },
 }
 
 fn api_client(key: &Option<String>) -> reqwest::Client {
@@ -210,6 +248,17 @@ async fn main() {
         Commands::Doctor { env_file } => doctor_cmd(&client, &base, &env_file, cli.json).await,
         Commands::Logs { limit, device, follow } => logs_cmd(&client, &base, limit, device, follow).await,
         Commands::Ota { action } => ota_cmd(&client, &base, action).await,
+        Commands::Tunnel { action } => {
+            let ta = match action {
+                CliTunnelAction::List => tunnels::TunnelAction::List,
+                CliTunnelAction::Start { id } => tunnels::TunnelAction::Start { id },
+                CliTunnelAction::Stop { id } => tunnels::TunnelAction::Stop { id },
+                CliTunnelAction::Status { id } => tunnels::TunnelAction::Status { id },
+                CliTunnelAction::QuickConnect => tunnels::TunnelAction::QuickConnect,
+                CliTunnelAction::Logs { id, limit } => tunnels::TunnelAction::Logs { id, limit },
+            };
+            tunnels::run(&client, &base, ta, cli.json).await
+        }
     };
 
     if let Err(e) = result {

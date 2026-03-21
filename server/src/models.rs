@@ -667,6 +667,27 @@ pub struct UpdateTunnel {
     pub config: Option<serde_json::Value>,
 }
 
+// --- Tunnel metrics/logs ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TunnelMetrics {
+    pub tunnel_id: String,
+    pub pid: Option<u32>,
+    pub started_at: Option<String>,
+    pub uptime_secs: Option<i64>,
+    pub restart_count: u32,
+    pub assigned_url: Option<String>,
+    pub connected: bool,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TunnelLogEntry {
+    pub timestamp: String,
+    pub level: String,
+    pub message: String,
+}
+
 // --- Mood Learning types ---
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

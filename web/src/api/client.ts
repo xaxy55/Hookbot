@@ -940,6 +940,30 @@ export interface TunnelConfig {
   last_connected_at: string | null;
   config: Record<string, unknown>;
   created_at: string;
+  process?: {
+    pid: number | null;
+    started_at: string;
+    restart_count: number;
+    assigned_url: string | null;
+    connected: boolean;
+  };
+}
+
+export interface TunnelMetrics {
+  tunnel_id: string;
+  pid: number | null;
+  started_at: string | null;
+  uptime_secs: number | null;
+  restart_count: number;
+  assigned_url: string | null;
+  connected: boolean;
+  status: string;
+}
+
+export interface TunnelLogEntry {
+  timestamp: string;
+  level: string;
+  message: string;
 }
 
 export const getTunnels = () => request<TunnelConfig[]>('/tunnels');
@@ -964,6 +988,15 @@ export const startTunnel = (id: string) =>
 
 export const stopTunnel = (id: string) =>
   request<{ ok: boolean; status: string }>(`/tunnels/${id}/stop`, { method: 'POST' });
+
+export const quickConnectTunnel = () =>
+  request<{ ok: boolean; id: string; name: string; status: string; assigned_url: string | null; message: string }>('/tunnels/quick-connect', { method: 'POST' });
+
+export const getTunnelMetrics = (id: string) =>
+  request<TunnelMetrics>(`/tunnels/${id}/metrics`);
+
+export const getTunnelLogs = (id: string, limit = 100) =>
+  request<TunnelLogEntry[]>(`/tunnels/${id}/logs?limit=${limit}`);
 
 // Voice Control
 export interface VoiceCommand {
