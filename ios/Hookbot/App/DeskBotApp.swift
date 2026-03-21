@@ -98,7 +98,13 @@ struct HookbotApp: App {
 
     private func loadConfig() {
         if let data = UserDefaults.standard.data(forKey: "hookbot_config"),
-           let config = try? JSONDecoder().decode(RuntimeConfig.self, from: data) {
+           var config = try? JSONDecoder().decode(RuntimeConfig.self, from: data) {
+            // Normalize serverURL to ensure it has an https scheme
+            if !config.serverURL.isEmpty,
+               !config.serverURL.hasPrefix("https://"),
+               !config.serverURL.hasPrefix("http://") {
+                config.serverURL = "https://\(config.serverURL)"
+            }
             engine.config = config
         }
     }

@@ -36,6 +36,9 @@ targets:
           - "**/.DS_Store"
     entitlements:
       path: Hookbot/Hookbot.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.usernotifications.time-sensitive: true
     dependencies:
       - target: HookbotiOSWidget
     settings:
@@ -100,6 +103,8 @@ targets:
       path: HookbotWatch/Complications/Info.plist
       properties:
         CFBundleDisplayName: "Hookbot"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
@@ -123,6 +128,8 @@ targets:
       path: HookbotiOSWidget/Info.plist
       properties:
         CFBundleDisplayName: "Hookbot"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
