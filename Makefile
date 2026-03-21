@@ -16,7 +16,7 @@ DIM    := \033[2m
 .PHONY: help \
         test \
         server web up build \
-        lint lint-fix lint-server lint-web \
+        lint lint-fix lint-server lint-web lint-ios lint-fix-ios swift-check \
         update update-server update-web \
         build-testflight screenshots \
         gh-secrets cloud-secrets \
@@ -38,7 +38,7 @@ help: ## Show this help
 	@grep -E '^test:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@printf "\n$(BOLD)$(YELLOW) Linting$(RESET)\n"
-	@grep -E '^lint.*:.*?## .*$$' $(MAKEFILE_LIST) \
+	@grep -E '^(lint|swift).*:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@printf "\n$(BOLD)$(YELLOW) Updates$(RESET)\n"
 	@grep -E '^update.*:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -113,7 +113,7 @@ test: ## Run Playwright tests
 # ============================================================
 #  Linting
 # ============================================================
-lint: lint-server lint-web ## Lint server (clippy) and web (eslint)
+lint: lint-server lint-web lint-ios ## Lint server, web, and iOS
 
 lint-server: ## Lint Rust server with Clippy
 	@printf "$(YELLOW)>> Clippy (server)...$(RESET)\n"
@@ -123,7 +123,26 @@ lint-web: ## Lint web with ESLint
 	@printf "$(YELLOW)>> ESLint (web)...$(RESET)\n"
 	cd web && npm run lint
 
-lint-fix: lint-fix-server lint-fix-web ## Auto-fix lint issues in server and web
+lint-ios: ## Lint Swift code with SwiftLint
+	@printf "$(YELLOW)>> SwiftLint (iOS)...$(RESET)\n"
+	cd ios && swiftlint lint --strict
+
+lint-fix-ios: ## Auto-fix Swift lint issues (SwiftLint)
+	@printf "$(YELLOW)>> SwiftLint --fix (iOS)...$(RESET)\n"
+	cd ios && swiftlint lint --fix && swiftlint lint --strict
+
+swift-check: ## Syntax check iOS project (xcodebuild build, no codesign)
+	@printf "$(YELLOW)>> Swift syntax check (xcodebuild)...$(RESET)\n"
+	cd ios && xcodebuild build \
+		-project Hookbot.xcodeproj \
+		-scheme Hookbot \
+		-destination 'generic/platform=iOS' \
+		CODE_SIGN_IDENTITY=- \
+		CODE_SIGNING_REQUIRED=NO \
+		CODE_SIGNING_ALLOWED=NO \
+		-quiet
+
+lint-fix: lint-fix-server lint-fix-web lint-fix-ios ## Auto-fix lint issues in server, web, and iOS
 
 lint-fix-server: ## Auto-fix Rust lint issues (cargo fix + fmt)
 	@printf "$(YELLOW)>> cargo fix + fmt (server)...$(RESET)\n"
