@@ -114,6 +114,16 @@ bool isClaimed() { return claimed; }
 const char* getClaimCode() { return claimCode; }
 const char* getDeviceToken() { return deviceToken; }
 
+void resetCloud() {
+    deviceToken[0] = '\0';
+    claimCode[0] = '\0';
+    deviceId[0] = '\0';
+    claimed = false;
+    registered = false;
+    saveCloudConfig();
+    Serial.println("[Cloud] Cloud state reset — will re-register on next cycle");
+}
+
 // --- Private Implementation ---
 
 static void loadCloudConfig() {

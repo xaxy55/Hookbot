@@ -3,20 +3,7 @@ import Foundation
 
 // Live Activity / Dynamic Island — your avatar lives on the home screen (Phase 13.1)
 // Shows real-time state: coding, idle, in meeting, error
-
-// MARK: - Activity Attributes
-
-struct HookbotActivityAttributes: ActivityAttributes {
-    struct ContentState: Codable, Hashable {
-        var state: String        // matches AvatarState.rawValue
-        var displayName: String
-        var xp: Int
-        var streak: Int
-        var toolName: String
-    }
-
-    var deviceName: String
-}
+// HookbotActivityAttributes is defined in Shared/HookbotActivityAttributes.swift
 
 // MARK: - Manager
 

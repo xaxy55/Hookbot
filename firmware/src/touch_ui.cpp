@@ -4,6 +4,7 @@
 #include "display.h"
 #include "server.h"
 #include "avatar.h"
+#include "cloud_client.h"
 
 extern String _hookbot_get_ip();
 
@@ -182,8 +183,11 @@ void update(uint32_t deltaMs, int16_t touchX, int16_t touchY, bool touching) {
 
 // ─── Drawing helpers ────────────────────────────────────────────
 
+// Reclaim confirmation state
+static bool showReclaimConfirm = false;
+
 static void drawSettingsPanel(DisplayCanvas* d) {
-    int16_t panelH = 95;
+    int16_t panelH = 120;  // Full height to fit cloud info
     int16_t panelY = 120 - (int16_t)(panelH * slideProgress);
 
     // Panel background
@@ -202,10 +206,9 @@ static void drawSettingsPanel(DisplayCanvas* d) {
     RuntimeConfig& cfg = HookbotServer::getConfig();
 
     // Sound toggle
-    int16_t rowY = panelY + 20;
+    int16_t rowY = panelY + 18;
     d->setCursor(4, rowY);
     d->print("Sound");
-    // Toggle indicator
     if (cfg.soundEnabled) {
         d->fillRoundRect(90, rowY - 1, 20, 9, 4, COLOR_WHITE);
         d->fillCircle(104, rowY + 3, 3, COLOR_BLACK);
@@ -213,7 +216,6 @@ static void drawSettingsPanel(DisplayCanvas* d) {
         d->drawRoundRect(90, rowY - 1, 20, 9, 4, COLOR_WHITE);
         d->fillCircle(96, rowY + 3, 3, COLOR_WHITE);
     }
-    // Tap zone for sound toggle
     if (justReleased && lastTouchY >= rowY - 2 && lastTouchY <= rowY + 10
         && lastTouchX >= 85 && lastTouchX <= 115) {
         cfg.soundEnabled = !cfg.soundEnabled;
@@ -222,31 +224,28 @@ static void drawSettingsPanel(DisplayCanvas* d) {
     }
 
     // Display brightness
-    rowY += 14;
+    rowY += 12;
     d->setCursor(4, rowY);
     d->print("Bright");
-    // Brightness bar
     int16_t barX = 44;
     int16_t barW = 66;
     d->drawRect(barX, rowY, barW, 7, COLOR_WHITE);
     int16_t fillW = (int16_t)((float)cfg.ledBrightness / 255.0f * (barW - 2));
     d->fillRect(barX + 1, rowY + 1, fillW, 5, COLOR_WHITE);
-    // Tap to adjust brightness
     if (justReleased && lastTouchY >= rowY - 2 && lastTouchY <= rowY + 10
         && lastTouchX >= barX && lastTouchX <= barX + barW) {
         float pct = (float)(lastTouchX - barX) / (float)barW;
         cfg.ledBrightness = (int)(pct * 255);
-        if (cfg.ledBrightness < 10) cfg.ledBrightness = 10;  // Don't allow full black
+        if (cfg.ledBrightness < 10) cfg.ledBrightness = 10;
         Display::setBrightness(cfg.ledBrightness);
         HookbotServer::saveConfigToNVS();
         Serial.printf("[TouchUI] Display brightness: %d\n", cfg.ledBrightness);
     }
 
     // Screensaver timeout
-    rowY += 14;
+    rowY += 12;
     d->setCursor(4, rowY);
     d->print("Sleep");
-    // Show current value
     char ssBuf[12];
     if (cfg.screensaverMins == 0) {
         snprintf(ssBuf, sizeof(ssBuf), "OFF");
@@ -255,41 +254,127 @@ static void drawSettingsPanel(DisplayCanvas* d) {
     }
     d->setCursor(90, rowY);
     d->print(ssBuf);
-    // Tap left half to decrease, right half to increase
     if (justReleased && lastTouchY >= rowY - 2 && lastTouchY <= rowY + 10) {
         if (lastTouchX >= 70 && lastTouchX < 95) {
-            // Decrease (cycle: 0, 5, 10, 15, 30, 60)
             int vals[] = {0, 5, 10, 15, 30, 60};
             int n = sizeof(vals)/sizeof(vals[0]);
             for (int i = n - 1; i >= 0; i--) {
                 if (vals[i] < cfg.screensaverMins) { cfg.screensaverMins = vals[i]; break; }
             }
             HookbotServer::saveConfigToNVS();
-            Serial.printf("[TouchUI] Screensaver: %d min\n", cfg.screensaverMins);
         } else if (lastTouchX >= 95) {
-            // Increase
             int vals[] = {0, 5, 10, 15, 30, 60};
             int n = sizeof(vals)/sizeof(vals[0]);
             for (int i = 0; i < n; i++) {
                 if (vals[i] > cfg.screensaverMins) { cfg.screensaverMins = vals[i]; break; }
             }
             HookbotServer::saveConfigToNVS();
-            Serial.printf("[TouchUI] Screensaver: %d min\n", cfg.screensaverMins);
         }
     }
 
-    // Device info
+    // ─── Divider ─────────────────────────────────────────────
     rowY += 12;
+    d->drawFastHLine(4, rowY, 112, 0x4208); // dim gray line
+
+    // ─── Server / Cloud Info ─────────────────────────────────
+    rowY += 5;
+    d->setTextColor(0x4208); // dim label
+    d->setCursor(4, rowY);
+    d->print("SERVER");
+
+    rowY += 10;
     d->setTextColor(COLOR_WHITE);
     d->setCursor(4, rowY);
+    if (strlen(cfg.mgmtServer) > 0) {
+        // Truncate long URLs to fit display
+        char truncUrl[20];
+        const char* url = cfg.mgmtServer;
+        // Skip "http://" or "https://"
+        if (strncmp(url, "https://", 8) == 0) url += 8;
+        else if (strncmp(url, "http://", 7) == 0) url += 7;
+        strncpy(truncUrl, url, sizeof(truncUrl) - 1);
+        truncUrl[sizeof(truncUrl) - 1] = '\0';
+        d->print(truncUrl);
+    } else {
+        d->print("(none - local)");
+    }
+
+    // Cloud status
+    rowY += 10;
+    d->setCursor(4, rowY);
+    if (CloudClient::isEnabled()) {
+        if (CloudClient::isClaimed()) {
+            d->setTextColor(0x07E0); // green
+            d->print("Claimed");
+        } else {
+            d->setTextColor(0xFFE0); // yellow
+            d->print("Code: ");
+            d->print(CloudClient::getClaimCode());
+        }
+    } else {
+        d->setTextColor(0x4208);
+        d->print("Local mode");
+    }
+
+    // Reclaim button (only when cloud is enabled)
+    if (CloudClient::isEnabled()) {
+        rowY += 12;
+        if (showReclaimConfirm) {
+            // Confirmation prompt
+            d->setTextColor(0xF800); // red
+            d->setCursor(4, rowY);
+            d->print("Reset cloud?");
+            // Yes button
+            d->fillRoundRect(80, rowY - 2, 16, 11, 3, 0xF800);
+            d->setTextColor(COLOR_WHITE);
+            d->setCursor(83, rowY);
+            d->print("Y");
+            // No button
+            d->fillRoundRect(100, rowY - 2, 16, 11, 3, 0x4208);
+            d->setCursor(104, rowY);
+            d->print("N");
+
+            if (justReleased && lastTouchY >= rowY - 4 && lastTouchY <= rowY + 12) {
+                if (lastTouchX >= 78 && lastTouchX < 98) {
+                    // Yes - reset cloud
+                    CloudClient::resetCloud();
+                    cfg.mgmtServer[0] = '\0';
+                    HookbotServer::saveConfigToNVS();
+                    showReclaimConfirm = false;
+                    Serial.println("[TouchUI] Cloud reset — device unclaimed");
+                } else if (lastTouchX >= 98) {
+                    // No - cancel
+                    showReclaimConfirm = false;
+                }
+            }
+        } else {
+            // Reclaim button
+            d->fillRoundRect(4, rowY - 2, 60, 11, 3, 0x4208);
+            d->setTextColor(COLOR_WHITE);
+            d->setCursor(8, rowY);
+            d->print("Reclaim");
+            if (justReleased && lastTouchY >= rowY - 4 && lastTouchY <= rowY + 12
+                && lastTouchX >= 2 && lastTouchX <= 66) {
+                showReclaimConfirm = true;
+            }
+        }
+    }
+
+    // IP & FW (bottom)
+    rowY += 14;
+    d->setTextColor(0x4208);
+    d->setCursor(4, rowY);
     d->print("IP:");
+    d->setTextColor(COLOR_WHITE);
     String ip = ::_hookbot_get_ip();
     d->setCursor(28, rowY);
     d->print(ip.c_str());
 
-    rowY += 10;
+    rowY += 9;
+    d->setTextColor(0x4208);
     d->setCursor(4, rowY);
     d->print("FW:");
+    d->setTextColor(COLOR_WHITE);
     d->setCursor(28, rowY);
     d->print(FIRMWARE_VERSION);
 }
