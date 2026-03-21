@@ -248,7 +248,7 @@ final class PongScene: SKScene {
             // Ball exits right → hand off to right phone
             let vel = ball.physicsBody!.velocity
             let normalY = ball.position.y / size.height
-            onBallHandoff?(-abs(vel.dx), vel.dy, ball.position.y, leftScore, rightScore)
+            onBallHandoff?(abs(vel.dx), vel.dy, ball.position.y, leftScore, rightScore)
             ball.isHidden = true
             gameRunning = false
 
@@ -353,7 +353,7 @@ struct PongGameView: View {
     private func setupGame() {
         scene.size = sceneSize
         scene.scaleMode = .resizeFill
-        scene.role = multipeer.isConnected ? .left : .left  // First connector is host
+        scene.role = multipeer.isConnected ? .left : .right  // First connector is host
         role = scene.role
 
         scene.onScoreChange = { l, r in
