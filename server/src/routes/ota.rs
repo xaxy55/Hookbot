@@ -2,14 +2,18 @@ use axum::extract::State;
 use axum::Json;
 use serde_json::json;
 
+use axum::Extension;
+
 use crate::config::AppConfig;
 use crate::db::DbPool;
 use crate::error::AppError;
 use crate::models::*;
+use crate::services::command_queue::CommandQueue;
 use crate::services::proxy;
 
 pub async fn deploy(
     State((db, config)): State<(DbPool, AppConfig)>,
+    Extension(queue): Extension<CommandQueue>,
     Json(input): Json<OtaDeploy>,
 ) -> Result<Json<Vec<OtaJob>>, AppError> {
     let conn = db.lock().unwrap();
@@ -58,7 +62,7 @@ pub async fn deploy(
     }
     drop(conn);
 
-    // Spawn OTA tasks
+    // Spawn OTA tasks — check connection mode for each device
     for job in &jobs {
         let db = db.clone();
         let config = config.clone();
@@ -66,9 +70,46 @@ pub async fn deploy(
         let device_id = job.device_id.clone();
         let firmware_id = job.firmware_id.clone();
 
-        tokio::spawn(async move {
-            execute_ota(db, config, job_id, device_id, firmware_id).await;
-        });
+        // Check if device is cloud-connected
+        let connection_mode: String = {
+            let conn = db.lock().unwrap();
+            conn.query_row(
+                "SELECT COALESCE(connection_mode, 'lan') FROM devices WHERE id = ?1",
+                [&device_id],
+                |row| row.get(0),
+            )
+            .unwrap_or_else(|_| "lan".to_string())
+        };
+
+        if connection_mode == "cloud" {
+            // Cloud device: enqueue OTA command with public firmware URL
+            let frontend_url = config.frontend_url.as_deref().unwrap_or("");
+            let base_url = if !frontend_url.is_empty() {
+                // Derive API URL from frontend URL (hookbot.mr-ai.no -> bot.mr-ai.no)
+                format!("https://{}", config.bind_addr)
+            } else {
+                format!("http://{}", config.bind_addr)
+            };
+            let firmware_url = format!("{}/api/firmware/{}/binary", base_url, firmware_id);
+            let payload = serde_json::json!({ "url": firmware_url });
+            let _ = queue.enqueue(&db, &device_id, "ota", &payload);
+            let queue_clone = queue.clone();
+            let device_id_clone = device_id.clone();
+            tokio::spawn(async move {
+                queue_clone.notify_device(&device_id_clone).await;
+            });
+            // Mark job as in_progress (device will pull it)
+            let conn = db.lock().unwrap();
+            let _ = conn.execute(
+                "UPDATE ota_jobs SET status = 'in_progress', updated_at = datetime('now') WHERE id = ?1",
+                [&job_id],
+            );
+        } else {
+            // LAN device: direct OTA push
+            tokio::spawn(async move {
+                execute_ota(db, config, job_id, device_id, firmware_id).await;
+            });
+        }
     }
 
     Ok(Json(jobs))

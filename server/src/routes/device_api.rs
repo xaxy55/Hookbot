@@ -16,7 +16,7 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tracing::{info, warn};
+use tracing::info;
 
 use crate::auth::UserId;
 use crate::db::DbPool;
@@ -54,6 +54,7 @@ fn hash_token(token: &str) -> String {
 // --- Types ---
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct RegisterRequest {
     pub hostname: String,
     pub mac_address: Option<String>,
@@ -86,6 +87,7 @@ pub struct CommandsQuery {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct AckRequest {
     pub success: Option<bool>,
     pub result: Option<serde_json::Value>,

@@ -110,6 +110,20 @@ async fn main() {
         .route("/auth/login", get(auth::workos_login))
         .route("/auth/callback", get(auth::workos_callback));
 
+    // Device API routes — authenticated by device token, not user auth
+    let device_api_routes = Router::new()
+        .route("/api/device/register", post(routes::device_api::register))
+        .with_state(pool.clone());
+
+    let device_api_token_routes = Router::new()
+        .route("/api/device/heartbeat", post(routes::device_api::heartbeat))
+        .with_state(pool.clone());
+
+    let device_api_command_routes = Router::new()
+        .route("/api/device/commands", get(routes::device_api::get_commands))
+        .route("/api/device/commands/{id}/ack", post(routes::device_api::ack_command))
+        .with_state((pool.clone(), command_queue.clone()));
+
     // Device routes use just the pool
     let device_routes = Router::new()
         .route("/api/devices", get(routes::devices::list_devices).post(routes::devices::create_device))
@@ -367,6 +381,11 @@ async fn main() {
         .route("/api/auth/rotate-key", post(auth::rotate_api_key))
         .route("/api/auth/me", get(auth::get_me));
 
+    // Device claiming (user-authenticated)
+    let claim_routes = Router::new()
+        .route("/api/devices/claim", post(routes::device_api::claim_device))
+        .with_state(pool.clone());
+
     // Protected routes — require API key or session cookie
     let protected_routes = Router::new()
         .merge(device_routes)
@@ -398,15 +417,20 @@ async fn main() {
         .merge(easter_egg_routes)
         .merge(insights_routes)
         .merge(auth_mgmt_routes)
+        .merge(claim_routes)
         .route_layer(middleware::from_fn(auth::require_auth));
 
     let app = Router::new()
         .merge(public_routes)
+        .merge(device_api_routes)
+        .merge(device_api_token_routes)
+        .merge(device_api_command_routes)
         .merge(protected_routes)
         .layer(Extension(pool.clone()))
         .layer(Extension(login_rate_limiter))
         .layer(Extension(config.clone()))
         .layer(Extension(tunnel_manager))
+        .layer(Extension(command_queue.clone()))
         .layer(cors);
 
     // If TLS cert and key are provided, serve HTTPS on 443 + HTTP redirect on 80

@@ -2,10 +2,13 @@ use axum::extract::{Path, Request, State};
 use axum::Json;
 use serde_json::json;
 
+use axum::Extension;
+
 use crate::auth::UserId;
 use crate::db::DbPool;
 use crate::error::AppError;
 use crate::models::*;
+use crate::services::command_queue::CommandQueue;
 use crate::services::proxy;
 
 // --- Config export/import types ---
@@ -57,7 +60,8 @@ pub async fn list_devices(
         (
             "SELECT d.id, d.name, d.hostname, d.ip_address, d.purpose, d.personality,
                     d.created_at, d.updated_at, d.device_type, d.user_id,
-                    s.state, s.uptime_ms, s.free_heap, s.recorded_at
+                    s.state, s.uptime_ms, s.free_heap, s.recorded_at,
+                    COALESCE(d.connection_mode, 'lan')
              FROM devices d
              LEFT JOIN (
                  SELECT device_id, state, uptime_ms, free_heap, recorded_at,
@@ -72,7 +76,8 @@ pub async fn list_devices(
         (
             "SELECT d.id, d.name, d.hostname, d.ip_address, d.purpose, d.personality,
                     d.created_at, d.updated_at, d.device_type, d.user_id,
-                    s.state, s.uptime_ms, s.free_heap, s.recorded_at
+                    s.state, s.uptime_ms, s.free_heap, s.recorded_at,
+                    COALESCE(d.connection_mode, 'lan')
              FROM devices d
              LEFT JOIN (
                  SELECT device_id, state, uptime_ms, free_heap, recorded_at,
@@ -116,6 +121,7 @@ pub async fn list_devices(
                 created_at: row.get(6)?,
                 updated_at: row.get(7)?,
                 user_id: row.get(9)?,
+                connection_mode: row.get(14)?,
             },
             latest_status,
             online,
@@ -153,7 +159,7 @@ pub async fn create_device(
     )?;
 
     let device = conn.query_row(
-        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type, user_id
+        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type, user_id, COALESCE(connection_mode, 'lan')
          FROM devices WHERE id = ?1",
         [&id],
         |row| {
@@ -168,6 +174,7 @@ pub async fn create_device(
                 created_at: row.get(6)?,
                 updated_at: row.get(7)?,
                 user_id: row.get(9)?,
+                connection_mode: row.get(10)?,
             })
         },
     )?;
@@ -177,7 +184,7 @@ pub async fn create_device(
 
 fn query_device(conn: &rusqlite::Connection, id: &str) -> Result<Device, AppError> {
     conn.query_row(
-        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type, user_id
+        "SELECT id, name, hostname, ip_address, purpose, personality, created_at, updated_at, device_type, user_id, COALESCE(connection_mode, 'lan')
          FROM devices WHERE id = ?1",
         [id],
         |row| {
@@ -192,6 +199,7 @@ fn query_device(conn: &rusqlite::Connection, id: &str) -> Result<Device, AppErro
                 created_at: row.get(6)?,
                 updated_at: row.get(7)?,
                 user_id: row.get(9)?,
+                connection_mode: row.get(10)?,
             })
         },
     ).map_err(|_| AppError::NotFound(format!("Device {id} not found")))
@@ -221,11 +229,56 @@ fn is_online(status: &Option<StatusSnapshot>) -> bool {
     })
 }
 
+struct DeviceConnection {
+    ip: String,
+    connection_mode: String,
+}
+
+fn query_device_connection(conn: &rusqlite::Connection, id: &str) -> Result<DeviceConnection, AppError> {
+    conn.query_row(
+        "SELECT ip_address, COALESCE(connection_mode, 'lan') FROM devices WHERE id = ?1",
+        [id],
+        |row| Ok(DeviceConnection {
+            ip: row.get(0)?,
+            connection_mode: row.get(1)?,
+        }),
+    )
+    .map_err(|_| AppError::NotFound(format!("Device {id} not found")))
+}
+
 fn query_device_ip(conn: &rusqlite::Connection, id: &str) -> Result<String, AppError> {
     conn.query_row(
         "SELECT ip_address FROM devices WHERE id = ?1", [id],
         |row| row.get(0),
     ).map_err(|_| AppError::NotFound(format!("Device {id} not found")))
+}
+
+/// Forward a command to a device: either via direct HTTP (LAN) or command queue (cloud).
+async fn forward_or_queue(
+    db: &DbPool,
+    queue: &CommandQueue,
+    device_id: &str,
+    endpoint: &str,
+    command_type: &str,
+    body: &serde_json::Value,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let conn_info = {
+        let conn = db.lock().unwrap();
+        query_device_connection(&conn, device_id)?
+    };
+
+    if conn_info.connection_mode == "cloud" {
+        // Cloud mode: enqueue command for device to pick up
+        queue.enqueue(db, device_id, command_type, body)
+            .map_err(|e| AppError::Internal(e))?;
+        queue.notify_device(device_id).await;
+        Ok(Json(json!({ "ok": true, "queued": true })))
+    } else {
+        // LAN mode: direct HTTP proxy
+        let device_url = format!("http://{}/{}", conn_info.ip, endpoint);
+        proxy::forward_json(&device_url, body).await?;
+        Ok(Json(json!({ "ok": true })))
+    }
 }
 
 pub async fn get_device(
@@ -287,49 +340,35 @@ pub async fn delete_device(
 
 pub async fn forward_state(
     State(db): State<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Path(id): Path<String>,
     Json(input): Json<StateChange>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let ip = {
-        let conn = db.lock().unwrap();
-        query_device_ip(&conn, &id)?
-    };
-
-    let device_url = format!("http://{}/state", ip);
     let body = json!({
         "state": input.state,
         "tool": input.tool.unwrap_or_default(),
         "detail": input.detail.unwrap_or_default(),
     });
 
-    proxy::forward_json(&device_url, &body).await?;
-    Ok(Json(json!({ "ok": true, "state": input.state })))
+    forward_or_queue(&db, &queue, &id, "state", "state_change", &body).await
 }
 
 pub async fn forward_servos(
     State(db): State<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let ip = {
-        let conn = db.lock().unwrap();
-        query_device_ip(&conn, &id)?
-    };
-    proxy::forward_json(&format!("http://{}/servos", ip), &body).await?;
-    Ok(Json(json!({ "ok": true })))
+    forward_or_queue(&db, &queue, &id, "servos", "servo", &body).await
 }
 
 pub async fn forward_servo_config(
     State(db): State<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let ip = {
-        let conn = db.lock().unwrap();
-        query_device_ip(&conn, &id)?
-    };
-    proxy::forward_json(&format!("http://{}/servos/config", ip), &body).await?;
-    Ok(Json(json!({ "ok": true })))
+    forward_or_queue(&db, &queue, &id, "servos/config", "servo_config", &body).await
 }
 
 pub async fn get_servos(
@@ -346,16 +385,11 @@ pub async fn get_servos(
 
 pub async fn forward_tasks(
     State(db): State<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let ip = {
-        let conn = db.lock().unwrap();
-        query_device_ip(&conn, &id)?
-    };
-
-    proxy::forward_json(&format!("http://{}/tasks", ip), &body).await?;
-    Ok(Json(json!({ "ok": true })))
+    forward_or_queue(&db, &queue, &id, "tasks", "tasks", &body).await
 }
 
 pub async fn get_device_status(
@@ -508,12 +542,13 @@ fn build_sound_pack_payload(pack: &str) -> Option<serde_json::Value> {
 
 pub async fn push_config(
     State(db): State<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Path(id): Path<String>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let (ip, config, sound_pack) = {
+    let (conn_info, config, sound_pack) = {
         let conn = db.lock().unwrap();
 
-        let ip = query_device_ip(&conn, &id)?;
+        let conn_info = query_device_connection(&conn, &id)?;
 
         let (config, sound_pack) = conn.query_row(
             "SELECT led_brightness, led_colors, sound_enabled, sound_volume, avatar_preset, custom_data, sound_pack
@@ -545,21 +580,33 @@ pub async fn push_config(
             },
         ).map_err(|_| AppError::NotFound(format!("Config for device {id} not found")))?;
 
-        (ip, config, sound_pack)
+        (conn_info, config, sound_pack)
     };
 
-    proxy::forward_json(&format!("http://{}/config", ip), &config).await?;
-
-    // Push sound pack data to device if not default
-    let pack_name = sound_pack.as_deref().unwrap_or("default");
-    if let Some(sound_payload) = build_sound_pack_payload(pack_name) {
-        let _ = proxy::forward_json(&format!("http://{}/sounds", ip), &sound_payload).await;
+    if conn_info.connection_mode == "cloud" {
+        // Cloud mode: enqueue config_update command
+        let pack_name = sound_pack.as_deref().unwrap_or("default");
+        let payload = json!({
+            "config": config,
+            "sound_pack": pack_name,
+        });
+        queue.enqueue(&db, &id, "config_update", &payload)
+            .map_err(|e| AppError::Internal(e))?;
+        queue.notify_device(&id).await;
+        Ok(Json(json!({ "ok": true, "queued": true })))
     } else {
-        // "default" pack: tell device to disable custom melodies
-        let _ = proxy::forward_json(&format!("http://{}/sounds", ip), &json!({"pack": "default"})).await;
-    }
+        // LAN mode: direct proxy
+        proxy::forward_json(&format!("http://{}/config", conn_info.ip), &config).await?;
 
-    Ok(Json(json!({ "ok": true })))
+        let pack_name = sound_pack.as_deref().unwrap_or("default");
+        if let Some(sound_payload) = build_sound_pack_payload(pack_name) {
+            let _ = proxy::forward_json(&format!("http://{}/sounds", conn_info.ip), &sound_payload).await;
+        } else {
+            let _ = proxy::forward_json(&format!("http://{}/sounds", conn_info.ip), &json!({"pack": "default"})).await;
+        }
+
+        Ok(Json(json!({ "ok": true })))
+    }
 }
 
 /// GET /api/devices/:id/config/export - export full device configuration as JSON backup
@@ -747,26 +794,18 @@ pub async fn import_config(
 /// POST /api/devices/:id/animation - forward animation to device
 pub async fn forward_animation(
     State(db): State<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let ip = {
-        let conn = db.lock().unwrap();
-        query_device_ip(&conn, &id)?
-    };
-    proxy::forward_json(&format!("http://{}/animation", ip), &body).await?;
-    Ok(Json(json!({ "ok": true })))
+    forward_or_queue(&db, &queue, &id, "animation", "animation", &body).await
 }
 
 /// POST /api/devices/:id/animation/stop - stop animation on device
 pub async fn stop_animation(
     State(db): State<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Path(id): Path<String>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let ip = {
-        let conn = db.lock().unwrap();
-        query_device_ip(&conn, &id)?
-    };
-    proxy::forward_json(&format!("http://{}/animation/stop", ip), &json!({})).await?;
-    Ok(Json(json!({ "ok": true })))
+    forward_or_queue(&db, &queue, &id, "animation/stop", "animation_stop", &json!({})).await
 }
