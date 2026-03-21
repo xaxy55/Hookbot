@@ -16,6 +16,7 @@
 #include "sound.h"
 #endif
 #include "server.h"
+#include "cloud_client.h"
 #include "servo.h"
 #include "sensors.h"
 #include "ble_prov.h"
@@ -171,6 +172,12 @@ void setup() {
         Serial.printf("[Main] State changed to %d via HTTP\n", (int)newState);
     });
 
+    // Cloud client: outbound connection to hosted server (if mgmtServer is set)
+    CloudClient::init([](AvatarState newState) {
+        setState(newState);
+        Serial.printf("[Main] State changed to %d via cloud\n", (int)newState);
+    });
+
     // OTA updates - no more USB cables for the CEO
     ArduinoOTA.setHostname(HookbotServer::getConfig().hostname);
     ArduinoOTA.onStart([]() {
@@ -244,6 +251,7 @@ void loop() {
     }
 #endif
     HookbotServer::update();
+    CloudClient::update();
     ArduinoOTA.handle();
     BleProv::update();
 #ifndef NO_AUDIO

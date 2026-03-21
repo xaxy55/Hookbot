@@ -2,6 +2,7 @@
 #include "display.h"
 #include "config.h"
 #include "server.h"
+#include "cloud_client.h"
 
 extern "C" bool _bleProv_isAdvertising();
 
@@ -1057,6 +1058,17 @@ static void drawIdleInfo(DisplayCanvas* d) {
             String ip = ::_hookbot_get_ip();
             d->setCursor(x, y + line * 10);
             d->print(ip.c_str());
+            line++;
+        }
+    }
+
+    // Cloud claim code (shown when device is registered but not yet claimed)
+    if (CloudClient::isEnabled() && !CloudClient::isClaimed()) {
+        const char* code = CloudClient::getClaimCode();
+        if (strlen(code) > 0) {
+            d->setCursor(x, y + line * 10);
+            d->print("Claim:");
+            d->print(code);
             line++;
         }
     }

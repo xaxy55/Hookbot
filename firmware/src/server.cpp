@@ -1730,6 +1730,10 @@ void sendVoiceToServer(const uint8_t* data, size_t size) {
 #endif
 }
 
+void queueOtaUrl(const char* url) {
+    pendingOtaUrl = String(url);
+}
+
 } // namespace HookbotServer
 
 // Global helper for avatar IP display

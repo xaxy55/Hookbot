@@ -66,6 +66,12 @@ export const updateDevice = (id: string, data: Record<string, unknown>) =>
 export const deleteDevice = (id: string) =>
   request<{ ok: boolean }>(`/devices/${id}`, { method: 'DELETE' });
 
+export const claimDevice = (data: { claim_code: string; name?: string }) =>
+  request<{ ok: boolean; device_id: string; name: string }>('/devices/claim', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
 export const sendState = (id: string, state: string) =>
   request<{ ok: boolean }>(`/devices/${id}/state`, {
     method: 'POST',
