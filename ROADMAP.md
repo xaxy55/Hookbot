@@ -188,58 +188,58 @@
 
 ### 13.1 Core Companion Experience
 
-- [ ] **Live avatar on home screen** — iOS Live Activity / Dynamic Island showing your hookbot avatar with real-time state (coding, idle, in meeting, error)
-- [ ] **Interactive widgets** — Home screen and Lock screen widgets: XP bar, streak counter, avatar mood, quick-action buttons (DND toggle, change state)
-- [ ] **Haptic reactions** — Phone buzzes with custom haptic patterns per event: gentle tap for task complete, heavy thud for build failure, heartbeat for flow state
-- [ ] **Watch complications** — Apple Watch face showing avatar mood, streak count, and XP — tap to send a quick reaction to your hookbot
-- [ ] **Siri Shortcuts** — "Hey Siri, how's my hookbot?" / "Start focus mode" / "Send my buddy a wave"
-- [ ] **Notification grouping** — Smart notification stacks: batch low-priority hookbot alerts, surface critical ones instantly with custom sounds
+- [x] **Live avatar on home screen** — iOS Live Activity / Dynamic Island showing your hookbot avatar with real-time state (coding, idle, in meeting, error)
+- [x] **Interactive widgets** — Home screen and Lock screen widgets: XP bar, streak counter, avatar mood, quick-action buttons (DND toggle, change state)
+- [x] **Haptic reactions** — Phone buzzes with custom haptic patterns per event: gentle tap for task complete, heavy thud for build failure, heartbeat for flow state
+- [x] **Watch complications** — Apple Watch face showing avatar mood, streak count, and XP — tap to send a quick reaction to your hookbot
+- [x] **Siri Shortcuts** — "Hey Siri, how's my hookbot?" / "Start focus mode" / "Send my buddy a wave"
+- [x] **Notification grouping** — Smart notification stacks: batch low-priority hookbot alerts, surface critical ones instantly with custom sounds
 
 ### 13.2 Avatar Phone Pairing (Cross-Screen Visit)
 
-- [ ] **Buddy phone pairing** — Link two iPhones via QR code or NFC tap; paired users can send their avatar to visit the other phone
-- [ ] **Avatar walk-over animation** — Your avatar walks off the right edge of your screen and appears walking in from the left edge of your buddy's screen, carrying a message or gift
+- [x] **Buddy phone pairing** — Link two iPhones via QR code or NFC tap; paired users can send their avatar to visit the other phone
+- [x] **Avatar walk-over animation** — Your avatar walks off the right edge of your screen and appears walking in from the left edge of your buddy's screen, carrying a message or gift
 - [ ] **Shared AR space** — Place both hookbot avatars on the same table using ARKit; they interact, high-five, or dance together
 - [ ] **Proximity discovery** — When two paired phones are nearby (Bluetooth/UWB), avatars react: wave, run toward each other, celebrate
 - [ ] **Cross-screen mini-games** — Two paired phones side by side become one wide screen: play Pong across both screens with your avatars as paddles
-- [ ] **Avatar gifting** — Send rare accessories or animations you've earned to a friend's avatar
-- [ ] **Visit history** — Log of avatar visits with timestamps, messages, and reactions — a social timeline
+- [x] **Avatar gifting** — Send rare accessories or animations you've earned to a friend's avatar
+- [x] **Visit history** — Log of avatar visits with timestamps, messages, and reactions — a social timeline
 
 ### 13.3 Avatar Personality & Expression
 
-- [ ] **Avatar mood engine** — Avatar's facial expression, posture, and idle animations shift based on your real coding activity (happy after deploys, sleepy after midnight coding)
-- [ ] **Avatar wardrobe** — Dress up your avatar with unlockable outfits, hats, and props that reflect your coding stats (deploy cape, debug monocle, 100-streak crown)
-- [ ] **Avatar voice lines** — Short spoken quips from your avatar on events: "Ship it!", "Ugh, merge conflict", "We're on fire today!" — customizable voice/tone
-- [ ] **Avatar journal** — Your avatar keeps a diary of your coding day, written in character ("Today our human wrote 47 functions. I'm exhausted.")
-- [ ] **Photo mode** — AR camera mode: place your avatar in the real world, take photos, share to social media with stats overlay
+- [x] **Avatar mood engine** — Avatar's facial expression, posture, and idle animations shift based on your real coding activity (happy after deploys, sleepy after midnight coding)
+- [x] **Avatar wardrobe** — Dress up your avatar with unlockable outfits, hats, and props that reflect your coding stats (deploy cape, debug monocle, 100-streak crown)
+- [x] **Avatar voice lines** — Short spoken quips from your avatar on events: "Ship it!", "Ugh, merge conflict", "We're on fire today!" — customizable voice/tone
+- [x] **Avatar journal** — Your avatar keeps a diary of your coding day, written in character ("Today our human wrote 47 functions. I'm exhausted.")
+- [x] **Photo mode** — AR camera mode: place your avatar in the real world, take photos, share to social media with stats overlay
 
 ### 13.4 Social & Multiplayer (Mobile)
 
-- [ ] **Friend list & presence** — See which friends are online, their avatar mood, current streak, and last activity
-- [ ] **Avatar raids (mobile)** — Send your avatar to "raid" a friend's phone with confetti, memes, or celebrations — they see it as a push notification that expands into a full-screen animation
-- [ ] **Coding challenges** — Challenge a friend: "Who writes more tests this week?" Loser's avatar wears a silly hat
-- [ ] **Team campfire** — Live shared screen where all team avatars gather around a campfire; more people coding = bigger fire
-- [ ] **Avatar emotes** — Tap to send real-time emoji reactions to a friend's avatar (fireworks, skull, party, hug)
+- [x] **Friend list & presence** — See which friends are online, their avatar mood, current streak, and last activity
+- [x] **Avatar raids (mobile)** — Send your avatar to "raid" a friend's phone with confetti, memes, or celebrations — they see it as a push notification that expands into a full-screen animation
+- [x] **Coding challenges** — Challenge a friend: "Who writes more tests this week?" Loser's avatar wears a silly hat
+- [x] **Team campfire** — Live shared screen where all team avatars gather around a campfire; more people coding = bigger fire
+- [x] **Avatar emotes** — Tap to send real-time emoji reactions to a friend's avatar (fireworks, skull, party, hug)
 - [ ] **Pair programming mode** — When two users are working on the same repo, their avatars sit side by side and react to each other's actions
-- [ ] **Weekly photo card** — Auto-generated shareable card with your avatar, week's stats, and achievements — designed for sharing on Twitter/Discord
+- [x] **Weekly photo card** — Auto-generated shareable card with your avatar, week's stats, and achievements — designed for sharing on Twitter/Discord
 
 ### 13.5 Engagement & Retention
 
-- [ ] **Daily login reward** — Open the app daily to receive avatar gifts, XP boosts, or rare loot; consecutive days increase rarity
-- [ ] **Avatar evolution (mobile)** — Your phone avatar independently evolves based on your coding patterns: speed demon, night owl, architect, test wizard — each with unique visual form
-- [ ] **Seasonal avatar events** — Time-limited avatar transformations: spooky October, cozy December, glitchy April Fools — earn exclusive accessories
-- [ ] **Achievement showcase** — Profile page displaying earned badges, rare items, longest streak, and total XP — shareable link
-- [ ] **Push notification avatar** — Your avatar appears in push notifications with contextual expressions (excited for deploys, alarmed for errors)
-- [ ] **Focus mode integration** — Sync with iOS Focus modes: hookbot auto-enters DND when you enable a coding Focus, resumes when you switch back
-- [ ] **Offline avatar** — Avatar lives on your phone even without server connection; syncs state when back online, plays catch-up animations
+- [x] **Daily login reward** — Open the app daily to receive avatar gifts, XP boosts, or rare loot; consecutive days increase rarity
+- [x] **Avatar evolution (mobile)** — Your phone avatar independently evolves based on your coding patterns: speed demon, night owl, architect, test wizard — each with unique visual form
+- [x] **Seasonal avatar events** — Time-limited avatar transformations: spooky October, cozy December, glitchy April Fools — earn exclusive accessories
+- [x] **Achievement showcase** — Profile page displaying earned badges, rare items, longest streak, and total XP — shareable link
+- [x] **Push notification avatar** — Your avatar appears in push notifications with contextual expressions (excited for deploys, alarmed for errors)
+- [x] **Focus mode integration** — Sync with iOS Focus modes: hookbot auto-enters DND when you enable a coding Focus, resumes when you switch back
+- [x] **Offline avatar** — Avatar lives on your phone even without server connection; syncs state when back online, plays catch-up animations
 
 ### 13.6 Health & Wellbeing
 
-- [ ] **Break reminders with avatar** — Avatar taps on screen and stretches when you've been coding too long, suggests a break with a mini-game
-- [ ] **Pomodoro buddy** — Built-in pomodoro timer where your avatar cheers during work sprints and relaxes during breaks
-- [ ] **Step challenge** — Integrates with HealthKit: avatar gets energized as you hit step goals, slouches if you've been sedentary
-- [ ] **Eye strain alerts** — Reminds you to look away using the 20-20-20 rule; avatar covers its eyes as a visual cue
-- [ ] **Sleep guardian** — If you're coding past your set bedtime, avatar gets progressively sleepier and eventually refuses to work (soft nudge to stop)
+- [x] **Break reminders with avatar** — Avatar taps on screen and stretches when you've been coding too long, suggests a break with a mini-game
+- [x] **Pomodoro buddy** — Built-in pomodoro timer where your avatar cheers during work sprints and relaxes during breaks
+- [x] **Step challenge** — Integrates with HealthKit: avatar gets energized as you hit step goals, slouches if you've been sedentary
+- [x] **Eye strain alerts** — Reminds you to look away using the 20-20-20 rule; avatar covers its eyes as a visual cue
+- [x] **Sleep guardian** — If you're coding past your set bedtime, avatar gets progressively sleepier and eventually refuses to work (soft nudge to stop)
 
 ---
 
