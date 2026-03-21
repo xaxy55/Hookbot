@@ -1,4 +1,6 @@
+#if !targetEnvironment(macCatalyst)
 import ActivityKit
+#endif
 import Foundation
 
 // Live Activity / Dynamic Island — your avatar lives on the home screen (Phase 13.1)
@@ -14,13 +16,16 @@ final class LiveActivityManager: ObservableObject {
 
     @Published private(set) var isRunning = false
 
+    #if !targetEnvironment(macCatalyst)
     private var currentActivity: Activity<HookbotActivityAttributes>?
+    #endif
 
     private init() {}
 
     // MARK: - Start
 
     func startActivity(deviceName: String, state: AvatarState, xp: Int, streak: Int) {
+        #if !targetEnvironment(macCatalyst)
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
         // End any existing activity first
@@ -45,11 +50,13 @@ final class LiveActivityManager: ObservableObject {
         } catch {
             print("[LiveActivity] Failed to start: \(error)")
         }
+        #endif
     }
 
     // MARK: - Update
 
     func updateActivity(state: AvatarState, toolName: String = "", xp: Int = 0, streak: Int = 0) {
+        #if !targetEnvironment(macCatalyst)
         guard let activity = currentActivity else {
             // Auto-start if we have stored config
             let deviceName = UserDefaults.standard.string(forKey: "hookbot_device_name") ?? "hookbot"
@@ -70,11 +77,13 @@ final class LiveActivityManager: ObservableObject {
                 ActivityContent(state: contentState, staleDate: Date().addingTimeInterval(60))
             )
         }
+        #endif
     }
 
     // MARK: - Stop
 
     func stopActivity() {
+        #if !targetEnvironment(macCatalyst)
         guard let activity = currentActivity else { return }
         Task {
             let finalState = HookbotActivityAttributes.ContentState(
@@ -93,6 +102,7 @@ final class LiveActivityManager: ObservableObject {
                 self.currentActivity = nil
             }
         }
+        #endif
     }
 
     // MARK: - Dynamic Island color

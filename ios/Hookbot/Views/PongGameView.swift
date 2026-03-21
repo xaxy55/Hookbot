@@ -247,7 +247,6 @@ final class PongScene: SKScene {
         if role == .left && ball.position.x > w + ballRadius {
             // Ball exits right → hand off to right phone
             let vel = ball.physicsBody!.velocity
-            let normalY = ball.position.y / size.height
             onBallHandoff?(abs(vel.dx), vel.dy, ball.position.y, leftScore, rightScore)
             ball.isHidden = true
             gameRunning = false

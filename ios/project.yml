@@ -18,7 +18,7 @@ targets:
   Hookbot:
     type: application
     platform: iOS
-    supportedDestinations: [iOS, macCatalyst]
+    supportedDestinations: [iOS]
     scheme:
       testTargets:
         - HookbotUITests
@@ -38,8 +38,6 @@ targets:
     entitlements:
       path: Hookbot/Hookbot.entitlements
       properties:
-        com.apple.security.app-sandbox: true
-        com.apple.security.network.client: true
         com.apple.developer.healthkit: true
         com.apple.developer.usernotifications.time-sensitive: true
     dependencies:

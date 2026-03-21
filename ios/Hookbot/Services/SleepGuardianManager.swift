@@ -103,9 +103,9 @@ final class SleepGuardianManager: ObservableObject {
     func startChecking() {
         checkTimer?.invalidate()
         checkTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            Task { await self?.checkSleepiness() }
+            Task { @MainActor in self?.checkSleepiness() }
         }
-        Task { await checkSleepiness() }
+        checkSleepiness()
     }
 
     private func checkSleepiness() {

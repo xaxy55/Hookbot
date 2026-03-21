@@ -172,33 +172,30 @@ final class SharedARViewModel: NSObject, ObservableObject {
     private func runHighFiveAnimation() {
         var frame = 0
         interactionTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] t in
-            guard let self else { t.invalidate(); return }
             frame += 1
-            let progress = Float(frame) / 60.0  // 2 second animation
-            self.interactionProgress = min(1.0, progress)
-
-            // Both avatars bounce toward center, then apart
+            let progress = Float(frame) / 60.0
             let ease = sinf(progress * .pi)
             let moveAmount = CGFloat(ease * 30)
-
-            // My avatar moves right (toward friend)
-            self.myAvatarOffset = CGSize(width: moveAmount, height: -CGFloat(ease * 10))
-            // Friend avatar moves left (toward me)
-            self.friendAvatarOffset = CGSize(width: -moveAmount, height: -CGFloat(ease * 10))
-
-            // Scale pulse at peak
             let scale = 1.0 + CGFloat(ease * 0.3)
-            self.myAvatarScale = scale
-            self.friendAvatarScale = scale
+            let isDone = frame >= 60
 
-            if frame >= 60 {
-                t.invalidate()
-                withAnimation(.spring()) {
-                    self.myAvatarOffset = .zero
-                    self.friendAvatarOffset = .zero
-                    self.myAvatarScale = 1.0
-                    self.friendAvatarScale = 1.0
-                    self.currentInteraction = nil
+            Task { @MainActor in
+                guard let self else { t.invalidate(); return }
+                self.interactionProgress = min(1.0, progress)
+                self.myAvatarOffset = CGSize(width: moveAmount, height: -CGFloat(ease * 10))
+                self.friendAvatarOffset = CGSize(width: -moveAmount, height: -CGFloat(ease * 10))
+                self.myAvatarScale = scale
+                self.friendAvatarScale = scale
+
+                if isDone {
+                    t.invalidate()
+                    withAnimation(.spring()) {
+                        self.myAvatarOffset = .zero
+                        self.friendAvatarOffset = .zero
+                        self.myAvatarScale = 1.0
+                        self.friendAvatarScale = 1.0
+                        self.currentInteraction = nil
+                    }
                 }
             }
         }
@@ -207,29 +204,29 @@ final class SharedARViewModel: NSObject, ObservableObject {
     private func runDanceAnimation() {
         var frame = 0
         interactionTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] t in
-            guard let self else { t.invalidate(); return }
             frame += 1
-            let progress = Float(frame) / 120.0  // 4 second dance
-
-            // Synchronized bouncing
+            let progress = Float(frame) / 120.0
             let bounce = sinf(progress * .pi * 8) * 15
             let sway = cosf(progress * .pi * 4) * 8
-
-            self.myAvatarOffset = CGSize(width: CGFloat(sway), height: CGFloat(-abs(bounce)))
-            self.friendAvatarOffset = CGSize(width: CGFloat(-sway), height: CGFloat(-abs(bounce)))
-
             let scale = 1.0 + CGFloat(abs(bounce) / 150)
-            self.myAvatarScale = scale
-            self.friendAvatarScale = scale
+            let isDone = frame >= 120
 
-            if frame >= 120 {
-                t.invalidate()
-                withAnimation(.spring()) {
-                    self.myAvatarOffset = .zero
-                    self.friendAvatarOffset = .zero
-                    self.myAvatarScale = 1.0
-                    self.friendAvatarScale = 1.0
-                    self.currentInteraction = nil
+            Task { @MainActor in
+                guard let self else { t.invalidate(); return }
+                self.myAvatarOffset = CGSize(width: CGFloat(sway), height: CGFloat(-abs(bounce)))
+                self.friendAvatarOffset = CGSize(width: CGFloat(-sway), height: CGFloat(-abs(bounce)))
+                self.myAvatarScale = scale
+                self.friendAvatarScale = scale
+
+                if isDone {
+                    t.invalidate()
+                    withAnimation(.spring()) {
+                        self.myAvatarOffset = .zero
+                        self.friendAvatarOffset = .zero
+                        self.myAvatarScale = 1.0
+                        self.friendAvatarScale = 1.0
+                        self.currentInteraction = nil
+                    }
                 }
             }
         }
@@ -238,19 +235,21 @@ final class SharedARViewModel: NSObject, ObservableObject {
     private func runWaveAnimation() {
         var frame = 0
         interactionTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] t in
-            guard let self else { t.invalidate(); return }
             frame += 1
             let progress = Float(frame) / 45.0
-
-            // My avatar waves (rocks side to side)
             let wave = sinf(progress * .pi * 6) * 10
-            self.myAvatarOffset = CGSize(width: CGFloat(wave), height: 0)
+            let isDone = frame >= 45
 
-            if frame >= 45 {
-                t.invalidate()
-                withAnimation(.spring()) {
-                    self.myAvatarOffset = .zero
-                    self.currentInteraction = nil
+            Task { @MainActor in
+                guard let self else { t.invalidate(); return }
+                self.myAvatarOffset = CGSize(width: CGFloat(wave), height: 0)
+
+                if isDone {
+                    t.invalidate()
+                    withAnimation(.spring()) {
+                        self.myAvatarOffset = .zero
+                        self.currentInteraction = nil
+                    }
                 }
             }
         }
@@ -345,7 +344,8 @@ struct ARSceneViewRepresentable: UIViewRepresentable {
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
             guard let arView = gesture.view as? ARSCNView else { return }
             let location = gesture.location(in: arView)
-            let results = arView.hitTest(location, types: [.existingPlaneUsingExtent, .estimatedHorizontalPlane])
+            guard let query = arView.raycastQuery(from: location, allowing: .estimatedPlane, alignment: .horizontal) else { return }
+            let results = arView.session.raycast(query)
             if let hit = results.first {
                 let pos = SCNVector3(
                     hit.worldTransform.columns.3.x,

@@ -65,7 +65,9 @@ final class FocusModeManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.checkFocusStatus()
+            Task { @MainActor in
+                self?.checkFocusStatus()
+            }
         }
     }
 

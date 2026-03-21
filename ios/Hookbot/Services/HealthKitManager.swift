@@ -26,7 +26,7 @@ final class HealthKitManager: ObservableObject {
 
         let stepType = HKObjectType.quantityType(forIdentifier: .stepCount)!
         store.requestAuthorization(toShare: nil, read: [stepType]) { [weak self] granted, _ in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.isAuthorized = granted
                 if granted {
                     self?.fetchTodaySteps()
@@ -86,7 +86,9 @@ final class HealthKitManager: ObservableObject {
     private func startObserving() {
         guard let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount) else { return }
         observerQuery = HKObserverQuery(sampleType: stepType, predicate: nil) { [weak self] _, _, _ in
-            self?.fetchTodaySteps()
+            Task { @MainActor in
+                self?.fetchTodaySteps()
+            }
         }
         store.execute(observerQuery!)
     }

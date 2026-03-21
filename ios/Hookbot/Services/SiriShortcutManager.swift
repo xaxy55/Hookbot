@@ -11,11 +11,9 @@ struct HookbotStatusIntent: AppIntent {
     static var description = IntentDescription("Check your hookbot's current state and mood.")
     static var openAppWhenRun = false
 
-    @Dependency
-    var engine: AvatarEngine
-
-    func perform() async throws -> some ReturnsValue & ProvidesDialog {
-        let state = engine.currentState
+    func perform() async throws -> some ReturnsValue<String> & ProvidesDialog {
+        let stateString = UserDefaults.standard.string(forKey: "hookbot_current_state") ?? AvatarState.idle.rawValue
+        let state = AvatarState(rawValue: stateString) ?? .idle
         let dialog: String
         switch state {
         case .idle:      dialog = "Your hookbot is scheming in the background. All quiet."
@@ -36,10 +34,7 @@ struct StartHookbotFocusIntent: AppIntent {
     static var description = IntentDescription("Put your hookbot in focus mode — DND on, distractions off.")
     static var openAppWhenRun = false
 
-    @Dependency
-    var engine: AvatarEngine
-
-    func perform() async throws -> some ReturnsValue & ProvidesDialog {
+    func perform() async throws -> some ReturnsValue<Bool> & ProvidesDialog {
         await MainActor.run {
             FocusModeManager.shared.enterFocusMode()
         }
@@ -58,7 +53,7 @@ struct SendBuddyWaveIntent: AppIntent {
     @Dependency
     var socialService: SocialService
 
-    func perform() async throws -> some ReturnsValue & ProvidesDialog {
+    func perform() async throws -> some ReturnsValue<Bool> & ProvidesDialog {
         let sent = await socialService.sendEmote(.wave, to: nil) // sends to first friend
         let dialog = sent
             ? "Wave sent! Your avatar is waving at your buddy."
@@ -74,10 +69,7 @@ struct CheckStreakIntent: AppIntent {
     static var description = IntentDescription("Find out your current coding streak and XP.")
     static var openAppWhenRun = false
 
-    @Dependency
-    var engine: AvatarEngine
-
-    func perform() async throws -> some ReturnsValue & ProvidesDialog {
+    func perform() async throws -> some ReturnsValue<Int> & ProvidesDialog {
         // Pull streak from UserDefaults (populated by AvatarEvolutionEngine)
         let streak = UserDefaults.standard.integer(forKey: "hookbot_streak")
         let xp = UserDefaults.standard.integer(forKey: "hookbot_xp")

@@ -16,10 +16,23 @@ final class AuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
     /// Start the WorkOS OAuth flow via ASWebAuthenticationSession
     func login(serverURL: String, completion: @escaping (String?, String?) -> Void) {
-        let trimmed = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        var trimmed = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
 
-        guard let loginURL = URL(string: "\(trimmed)/auth/login?mobile_redirect=\(callbackScheme)://auth/callback") else {
+        // Ensure the server URL has an https scheme
+        if !trimmed.hasPrefix("https://") && !trimmed.hasPrefix("http://") {
+            trimmed = "https://\(trimmed)"
+        }
+
+        guard var components = URLComponents(string: "\(trimmed)/auth/login") else {
+            errorMessage = "Invalid server URL"
+            completion(nil, nil)
+            return
+        }
+        components.queryItems = [
+            URLQueryItem(name: "mobile_redirect", value: "\(callbackScheme)://auth/callback")
+        ]
+        guard let loginURL = components.url else {
             errorMessage = "Invalid server URL"
             completion(nil, nil)
             return

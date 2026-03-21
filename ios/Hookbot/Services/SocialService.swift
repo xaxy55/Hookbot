@@ -129,7 +129,7 @@ final class SocialService: ObservableObject {
     func refreshFriends() {
         guard !serverURL.isEmpty else { return }
         let url = URL(string: "\(serverURL)/api/social/friends?device_id=\(deviceId)")!
-        var req = authedRequest(url: url)
+        let req = authedRequest(url: url)
         URLSession.shared.dataTask(with: req) { [weak self] data, _, _ in
             guard let data,
                   let decoded = try? JSONDecoder().decode([Friend].self, from: data) else { return }
@@ -206,7 +206,9 @@ final class SocialService: ObservableObject {
             URLSession.shared.dataTask(with: self.authedRequest(url: url)) { data, _, _ in
                 guard let data,
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                    self.pollForPairingCompletion(code: code)
+                    Task { @MainActor in
+                        self.pollForPairingCompletion(code: code)
+                    }
                     return
                 }
                 DispatchQueue.main.async {
@@ -334,8 +336,10 @@ final class SocialService: ObservableObject {
             "challenged_friend_id": friendId,
             "type": type
         ])
-        URLSession.shared.dataTask(with: req) { [weak self] data, _, _ in
-            self?.refreshChallenges()
+        URLSession.shared.dataTask(with: req) { [weak self] _, _, _ in
+            Task { @MainActor in
+                self?.refreshChallenges()
+            }
         }.resume()
     }
 

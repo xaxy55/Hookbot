@@ -210,8 +210,6 @@ extension DeviceClaimService: CBCentralManagerDelegate {
         rssi RSSI: NSNumber
     ) {
         Task { @MainActor in
-            let bleName = peripheral.name ?? advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? "Hookbot"
-
             // Connect to read the claim info characteristic
             if connectedPeripherals[peripheral.identifier] == nil {
                 connectedPeripherals[peripheral.identifier] = peripheral

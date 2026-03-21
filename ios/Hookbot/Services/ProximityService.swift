@@ -68,10 +68,8 @@ final class ProximityService: NSObject, ObservableObject {
     func start() {
         central = CBCentralManager(delegate: self, queue: .main)
         peripheral = CBPeripheralManager(delegate: self, queue: .main)
-        if #available(iOS 14.0, *) {
-            if NISession.isSupported {
-                startNISession()
-            }
+        if NISession.deviceCapabilities.supportsPreciseDistanceMeasurement {
+            startNISession()
         }
     }
 
