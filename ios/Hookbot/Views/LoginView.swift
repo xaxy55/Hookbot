@@ -57,8 +57,12 @@ struct LoginView: View {
                     auth.login(serverURL: serverURL) { apiKey, email in
                         guard let apiKey else { return }
                         engine.config.apiKey = apiKey
-                        engine.config.serverURL = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+                        var normalizedURL = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
                             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                        if !normalizedURL.hasPrefix("https://") && !normalizedURL.hasPrefix("http://") {
+                            normalizedURL = "https://\(normalizedURL)"
+                        }
+                        engine.config.serverURL = normalizedURL
                         if let data = try? JSONEncoder().encode(engine.config) {
                             UserDefaults.standard.set(data, forKey: "hookbot_config")
                         }
@@ -106,8 +110,12 @@ struct LoginView: View {
 
                         Button {
                             engine.config.apiKey = manualAPIKey
-                            engine.config.serverURL = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+                            var normalizedURL = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
                                 .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                            if !normalizedURL.hasPrefix("https://") && !normalizedURL.hasPrefix("http://") {
+                                normalizedURL = "https://\(normalizedURL)"
+                            }
+                            engine.config.serverURL = normalizedURL
                             if let data = try? JSONEncoder().encode(engine.config) {
                                 UserDefaults.standard.set(data, forKey: "hookbot_config")
                             }

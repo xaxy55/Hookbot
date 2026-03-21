@@ -189,8 +189,12 @@ struct SettingsView: View {
     // MARK: - Test Connection
 
     private func testServerConnection() {
-        let urlString = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        var urlString = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard !urlString.isEmpty else { return }
+        if !urlString.hasPrefix("https://") && !urlString.hasPrefix("http://") {
+            urlString = "https://\(urlString)"
+        }
 
         // Test /api/health first, fall back to /api/devices
         guard let url = URL(string: "\(urlString)/api/health") else {
@@ -254,10 +258,15 @@ struct SettingsView: View {
     }
 
     private func save() {
-        let serverChanged = engine.config.serverURL != serverURL || engine.config.deviceId != deviceId
+        var normalizedURL = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if !normalizedURL.hasPrefix("https://") && !normalizedURL.hasPrefix("http://") {
+            normalizedURL = "https://\(normalizedURL)"
+        }
+        let serverChanged = engine.config.serverURL != normalizedURL || engine.config.deviceId != deviceId
 
         engine.config.soundEnabled = soundEnabled
-        engine.config.serverURL = serverURL
+        engine.config.serverURL = normalizedURL
         engine.config.apiKey = apiKey
         engine.config.deviceId = deviceId
         engine.config.deviceName = deviceName
