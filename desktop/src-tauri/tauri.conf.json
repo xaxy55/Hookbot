@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicehash/tauri/dev/tooling/cli/schema.json",
+  "productName": "Hookbot Widget",
+  "version": "0.1.0",
+  "identifier": "com.hookbot.desktop-widget",
+  "build": {
+    "frontendDist": "../src",
+    "devUrl": "http://localhost:1420"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Hookbot Status",
+        "width": 320,
+        "height": 420,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "visible": false,
+        "skipTaskbar": true
+      }
+    ],
+    "trayIcon": {
+      "iconPath": "icons/tray-icon.png",
+      "iconAsTemplate": true,
+      "tooltip": "Hookbot Widget"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/icon.ico"
+    ]
+  }
+}
