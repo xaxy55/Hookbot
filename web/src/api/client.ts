@@ -1216,3 +1216,340 @@ export const getGlobalEvents = (limit?: number, eventType?: string) => {
 };
 export const createGlobalEvent = (data: { device_id?: string; event_type: string; message: string; anonymous?: boolean }) =>
   request<GlobalEvent>('/social/events', { method: 'POST', body: JSON.stringify(data) });
+
+// --- Phase 8: Desk Ecosystem & Smart Home ---
+
+// Desk Lights
+export interface DeskLightConfig {
+  id: string;
+  device_id: string;
+  provider: string;
+  name: string;
+  bridge_ip: string | null;
+  api_key: string | null;
+  light_ids: string[];
+  state_colors: Record<string, string>;
+  enabled: boolean;
+  created_at: string;
+}
+
+export const getDeskLights = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<DeskLightConfig[]>(`/desk-lights${params}`);
+};
+
+export const createDeskLight = (data: {
+  device_id?: string;
+  provider: string;
+  name: string;
+  bridge_ip?: string;
+  api_key?: string;
+  light_ids?: string[];
+  state_colors?: Record<string, string>;
+}) => request<DeskLightConfig>('/desk-lights', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateDeskLight = (id: string, data: {
+  name?: string;
+  bridge_ip?: string;
+  api_key?: string;
+  light_ids?: string[];
+  state_colors?: Record<string, string>;
+  enabled?: boolean;
+}) => request<{ ok: boolean }>(`/desk-lights/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteDeskLight = (id: string) =>
+  request<{ ok: boolean }>(`/desk-lights/${id}`, { method: 'DELETE' });
+
+export const triggerDeskLightAction = (id: string, data: {
+  color?: string;
+  brightness?: number;
+  effect?: string;
+}) => request<{ ok: boolean }>(`/desk-lights/${id}/action`, { method: 'POST', body: JSON.stringify(data) });
+
+// Music Integration
+export interface MusicConfig {
+  id: string;
+  device_id: string;
+  provider: string;
+  access_token: string | null;
+  refresh_token: string | null;
+  auto_pause_meetings: boolean;
+  focus_playlist_id: string | null;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface NowPlaying {
+  is_playing: boolean;
+  track_name: string | null;
+  artist_name: string | null;
+  album_name: string | null;
+  album_art_url: string | null;
+  progress_ms: number | null;
+  duration_ms: number | null;
+}
+
+export const getMusicConfig = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<MusicConfig[]>(`/music/config${params}`);
+};
+
+export const createMusicConfig = (data: {
+  device_id?: string;
+  provider: string;
+  access_token?: string;
+  refresh_token?: string;
+  focus_playlist_id?: string;
+}) => request<MusicConfig>('/music/config', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateMusicConfig = (id: string, data: {
+  access_token?: string;
+  auto_pause_meetings?: boolean;
+  focus_playlist_id?: string;
+  enabled?: boolean;
+}) => request<{ ok: boolean }>(`/music/config/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteMusicConfig = (id: string) =>
+  request<{ ok: boolean }>(`/music/config/${id}`, { method: 'DELETE' });
+
+export const getNowPlaying = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<NowPlaying>(`/music/now-playing${params}`);
+};
+
+export const musicAction = (action: string, deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ ok: boolean }>(`/music/action${params}`, { method: 'POST', body: JSON.stringify({ action }) });
+};
+
+// Standing Desk
+export interface StandingDeskConfig {
+  id: string;
+  device_id: string;
+  sit_remind_minutes: number;
+  stand_remind_minutes: number;
+  enabled: boolean;
+  current_position: string;
+  total_stand_minutes: number;
+  total_sit_minutes: number;
+  transitions_today: number;
+  last_transition_at: string | null;
+  created_at: string;
+}
+
+export interface DeskHealthReport {
+  total_stand_minutes: number;
+  total_sit_minutes: number;
+  stand_ratio: number;
+  transitions_today: number;
+  daily_history: { date: string; stand_minutes: number; sit_minutes: number; transitions: number }[];
+}
+
+export const getStandingDesk = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<StandingDeskConfig>(`/standing-desk${params}`);
+};
+
+export const updateStandingDesk = (data: {
+  sit_remind_minutes?: number;
+  stand_remind_minutes?: number;
+  enabled?: boolean;
+}, deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ ok: boolean }>(`/standing-desk${params}`, { method: 'PUT', body: JSON.stringify(data) });
+};
+
+export const changePosition = (position: string, deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ ok: boolean; celebration: boolean; message: string }>(`/standing-desk/position${params}`, {
+    method: 'POST', body: JSON.stringify({ position }),
+  });
+};
+
+export const getDeskReport = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<DeskHealthReport>(`/standing-desk/report${params}`);
+};
+
+// Stream Deck
+export interface StreamDeckButton {
+  id: string;
+  device_id: string;
+  position: number;
+  label: string;
+  icon: string | null;
+  action_type: string;
+  action_config: Record<string, unknown>;
+  enabled: boolean;
+  created_at: string;
+}
+
+export const getStreamDeckButtons = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<StreamDeckButton[]>(`/streamdeck/buttons${params}`);
+};
+
+export const createStreamDeckButton = (data: {
+  device_id?: string;
+  position: number;
+  label: string;
+  icon?: string;
+  action_type: string;
+  action_config?: Record<string, unknown>;
+}) => request<StreamDeckButton>('/streamdeck/buttons', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateStreamDeckButton = (id: string, data: {
+  label?: string;
+  icon?: string;
+  action_type?: string;
+  action_config?: Record<string, unknown>;
+  enabled?: boolean;
+}) => request<{ ok: boolean }>(`/streamdeck/buttons/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteStreamDeckButton = (id: string) =>
+  request<{ ok: boolean }>(`/streamdeck/buttons/${id}`, { method: 'DELETE' });
+
+export const triggerStreamDeckButton = (buttonId: string) =>
+  request<{ ok: boolean }>('/streamdeck/trigger', { method: 'POST', body: JSON.stringify({ button_id: buttonId }) });
+
+// Home Assistant
+export interface HomeAssistantConfig {
+  id: string;
+  device_id: string;
+  ha_url: string;
+  access_token: string | null;
+  entity_id: string | null;
+  expose_states: boolean;
+  expose_sensors: boolean;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface HomeAssistantEntity {
+  entity_id: string;
+  state: string;
+  attributes: Record<string, unknown>;
+}
+
+export const getHomeAssistantConfig = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<HomeAssistantConfig | null>(`/homeassistant${params}`);
+};
+
+export const createHomeAssistantConfig = (data: {
+  device_id?: string;
+  ha_url: string;
+  access_token?: string;
+  entity_id?: string;
+}) => request<HomeAssistantConfig>('/homeassistant', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateHomeAssistantConfig = (id: string, data: {
+  ha_url?: string;
+  access_token?: string;
+  entity_id?: string;
+  expose_states?: boolean;
+  expose_sensors?: boolean;
+  enabled?: boolean;
+}) => request<{ ok: boolean }>(`/homeassistant/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteHomeAssistantConfig = (id: string) =>
+  request<{ ok: boolean }>(`/homeassistant/${id}`, { method: 'DELETE' });
+
+export const getHomeAssistantEntity = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<HomeAssistantEntity>(`/homeassistant/entity${params}`);
+};
+
+export const syncHomeAssistant = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ ok: boolean }>(`/homeassistant/sync${params}`, { method: 'POST' });
+};
+
+// Desk Occupancy
+export interface DeskOccupancyConfig {
+  id: string;
+  device_id: string;
+  break_remind_minutes: number;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface OccupancyEvent {
+  id: number;
+  device_id: string;
+  event_type: string;
+  created_at: string;
+}
+
+export interface OccupancyReport {
+  total_desk_hours: number;
+  total_break_hours: number;
+  avg_session_minutes: number;
+  breaks_taken: number;
+  optimal_break_suggestion: string;
+  daily_stats: { date: string; desk_hours: number; break_count: number; longest_session_minutes: number }[];
+}
+
+export const getDeskOccupancyConfig = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<DeskOccupancyConfig>(`/desk-occupancy/config${params}`);
+};
+
+export const updateDeskOccupancyConfig = (data: {
+  break_remind_minutes?: number;
+  enabled?: boolean;
+}, deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ ok: boolean }>(`/desk-occupancy/config${params}`, { method: 'PUT', body: JSON.stringify(data) });
+};
+
+export const recordOccupancyEvent = (eventType: string, deviceId?: string) =>
+  request<OccupancyEvent>('/desk-occupancy/events', {
+    method: 'POST', body: JSON.stringify({ device_id: deviceId, event_type: eventType }),
+  });
+
+export const getOccupancyEvents = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<OccupancyEvent[]>(`/desk-occupancy/events${params}`);
+};
+
+export const getOccupancyReport = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<OccupancyReport>(`/desk-occupancy/report${params}`);
+};
+
+// Multi-Monitor
+export interface MonitorConfig {
+  id: string;
+  device_id: string;
+  monitor_count: number;
+  servo_pin: number | null;
+  angle_map: Record<string, number>;
+  detection_method: string;
+  enabled: boolean;
+  active_monitor: number;
+  created_at: string;
+}
+
+export const getMonitorConfig = (deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<MonitorConfig>(`/monitors${params}`);
+};
+
+export const updateMonitorConfig = (data: {
+  monitor_count?: number;
+  servo_pin?: number;
+  angle_map?: Record<string, number>;
+  detection_method?: string;
+  enabled?: boolean;
+}, deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ ok: boolean }>(`/monitors${params}`, { method: 'PUT', body: JSON.stringify(data) });
+};
+
+export const setActiveMonitor = (monitor: number, deviceId?: string) => {
+  const params = deviceId ? `?device_id=${deviceId}` : '';
+  return request<{ ok: boolean; target_angle: number }>(`/monitors/active${params}`, {
+    method: 'POST', body: JSON.stringify({ monitor }),
+  });
+};

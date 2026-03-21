@@ -779,6 +779,325 @@ pub struct UpdateVoiceConfig {
     pub language: Option<String>,
 }
 
+// --- Desk Lighting types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeskLightConfig {
+    pub id: String,
+    pub device_id: String,
+    pub provider: String, // "hue", "wled"
+    pub name: String,
+    pub bridge_ip: Option<String>,
+    pub api_key: Option<String>,
+    pub light_ids: Vec<String>,
+    pub state_colors: serde_json::Value,
+    pub enabled: bool,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDeskLight {
+    pub device_id: Option<String>,
+    pub provider: String,
+    pub name: String,
+    pub bridge_ip: Option<String>,
+    pub api_key: Option<String>,
+    pub light_ids: Option<Vec<String>>,
+    pub state_colors: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateDeskLight {
+    pub name: Option<String>,
+    pub bridge_ip: Option<String>,
+    pub api_key: Option<String>,
+    pub light_ids: Option<Vec<String>>,
+    pub state_colors: Option<serde_json::Value>,
+    pub enabled: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DeskLightAction {
+    pub color: Option<String>,
+    pub brightness: Option<i32>,
+    pub effect: Option<String>,
+}
+
+// --- Music Integration types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MusicConfig {
+    pub id: String,
+    pub device_id: String,
+    pub provider: String, // "spotify", "apple_music"
+    pub access_token: Option<String>,
+    pub refresh_token: Option<String>,
+    pub auto_pause_meetings: bool,
+    pub focus_playlist_id: Option<String>,
+    pub enabled: bool,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateMusicConfig {
+    pub device_id: Option<String>,
+    pub provider: String,
+    pub access_token: Option<String>,
+    pub refresh_token: Option<String>,
+    pub focus_playlist_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateMusicConfig {
+    pub access_token: Option<String>,
+    pub refresh_token: Option<String>,
+    pub auto_pause_meetings: Option<bool>,
+    pub focus_playlist_id: Option<String>,
+    pub enabled: Option<bool>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct NowPlaying {
+    pub is_playing: bool,
+    pub track_name: Option<String>,
+    pub artist_name: Option<String>,
+    pub album_name: Option<String>,
+    pub album_art_url: Option<String>,
+    pub progress_ms: Option<i64>,
+    pub duration_ms: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MusicAction {
+    pub action: String, // "play", "pause", "next", "previous"
+    pub playlist_id: Option<String>,
+}
+
+// --- Standing Desk types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StandingDeskConfig {
+    pub id: String,
+    pub device_id: String,
+    pub sit_remind_minutes: i64,
+    pub stand_remind_minutes: i64,
+    pub enabled: bool,
+    pub current_position: String, // "sitting", "standing"
+    pub total_stand_minutes: i64,
+    pub total_sit_minutes: i64,
+    pub transitions_today: i64,
+    pub last_transition_at: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateStandingDeskConfig {
+    pub device_id: Option<String>,
+    pub sit_remind_minutes: Option<i64>,
+    pub stand_remind_minutes: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateStandingDeskConfig {
+    pub sit_remind_minutes: Option<i64>,
+    pub stand_remind_minutes: Option<i64>,
+    pub enabled: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DeskPositionChange {
+    pub position: String, // "sitting" or "standing"
+}
+
+#[derive(Debug, Serialize)]
+pub struct DeskHealthReport {
+    pub total_stand_minutes: i64,
+    pub total_sit_minutes: i64,
+    pub stand_ratio: f64,
+    pub transitions_today: i64,
+    pub daily_history: Vec<DeskDayStats>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DeskDayStats {
+    pub date: String,
+    pub stand_minutes: i64,
+    pub sit_minutes: i64,
+    pub transitions: i64,
+}
+
+// --- Stream Deck types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StreamDeckButton {
+    pub id: String,
+    pub device_id: String,
+    pub position: i32,
+    pub label: String,
+    pub icon: Option<String>,
+    pub action_type: String,
+    pub action_config: serde_json::Value,
+    pub enabled: bool,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateStreamDeckButton {
+    pub device_id: Option<String>,
+    pub position: i32,
+    pub label: String,
+    pub icon: Option<String>,
+    pub action_type: String,
+    pub action_config: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateStreamDeckButton {
+    pub label: Option<String>,
+    pub icon: Option<String>,
+    pub action_type: Option<String>,
+    pub action_config: Option<serde_json::Value>,
+    pub enabled: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TriggerStreamDeckButton {
+    pub button_id: String,
+}
+
+// --- Home Assistant types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HomeAssistantConfig {
+    pub id: String,
+    pub device_id: String,
+    pub ha_url: String,
+    pub access_token: Option<String>,
+    pub entity_id: Option<String>,
+    pub expose_states: bool,
+    pub expose_sensors: bool,
+    pub enabled: bool,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateHomeAssistantConfig {
+    pub device_id: Option<String>,
+    pub ha_url: String,
+    pub access_token: Option<String>,
+    pub entity_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateHomeAssistantConfig {
+    pub ha_url: Option<String>,
+    pub access_token: Option<String>,
+    pub entity_id: Option<String>,
+    pub expose_states: Option<bool>,
+    pub expose_sensors: Option<bool>,
+    pub enabled: Option<bool>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct HomeAssistantEntity {
+    pub entity_id: String,
+    pub state: String,
+    pub attributes: serde_json::Value,
+}
+
+// --- Desk Occupancy types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeskOccupancyConfig {
+    pub id: String,
+    pub device_id: String,
+    pub break_remind_minutes: i64,
+    pub enabled: bool,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDeskOccupancyConfig {
+    pub device_id: Option<String>,
+    pub break_remind_minutes: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateDeskOccupancyConfig {
+    pub break_remind_minutes: Option<i64>,
+    pub enabled: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OccupancyEvent {
+    pub id: i64,
+    pub device_id: String,
+    pub event_type: String, // "occupied", "vacant", "break_start", "break_end"
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RecordOccupancyEvent {
+    pub device_id: Option<String>,
+    pub event_type: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct OccupancyReport {
+    pub total_desk_hours: f64,
+    pub total_break_hours: f64,
+    pub avg_session_minutes: f64,
+    pub breaks_taken: i64,
+    pub optimal_break_suggestion: String,
+    pub daily_stats: Vec<OccupancyDayStats>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct OccupancyDayStats {
+    pub date: String,
+    pub desk_hours: f64,
+    pub break_count: i64,
+    pub longest_session_minutes: f64,
+}
+
+// --- Multi-Monitor types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MonitorConfig {
+    pub id: String,
+    pub device_id: String,
+    pub monitor_count: i32,
+    pub servo_pin: Option<i32>,
+    pub angle_map: serde_json::Value, // { "0": 45, "1": 90, "2": 135 }
+    pub detection_method: String, // "usb", "manual"
+    pub enabled: bool,
+    pub active_monitor: i32,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateMonitorConfig {
+    pub device_id: Option<String>,
+    pub monitor_count: Option<i32>,
+    pub servo_pin: Option<i32>,
+    pub angle_map: Option<serde_json::Value>,
+    pub detection_method: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateMonitorConfig {
+    pub monitor_count: Option<i32>,
+    pub servo_pin: Option<i32>,
+    pub angle_map: Option<serde_json::Value>,
+    pub detection_method: Option<String>,
+    pub enabled: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SetActiveMonitor {
+    pub monitor: i32,
+}
+
 // --- Context types ---
 
 #[derive(Debug, Serialize)]

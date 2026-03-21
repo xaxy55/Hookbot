@@ -35,6 +35,13 @@ import VoiceControlPage from './pages/VoiceControlPage';
 import SocialPage from './pages/SocialPage';
 import TeamDashboardPage from './pages/TeamDashboardPage';
 import GlobalWallPage from './pages/GlobalWallPage';
+import DeskLightsPage from './pages/DeskLightsPage';
+import MusicPage from './pages/MusicPage';
+import StandingDeskPage from './pages/StandingDeskPage';
+import StreamDeckPage from './pages/StreamDeckPage';
+import HomeAssistantPage from './pages/HomeAssistantPage';
+import DeskOccupancyPage from './pages/DeskOccupancyPage';
+import MonitorsPage from './pages/MonitorsPage';
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -94,6 +101,13 @@ export default function App() {
           <Route path="/social" element={<SocialPage />} />
           <Route path="/team" element={<TeamDashboardPage />} />
           <Route path="/global-wall" element={<GlobalWallPage />} />
+          <Route path="/desk-lights" element={<DeskLightsPage />} />
+          <Route path="/music" element={<MusicPage />} />
+          <Route path="/standing-desk" element={<StandingDeskPage />} />
+          <Route path="/streamdeck" element={<StreamDeckPage />} />
+          <Route path="/homeassistant" element={<HomeAssistantPage />} />
+          <Route path="/desk-occupancy" element={<DeskOccupancyPage />} />
+          <Route path="/monitors" element={<MonitorsPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/logs" element={<LogsPage />} />
