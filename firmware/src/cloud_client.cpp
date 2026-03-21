@@ -208,7 +208,18 @@ static void sendHeartbeat() {
                 saveCloudConfig();
                 Serial.println("[Cloud] Device was claimed by a user!");
             }
+
+            // Token rotation: server may issue a new token
+            const char* newToken = resp["new_token"] | (const char*)nullptr;
+            if (newToken && strlen(newToken) > 0) {
+                strncpy(deviceToken, newToken, sizeof(deviceToken) - 1);
+                saveCloudConfig();
+                Serial.println("[Cloud] Device token rotated by server");
+            }
         }
+    } else if (code == 429) {
+        // Rate limited — back off
+        Serial.println("[Cloud] Rate limited, backing off...");
     } else if (code == 401) {
         // Token invalid — re-register
         Serial.println("[Cloud] Token expired, re-registering...");

@@ -60,6 +60,11 @@ async fn main() {
         config.login_rate_limit_max, config.login_rate_limit_window_secs
     );
 
+    // Create rate limiter for device API (60 requests per 60 seconds per IP)
+    let device_rate_limiter = routes::device_api::DeviceApiRateLimiter::new(60, 60);
+    device_rate_limiter.clone().start_cleanup_task();
+    info!("Device API rate limit: 60 requests per 60 seconds per IP");
+
     let config = Arc::new(config);
 
     // CORS: use explicit origins if configured, otherwise fall back to mirror (permissive)
@@ -428,6 +433,7 @@ async fn main() {
         .merge(protected_routes)
         .layer(Extension(pool.clone()))
         .layer(Extension(login_rate_limiter))
+        .layer(Extension(device_rate_limiter))
         .layer(Extension(config.clone()))
         .layer(Extension(tunnel_manager))
         .layer(Extension(command_queue.clone()))

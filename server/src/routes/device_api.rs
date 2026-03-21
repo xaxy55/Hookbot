@@ -10,18 +10,89 @@
 //! - POST /api/device/commands/:id/ack — acknowledge command execution
 //! - POST /api/devices/claim     — user claims device by code (user-authed)
 
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use axum::extract::{Path, Query, Request, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tracing::info;
+use tokio::sync::Mutex;
+use tracing::{info, warn};
 
 use crate::auth::UserId;
 use crate::db::DbPool;
-use crate::error::AppError;
 use crate::services::command_queue::CommandQueue;
+
+// --- Device API rate limiter ---
+
+/// Per-IP rate limiter for device API endpoints.
+/// Limits requests per IP to prevent abuse of public device endpoints.
+#[derive(Clone)]
+pub struct DeviceApiRateLimiter {
+    /// Map of IP -> (request_count, window_start_epoch_secs)
+    requests: Arc<Mutex<HashMap<String, (u32, u64)>>>,
+    max_requests: u32,
+    window_secs: u64,
+}
+
+impl DeviceApiRateLimiter {
+    pub fn new(max_requests: u32, window_secs: u64) -> Self {
+        Self {
+            requests: Arc::new(Mutex::new(HashMap::new())),
+            max_requests,
+            window_secs,
+        }
+    }
+
+    /// Check if a request from this IP is allowed. Returns Ok(()) or Err(retry_after_secs).
+    pub async fn check(&self, ip: &str) -> Result<(), u64> {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        let mut requests = self.requests.lock().await;
+
+        let entry = requests.entry(ip.to_string()).or_insert((0, now));
+
+        // Reset window if expired
+        if now >= entry.1 + self.window_secs {
+            *entry = (0, now);
+        }
+
+        if entry.0 >= self.max_requests {
+            let retry_after = (entry.1 + self.window_secs).saturating_sub(now);
+            return Err(retry_after);
+        }
+
+        entry.0 += 1;
+        Ok(())
+    }
+
+    /// Periodic cleanup of expired entries to prevent memory growth.
+    pub fn start_cleanup_task(self) {
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(300));
+            loop {
+                interval.tick().await;
+                let now = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                let mut requests = self.requests.lock().await;
+                requests.retain(|_, (_, window_start)| now < *window_start + self.window_secs);
+            }
+        });
+    }
+}
+
+// --- Token rotation ---
+
+const TOKEN_ROTATION_HOURS: u64 = 24;
 
 // --- Claim code generation ---
 
@@ -139,8 +210,63 @@ fn authenticate_device(req: &Request, db: &DbPool) -> Result<String, Response> {
 /// POST /api/device/register — ESP device self-registration on first boot.
 pub async fn register(
     State(db): State<DbPool>,
-    Json(input): Json<RegisterRequest>,
-) -> Result<Json<RegisterResponse>, AppError> {
+    axum::Extension(rate_limiter): axum::Extension<DeviceApiRateLimiter>,
+    req: Request,
+) -> Response {
+    // Rate limit by source IP
+    let ip = req
+        .headers()
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.split(',').next().unwrap_or("").trim().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+
+    if let Err(retry_after) = rate_limiter.check(&ip).await {
+        warn!("Device register rate limited: {ip}");
+        return (
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(json!({ "error": "Too many requests", "retry_after": retry_after })),
+        )
+            .into_response();
+    }
+
+    // Parse body
+    let body_bytes = match axum::body::to_bytes(req.into_body(), 1024 * 16).await {
+        Ok(b) => b,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "error": "Invalid request body" })),
+            )
+                .into_response();
+        }
+    };
+
+    let input: RegisterRequest = match serde_json::from_slice(&body_bytes) {
+        Ok(b) => b,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "error": "Invalid JSON" })),
+            )
+                .into_response();
+        }
+    };
+
+    match register_inner(db, input) {
+        Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "error": e.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
+fn register_inner(
+    db: DbPool,
+    input: RegisterRequest,
+) -> Result<RegisterResponse, String> {
     let conn = db.lock().unwrap();
 
     // Check if device already exists by hostname
@@ -167,12 +293,12 @@ pub async fn register(
                 rusqlite::params![token_hash, device_id],
             );
 
-            return Ok(Json(RegisterResponse {
+            return Ok(RegisterResponse {
                 device_id,
                 device_token: new_token,
                 claim_code: String::new(),
                 claimed: true,
-            }));
+            });
         } else {
             // Not yet claimed — refresh token, keep claim code
             let new_token = uuid::Uuid::new_v4().to_string();
@@ -184,12 +310,12 @@ pub async fn register(
                 rusqlite::params![token_hash, claim_code, device_id],
             );
 
-            return Ok(Json(RegisterResponse {
+            return Ok(RegisterResponse {
                 device_id,
                 device_token: new_token,
                 claim_code,
                 claimed: false,
-            }));
+            });
         }
     }
 
@@ -209,33 +335,50 @@ pub async fn register(
             input.device_type.as_deref().unwrap_or(""),
         ],
     )
-    .map_err(|e| AppError::Internal(format!("Failed to create device: {e}")))?;
+    .map_err(|e| format!("Failed to create device: {e}"))?;
 
     conn.execute(
         "INSERT INTO device_tokens (device_id, token_hash, claim_code, created_at)
          VALUES (?1, ?2, ?3, datetime('now'))",
         rusqlite::params![device_id, token_hash, claim_code],
     )
-    .map_err(|e| AppError::Internal(format!("Failed to create device token: {e}")))?;
+    .map_err(|e| format!("Failed to create device token: {e}"))?;
 
     info!(
         "New cloud device registered: {} (hostname: {}, claim: {})",
         device_id, input.hostname, claim_code
     );
 
-    Ok(Json(RegisterResponse {
+    Ok(RegisterResponse {
         device_id,
         device_token,
         claim_code,
         claimed: false,
-    }))
+    })
 }
 
 /// POST /api/device/heartbeat — Device pushes its status to the server.
 pub async fn heartbeat(
     State(db): State<DbPool>,
+    axum::Extension(rate_limiter): axum::Extension<DeviceApiRateLimiter>,
     req: Request,
 ) -> Response {
+    // Rate limit by source IP
+    let ip = req
+        .headers()
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.split(',').next().unwrap_or("").trim().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+
+    if let Err(retry_after) = rate_limiter.check(&ip).await {
+        return (
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(json!({ "error": "Too many requests", "retry_after": retry_after })),
+        )
+            .into_response();
+    }
+
     let device_id = match authenticate_device(&req, &db) {
         Ok(id) => id,
         Err(resp) => return resp,
@@ -312,39 +455,53 @@ pub async fn heartbeat(
         [&device_id],
     );
 
-    // Check if device is claimed
-    let claimed: bool = conn
+    // Check if device is claimed and get token age
+    let (claim_code_opt, token_created_at): (Option<String>, Option<String>) = conn
         .query_row(
-            "SELECT claim_code FROM device_tokens WHERE device_id = ?1",
+            "SELECT claim_code, created_at FROM device_tokens WHERE device_id = ?1",
             [&device_id],
-            |row| row.get::<_, Option<String>>(0),
+            |row| Ok((row.get(0)?, row.get(1)?)),
         )
-        .ok()
-        .flatten()
-        .is_none();
+        .unwrap_or((None, None));
 
-    let claim_code: String = if !claimed {
-        conn.query_row(
-            "SELECT claim_code FROM device_tokens WHERE device_id = ?1",
-            [&device_id],
-            |row| row.get::<_, Option<String>>(0),
-        )
-        .ok()
-        .flatten()
-        .unwrap_or_default()
-    } else {
-        String::new()
-    };
+    let claimed = claim_code_opt.is_none();
+    let claim_code = claim_code_opt.unwrap_or_default();
 
-    (
-        StatusCode::OK,
-        Json(json!({
-            "ok": true,
-            "claimed": claimed,
-            "claim_code": claim_code,
-        })),
-    )
-        .into_response()
+    // Token rotation: if token is older than TOKEN_ROTATION_HOURS, issue a new one
+    let mut new_token: Option<String> = None;
+    if let Some(ref created) = token_created_at {
+        let should_rotate: bool = conn
+            .query_row(
+                "SELECT datetime(?1, '+' || ?2 || ' hours') < datetime('now')",
+                rusqlite::params![created, TOKEN_ROTATION_HOURS],
+                |row| row.get(0),
+            )
+            .unwrap_or(false);
+
+        if should_rotate {
+            let token = uuid::Uuid::new_v4().to_string();
+            let token_hash = hash_token(&token);
+            let _ = conn.execute(
+                "UPDATE device_tokens SET token_hash = ?1, created_at = datetime('now') WHERE device_id = ?2",
+                rusqlite::params![token_hash, device_id],
+            );
+            info!("Rotated device token for {device_id}");
+            new_token = Some(token);
+        }
+    }
+
+    let mut response = json!({
+        "ok": true,
+        "claimed": claimed,
+        "claim_code": claim_code,
+    });
+
+    // Include new token in response if rotated — device must update its stored token
+    if let Some(ref token) = new_token {
+        response["new_token"] = json!(token);
+    }
+
+    (StatusCode::OK, Json(response)).into_response()
 }
 
 /// GET /api/device/commands — Device polls for pending commands (supports long-poll).

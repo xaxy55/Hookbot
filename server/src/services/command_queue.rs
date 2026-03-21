@@ -141,17 +141,70 @@ impl CommandQueue {
         .unwrap_or(0)
     }
 
-    /// Start background task to periodically expire old commands.
+    /// Mark cloud devices as offline if no heartbeat received within the timeout.
+    /// Returns the number of devices marked offline.
+    pub fn check_heartbeat_timeouts(&self, db: &DbPool, timeout_secs: u64) -> usize {
+        let conn = db.lock().unwrap();
+
+        // Find cloud devices with stale heartbeats and update their status
+        let stale_count = conn
+            .execute(
+                "UPDATE devices SET updated_at = datetime('now')
+                 WHERE connection_mode = 'cloud'
+                   AND id IN (
+                       SELECT dt.device_id FROM device_tokens dt
+                       WHERE dt.last_heartbeat_at IS NOT NULL
+                         AND dt.last_heartbeat_at < datetime('now', '-' || ?1 || ' seconds')
+                   )
+                   AND id NOT IN (
+                       SELECT device_id FROM status_log
+                       WHERE state = 'offline'
+                         AND timestamp > datetime('now', '-' || ?1 || ' seconds')
+                   )",
+                rusqlite::params![timeout_secs],
+            )
+            .unwrap_or(0);
+
+        // Insert 'offline' status log entries for stale devices
+        if stale_count > 0 {
+            let _ = conn.execute_batch(&format!(
+                "INSERT INTO status_log (device_id, state, uptime_ms, free_heap)
+                 SELECT d.id, 'offline', 0, 0
+                 FROM devices d
+                 JOIN device_tokens dt ON dt.device_id = d.id
+                 WHERE d.connection_mode = 'cloud'
+                   AND dt.last_heartbeat_at IS NOT NULL
+                   AND dt.last_heartbeat_at < datetime('now', '-{timeout_secs} seconds')
+                   AND d.id NOT IN (
+                       SELECT device_id FROM status_log
+                       WHERE state = 'offline'
+                         AND timestamp > datetime('now', '-{timeout_secs} seconds')
+                   )"
+            ));
+        }
+
+        stale_count
+    }
+
+    /// Start background task to periodically expire old commands and check heartbeat timeouts.
     pub fn start_expiry_task(&self, db: DbPool) {
         let queue = self.clone();
         tokio::spawn(async move {
             let mut interval =
-                tokio::time::interval(tokio::time::Duration::from_secs(60));
+                tokio::time::interval(tokio::time::Duration::from_secs(30));
             loop {
                 interval.tick().await;
+
+                // Expire old commands
                 let expired = queue.expire_old(&db);
                 if expired > 0 {
                     debug!("Expired {expired} old device commands");
+                }
+
+                // Check heartbeat timeouts (60 second threshold)
+                let timed_out = queue.check_heartbeat_timeouts(&db, 60);
+                if timed_out > 0 {
+                    debug!("{timed_out} cloud device(s) marked offline (heartbeat timeout)");
                 }
             }
         });

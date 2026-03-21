@@ -263,7 +263,7 @@
 - [x] **Claim endpoint** — `POST /api/devices/claim` — User enters claim code to associate device with their account
 - [x] **Claim UI in web dashboard** — "Claim Device" button with claim code input on Devices page
 - [x] **Bluetooth claim flow** — BLE setup page reads claim code from device and offers one-click claiming
-- [ ] **Claim flow in iOS app** — Native claim flow with camera-based code scanning
+- [x] **Claim flow in iOS app** — Native claim flow with BLE discovery, camera QR scanning, and manual code entry
 
 ### 14.4 Firmware Cloud Client
 - [x] **Cloud client module** — `cloud_client.cpp/.h` — Heartbeat push, command polling, registration, command dispatch
@@ -274,9 +274,9 @@
 
 ### 14.5 Hardening
 - [ ] **HTTPS with cert pinning** — ESP32 validates server certificate
-- [ ] **Heartbeat timeout detection** — Mark device offline if no heartbeat in 60s
-- [ ] **Rate limiting** — Throttle device API endpoints
-- [ ] **Device token rotation** — Periodic token refresh for security
+- [x] **Heartbeat timeout detection** — Background task marks cloud devices offline if no heartbeat in 60s
+- [x] **Rate limiting** — Per-IP rate limiter on device API endpoints (60 req/min), with auto-cleanup
+- [x] **Device token rotation** — Server rotates device token every 24h via heartbeat response; firmware auto-updates stored token
 
 ---
 
