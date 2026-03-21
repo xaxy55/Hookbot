@@ -19,6 +19,7 @@ struct SettingsView: View {
     @State private var testResult: ServerTestResult?
     @State private var isTesting = false
     @State private var showCigarAgeGate = false
+    @State private var showClaimDevice = false
 
     var body: some View {
         NavigationStack {
@@ -68,6 +69,18 @@ struct SettingsView: View {
                                         .foregroundColor(.secondary)
                                 }
                             }
+                        }
+                    }
+                }
+
+                Section("Cloud Device") {
+                    Button {
+                        showClaimDevice = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Claim a Device")
                         }
                     }
                 }
@@ -156,6 +169,11 @@ struct SettingsView: View {
                 deviceId = engine.config.deviceId
                 deviceName = engine.config.deviceName
                 accessories = engine.config.accessories
+            }
+            .sheet(isPresented: $showClaimDevice) {
+                ClaimDeviceView()
+                    .environmentObject(engine)
+                    .environmentObject(network)
             }
             .alert("Age Verification", isPresented: $showCigarAgeGate) {
                 Button("I am 17 or older") {

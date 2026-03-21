@@ -58,6 +58,8 @@ targets:
           - "_http._tcp"
         INFOPLIST_KEY_NSHealthShareUsageDescription: "Hookbot reads your step count to energize your avatar when you hit your daily goal."
         INFOPLIST_KEY_NSSupportsLiveActivities: true
+        INFOPLIST_KEY_NSCameraUsageDescription: "Hookbot uses the camera to scan QR codes on devices for quick claiming."
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup."
         INFOPLIST_KEY_NFCReaderUsageDescription: "Hookbot uses NFC to pair with a buddy's phone by tapping devices together."
         PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot
         GENERATE_INFOPLIST_FILE: true
