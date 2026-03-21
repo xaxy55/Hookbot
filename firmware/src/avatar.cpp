@@ -3,6 +3,8 @@
 #include "config.h"
 #include "server.h"
 #include "cloud_client.h"
+#include "qr_display.h"
+#include "mini_games.h"
 
 extern "C" bool _bleProv_isAdvertising();
 
@@ -1070,6 +1072,9 @@ static void drawIdleInfo(DisplayCanvas* d) {
             d->print("Claim:");
             d->print(code);
             line++;
+            d->setCursor(x, y + line * 10);
+            d->print("(hold for QR)");
+            line++;
         }
     }
 
@@ -1202,9 +1207,33 @@ static void drawDndIndicator(DisplayCanvas* d) {
     d->print("DND");
 }
 
+static bool showingQR = false;
+
+bool isShowingQR() { return showingQR; }
+
+void showQR(bool show) { showingQR = show; }
+
 void draw() {
     DisplayCanvas* d = Display::getCanvas();
     Display::clear();
+
+    // QR code takes over the full screen
+    if (showingQR && CloudClient::isEnabled() && !CloudClient::isClaimed()) {
+        const char* code = CloudClient::getClaimCode();
+        if (strlen(code) > 0) {
+            char url[64];
+            snprintf(url, sizeof(url), "hookbot://claim/%s", code);
+            QRDisplay::draw(url);
+            return;
+        }
+    }
+
+    // Mini-game takes over the full screen
+    if (MiniGames::isActive()) {
+        MiniGames::draw();
+        return;
+    }
+
     drawFace(d);
     drawTaskList(d);
     drawNotifications(d);

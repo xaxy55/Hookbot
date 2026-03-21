@@ -10,6 +10,7 @@
 #include "audio.h"
 #endif
 #include "animation_player.h"
+#include "mini_games.h"
 #include <WiFi.h>
 #include <WiFiMulti.h>
 #include <ESPmDNS.h>
@@ -1328,6 +1329,48 @@ void init(std::function<void(AvatarState)> onStateChange) {
         JsonDocument resp;
         resp["ok"] = true;
         resp["msg"] = "animation stopped";
+
+        String json;
+        serializeJson(resp, json);
+        req->send(200, "application/json", json);
+    });
+
+    // ─── Mini-games ────────────────────────────────────────────
+    // POST /game/start - start a mini-game (default: snake)
+    server.on("/game/start", HTTP_POST, [](AsyncWebServerRequest* req) {
+        MiniGames::startGame(MiniGames::Game::SNAKE);
+        req->send(200, "application/json", "{\"ok\":true,\"game\":\"snake\"}");
+    });
+
+    // POST /game/stop - stop the current game
+    server.on("/game/stop", HTTP_POST, [](AsyncWebServerRequest* req) {
+        MiniGames::stopGame();
+        req->send(200, "application/json", "{\"ok\":true}");
+    });
+
+    // POST /game/input?dir=0 - send direction input (0=up, 1=right, 2=down, 3=left)
+    server.on("/game/input", HTTP_POST, [](AsyncWebServerRequest* req) {
+        uint8_t dir = 1;
+        if (req->hasParam("dir")) {
+            dir = req->getParam("dir")->value().toInt() % 4;
+        }
+        MiniGames::input(dir);
+
+        JsonDocument resp;
+        resp["ok"] = true;
+        resp["score"] = MiniGames::getScore();
+        resp["active"] = MiniGames::isActive();
+
+        String json;
+        serializeJson(resp, json);
+        req->send(200, "application/json", json);
+    });
+
+    // GET /game/status - get current game state
+    server.on("/game/status", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument resp;
+        resp["active"] = MiniGames::isActive();
+        resp["score"] = MiniGames::getScore();
 
         String json;
         serializeJson(resp, json);

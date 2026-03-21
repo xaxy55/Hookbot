@@ -5,6 +5,7 @@
 #include "server.h"
 #include "avatar.h"
 #include "cloud_client.h"
+#include "mini_games.h"
 
 extern String _hookbot_get_ip();
 
@@ -132,6 +133,36 @@ void update(uint32_t deltaMs, int16_t touchX, int16_t touchY, bool touching) {
         // Touch release
         justReleased = true;
         uint32_t touchDuration = millis() - touchStartTime;
+
+        // When a mini-game is active, swipes become directional input
+        if (swipeTracking && MiniGames::isActive()) {
+            int16_t dy = lastTouchY - swipeStartY;
+            int16_t dx = lastTouchX - swipeStartX;
+
+            if (abs(dx) > 5 || abs(dy) > 5) {
+                // Determine dominant direction
+                if (abs(dx) > abs(dy)) {
+                    MiniGames::input(dx > 0 ? 1 : 3);  // right : left
+                } else {
+                    MiniGames::input(dy > 0 ? 2 : 0);  // down : up
+                }
+            } else if (touchDuration > 1500) {
+                // Long press exits the game
+                MiniGames::stopGame();
+                Serial.println("[Touch] Long press -> game stopped");
+            }
+            swipeTracking = false;
+            wasTouching = touching;
+            return;
+        }
+
+        // When QR code is showing, any tap dismisses it
+        if (swipeTracking && Avatar::isShowingQR()) {
+            Avatar::showQR(false);
+            swipeTracking = false;
+            wasTouching = touching;
+            return;
+        }
 
         if (swipeTracking && activePanel == Panel::NONE) {
             int16_t dy = lastTouchY - swipeStartY;
@@ -437,6 +468,41 @@ static void drawAccessoriesPanel(DisplayCanvas* d) {
             *items[i].value = !(*items[i].value);
             HookbotServer::saveConfigToNVS();
             Serial.printf("[TouchUI] %s: %s\n", items[i].name, *items[i].value ? "ON" : "OFF");
+        }
+    }
+
+    // ─── Games button ───────────────────────────────────────
+    int16_t gameY = 16 + 8 * 13 + 2;
+    d->drawFastHLine(panelX + 4, gameY - 2, panelW - 8, 0x4208);
+    d->fillRoundRect(panelX + 4, gameY, panelW - 8, 11, 3, 0x4208);
+    d->setTextColor(COLOR_WHITE);
+    d->setCursor(panelX + 12, gameY + 2);
+    d->print("Snake");
+    // Small game icon
+    d->drawPixel(panelX + 8, gameY + 3, COLOR_WHITE);
+    d->drawPixel(panelX + 8, gameY + 5, COLOR_WHITE);
+    d->drawPixel(panelX + 8, gameY + 7, COLOR_WHITE);
+
+    if (justReleased && lastTouchY >= gameY - 2 && lastTouchY <= gameY + 12
+        && lastTouchX >= panelX && lastTouchX <= panelX + panelW) {
+        MiniGames::startGame(MiniGames::Game::SNAKE);
+        closePanel();
+        Serial.println("[TouchUI] Started Snake game");
+    }
+
+    // QR code button (only when unclaimed cloud device)
+    if (CloudClient::isEnabled() && !CloudClient::isClaimed()) {
+        int16_t qrY = gameY + 14;
+        d->fillRoundRect(panelX + 4, qrY, panelW - 8, 11, 3, 0x4208);
+        d->setTextColor(COLOR_WHITE);
+        d->setCursor(panelX + 12, qrY + 2);
+        d->print("QR Code");
+
+        if (justReleased && lastTouchY >= qrY - 2 && lastTouchY <= qrY + 12
+            && lastTouchX >= panelX && lastTouchX <= panelX + panelW) {
+            Avatar::showQR(true);
+            closePanel();
+            Serial.println("[TouchUI] Showing QR claim code");
         }
     }
 }

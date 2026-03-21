@@ -5,6 +5,7 @@ use serde_json::json;
 
 use crate::db::DbPool;
 use crate::error::AppError;
+use crate::services::command_queue::CommandQueue;
 
 // ── OLED Mini-Games ─────────────────────────────────────────────
 // Snake, Pong, Tetris — playable via web UI or physical buttons.
@@ -177,4 +178,63 @@ pub async fn list_games(
     }
 
     Ok(Json(result))
+}
+
+// ── Device game commands ────────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+pub struct GameCommandRequest {
+    pub device_id: Option<String>,
+    pub game: Option<String>,
+    pub direction: Option<u8>,
+}
+
+/// POST /api/games/start — send game_start command to device
+pub async fn start_game(
+    State((db, queue)): State<(DbPool, CommandQueue)>,
+    Json(input): Json<GameCommandRequest>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let conn = db.lock().unwrap();
+    let device_id = resolve_device_id(&conn, input.device_id.as_deref())?;
+    let game = input.game.as_deref().unwrap_or("snake");
+    drop(conn);
+
+    queue.enqueue(&db, &device_id, "game_start", &json!({ "game": game }))
+        .map_err(|e| AppError::Internal(e))?;
+    queue.notify_device(&device_id).await;
+
+    Ok(Json(json!({ "ok": true, "game": game })))
+}
+
+/// POST /api/games/stop — send game_stop command to device
+pub async fn stop_game(
+    State((db, queue)): State<(DbPool, CommandQueue)>,
+    Json(input): Json<GameCommandRequest>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let conn = db.lock().unwrap();
+    let device_id = resolve_device_id(&conn, input.device_id.as_deref())?;
+    drop(conn);
+
+    queue.enqueue(&db, &device_id, "game_stop", &json!({}))
+        .map_err(|e| AppError::Internal(e))?;
+    queue.notify_device(&device_id).await;
+
+    Ok(Json(json!({ "ok": true })))
+}
+
+/// POST /api/games/input — send game_input command to device
+pub async fn game_input(
+    State((db, queue)): State<(DbPool, CommandQueue)>,
+    Json(input): Json<GameCommandRequest>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let conn = db.lock().unwrap();
+    let device_id = resolve_device_id(&conn, input.device_id.as_deref())?;
+    drop(conn);
+
+    let direction = input.direction.unwrap_or(0);
+    queue.enqueue(&db, &device_id, "game_input", &json!({ "direction": direction }))
+        .map_err(|e| AppError::Internal(e))?;
+    queue.notify_device(&device_id).await;
+
+    Ok(Json(json!({ "ok": true, "direction": direction })))
 }

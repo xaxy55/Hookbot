@@ -133,7 +133,7 @@
 > Reward breaks, fight burnout, hide delightful surprises.
 
 - [ ] **Tamagotchi mode** — Feed your hookbot by coding, it gets sad if ignored, evolves into different forms based on your coding style
-- [ ] **OLED mini-games** — Snake, Pong, Tetris on the OLED during breaks, controlled via physical buttons or web UI
+- [x] **OLED mini-games** — Snake on the OLED during breaks, controlled via touch swipes or web UI (game_start/stop/input commands)
 - [ ] **Boss battle** — Weekly "boss bug" challenge: fix a puzzle bug to earn bonus XP, hookbot cheers you on
 - [ ] **Konami code** — Enter the classic code on physical buttons for a secret animation and hidden achievement
 - [ ] **Avatar evolution** — Your avatar visually evolves every 10 levels: egg → blob → robot → mech → cosmic entity
@@ -298,5 +298,5 @@
 - [x] Random motivational quotes on idle screen
 - [x] Customizable startup boot animation
 - [ ] Battery backup with low-power sleep mode
-- [ ] QR code display for quick device pairing
+- [x] QR code display for quick device pairing
 - [x] Desktop widget (macOS/Windows) showing hookbot status

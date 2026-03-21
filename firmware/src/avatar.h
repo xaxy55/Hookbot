@@ -34,4 +34,7 @@ namespace Avatar {
     void draw();
     // Override face parameters for one frame (used by animation player)
     void overrideParams(const AvatarParams& params);
+    // QR code display (full-screen overlay when unclaimed)
+    bool isShowingQR();
+    void showQR(bool show);
 }

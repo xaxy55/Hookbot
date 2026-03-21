@@ -8,6 +8,7 @@
 #include "screensaver.h"
 #include "animation_player.h"
 #include "boot_anim.h"
+#include "mini_games.h"
 #endif
 #ifndef NO_LED
 #include "led.h"
@@ -162,6 +163,7 @@ void setup() {
         BootAnim::play(bootAnimType);
     }
     Screensaver::init();
+    MiniGames::init();
     Avatar::draw();
     Display::flush();
 #endif
@@ -228,6 +230,11 @@ void loop() {
 
     // Update all subsystems
 #ifndef NO_DISPLAY
+    // Update mini-games (if active, skip avatar updates)
+    if (MiniGames::isActive()) {
+        MiniGames::update(delta);
+    }
+
     // When custom animation is playing, override avatar params
     if (AnimPlayer::isPlaying()) {
         AvatarParams animParams;

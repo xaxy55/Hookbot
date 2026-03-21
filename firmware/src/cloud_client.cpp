@@ -2,6 +2,9 @@
 #include "config.h"
 #include "server.h"
 #include "ca_cert.h"
+#ifndef NO_DISPLAY
+#include "mini_games.h"
+#endif
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -379,6 +382,27 @@ static void executeCommand(const char* type, JsonObject payload, const char* cmd
     }
     else if (strcmp(type, "animation_stop") == 0) {
         Serial.printf("[Cloud] Animation stop (not yet dispatched)\n");
+    }
+    else if (strcmp(type, "game_start") == 0) {
+        #ifndef NO_DISPLAY
+        const char* game = payload["game"] | "snake";
+        if (strcmp(game, "snake") == 0) {
+            MiniGames::startGame(MiniGames::Game::SNAKE);
+            Serial.println("[Cloud] Started Snake game");
+        }
+        #endif
+    }
+    else if (strcmp(type, "game_stop") == 0) {
+        #ifndef NO_DISPLAY
+        MiniGames::stopGame();
+        Serial.println("[Cloud] Stopped game");
+        #endif
+    }
+    else if (strcmp(type, "game_input") == 0) {
+        #ifndef NO_DISPLAY
+        uint8_t dir = payload["direction"] | 0;
+        MiniGames::input(dir);
+        #endif
     }
     else {
         Serial.printf("[Cloud] Unknown command type: %s\n", type);
