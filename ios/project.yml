@@ -40,6 +40,10 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
+        com.apple.developer.healthkit: true
+        com.apple.developer.usernotifications.time-sensitive: true
+    dependencies:
+      - target: HookbotiOSWidget
     settings:
       base:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
@@ -52,6 +56,9 @@ targets:
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server."
         INFOPLIST_KEY_NSBonjourServices:
           - "_http._tcp"
+        INFOPLIST_KEY_NSHealthShareUsageDescription: "Hookbot reads your step count to energize your avatar when you hit your daily goal."
+        INFOPLIST_KEY_NSSupportsLiveActivities: true
+        INFOPLIST_KEY_NFCReaderUsageDescription: "Hookbot uses NFC to pair with a buddy's phone by tapping devices together."
         PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot
         GENERATE_INFOPLIST_FILE: true
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -104,6 +111,30 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot.watchkitapp.widget
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 1.0.0
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+
+  HookbotiOSWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: HookbotiOSWidget
+        excludes:
+          - "**/.DS_Store"
+      - path: Shared
+        excludes:
+          - "**/.DS_Store"
+    info:
+      path: HookbotiOSWidget/Info.plist
+      properties:
+        CFBundleDisplayName: "Hookbot"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot.widget
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.0.0
+        GENERATE_INFOPLIST_FILE: true
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
 
   HookbotUITests:
