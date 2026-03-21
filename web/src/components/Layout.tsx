@@ -243,7 +243,7 @@ export default function Layout() {
               className={`p-1.5 rounded-md transition-colors ${theme === 'system' ? 'bg-raised text-fg' : 'text-subtle hover:text-muted'}`}
               title="System theme"
             >
-              <MonitorIcon />
+              <SystemMonitorIcon />
             </button>
             <button
               onClick={() => setTheme('light')}
@@ -369,7 +369,7 @@ function PlugIcon({ active }: { active: boolean }) {
   );
 }
 
-function MonitorIcon() {
+function SystemMonitorIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
       <rect x="2" y="2" width="12" height="9" rx="1" />
