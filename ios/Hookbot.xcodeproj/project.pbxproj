@@ -42,6 +42,30 @@
 		F156A3AF2CC4A7BA2413911A /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
 		F4F0D14584599DDB57D66845 /* WatchNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B84137B7C09B2C196A0D2896 /* WatchNetworkService.swift */; };
 		FF2350D11B46FB9A7B22EB30 /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
+		BB01A2B3C4D5E6F7A8B9C0D1 /* AvatarEvolutionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01B2C3D4E5F6A7B8C9D0E1 /* AvatarEvolutionEngine.swift */; };
+		BB02A3B4C5D6E7F8A9B0C1D2 /* BreakReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA02B3C4D5E6F7A8B9C0D1E2 /* BreakReminderManager.swift */; };
+		BB03A4B5C6D7E8F9A0B1C2D3 /* FocusModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA03B4C5D6E7F8A9B0C1D2E3 /* FocusModeManager.swift */; };
+		BB04A5B6C7D8E9F0A1B2C3D4 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA04B5C6D7E8F9A0B1C2D3E4 /* HealthKitManager.swift */; };
+		BB05A6B7C8D9E0F1A2B3C4D5 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA05B6C7D8E9F0A1B2C3D4E5 /* LiveActivityManager.swift */; };
+		BB06A7B8C9D0E1F2A3B4C5D6 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA06B7C8D9E0F1A2B3C4D5E6 /* NotificationManager.swift */; };
+		BB07A8B9C0D1E2F3A4B5C6D7 /* SeasonalEventsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA07B8C9D0E1F2A3B4C5D6E7 /* SeasonalEventsManager.swift */; };
+		BB08A9B0C1D2E3F4A5B6C7D8 /* SiriShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA08B9C0D1E2F3A4B5C6D7E8 /* SiriShortcutManager.swift */; };
+		BB09A0B1C2D3E4F5A6B7C8D9 /* SleepGuardianManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA09B0C1D2E3F4A5B6C7D8E9 /* SleepGuardianManager.swift */; };
+		BB10A1B2C3D4E5F6A7B8C9D0 /* SocialService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10B1C2D3E4F5A6B7C8D9E0 /* SocialService.swift */; };
+		BB11A2B3C4D5E6F7A8B9C0D1 /* VoiceLinesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11B2C3D4E5F6A7B8C9D0E1 /* VoiceLinesManager.swift */; };
+		3F518F1F2261C26884DB74C1 /* AchievementShowcaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ECAA8CA141AD0D2360349F1 /* AchievementShowcaseView.swift */; };
+		CF472BE4C60138BE72E062D6 /* PomodoroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875796E4F37BD819E7C9CBE8 /* PomodoroView.swift */; };
+		06D953418DBD6ECF38D08FF0 /* PhotoModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3790273532D9916C0570BD73 /* PhotoModeView.swift */; };
+		BA540999D90C22A42AE664B9 /* AvatarJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1285517988CECE8F35566B03 /* AvatarJournalView.swift */; };
+		2345072C8651A88BB8151484 /* DailyRewardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0283285BC31333A948F8839 /* DailyRewardView.swift */; };
+		C12175E777D4C27BB9928217 /* WardrobeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B8BD8F0519BD402450D140D /* WardrobeView.swift */; };
+		BAAB4CF7870020F5F12236A1 /* CodingChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33717FAEFAA8EAE9E8EF785F /* CodingChallengeView.swift */; };
+		73E405FAD284FBC574F49312 /* VisitHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05AAB75F80C667A92DD45E9 /* VisitHistoryView.swift */; };
+		57971A2D2989DE26E85D375A /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E08E6E2D93AFCF872061357 /* PairingView.swift */; };
+		9E793FF0FEA2C17E032EE54D /* FriendListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 634182FC645CA25E5A54C38D /* FriendListView.swift */; };
+		B36A3373C95A17303D35566A /* TeamCampfireView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A479B11891DF1BED0B05BC /* TeamCampfireView.swift */; };
+		CB005A6917FCFD260BEDBFD1 /* AvatarEmotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73AEDA1DBF737A8C3EF1990F /* AvatarEmotesView.swift */; };
+		3BFA25C7B55804561E2964E4 /* WeeklyPhotoCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93633D908914C59F8E2F069 /* WeeklyPhotoCardView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -121,6 +145,30 @@
 		D8C1FD09F4BC65018E7A445D /* WatchTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTabView.swift; sourceTree = "<group>"; };
 		EB5F1894C33647E074AD0A11 /* WatchMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMainView.swift; sourceTree = "<group>"; };
 		EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
+		AA01B2C3D4E5F6A7B8C9D0E1 /* AvatarEvolutionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEvolutionEngine.swift; sourceTree = "<group>"; };
+		AA02B3C4D5E6F7A8B9C0D1E2 /* BreakReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakReminderManager.swift; sourceTree = "<group>"; };
+		AA03B4C5D6E7F8A9B0C1D2E3 /* FocusModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeManager.swift; sourceTree = "<group>"; };
+		AA04B5C6D7E8F9A0B1C2D3E4 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
+		AA05B6C7D8E9F0A1B2C3D4E5 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		AA06B7C8D9E0F1A2B3C4D5E6 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		AA07B8C9D0E1F2A3B4C5D6E7 /* SeasonalEventsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeasonalEventsManager.swift; sourceTree = "<group>"; };
+		AA08B9C0D1E2F3A4B5C6D7E8 /* SiriShortcutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriShortcutManager.swift; sourceTree = "<group>"; };
+		AA09B0C1D2E3F4A5B6C7D8E9 /* SleepGuardianManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepGuardianManager.swift; sourceTree = "<group>"; };
+		AA10B1C2D3E4F5A6B7C8D9E0 /* SocialService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialService.swift; sourceTree = "<group>"; };
+		AA11B2C3D4E5F6A7B8C9D0E1 /* VoiceLinesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceLinesManager.swift; sourceTree = "<group>"; };
+		8ECAA8CA141AD0D2360349F1 /* AchievementShowcaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementShowcaseView.swift; sourceTree = "<group>"; };
+		875796E4F37BD819E7C9CBE8 /* PomodoroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroView.swift; sourceTree = "<group>"; };
+		3790273532D9916C0570BD73 /* PhotoModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoModeView.swift; sourceTree = "<group>"; };
+		1285517988CECE8F35566B03 /* AvatarJournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarJournalView.swift; sourceTree = "<group>"; };
+		A0283285BC31333A948F8839 /* DailyRewardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyRewardView.swift; sourceTree = "<group>"; };
+		4B8BD8F0519BD402450D140D /* WardrobeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeView.swift; sourceTree = "<group>"; };
+		33717FAEFAA8EAE9E8EF785F /* CodingChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingChallengeView.swift; sourceTree = "<group>"; };
+		A05AAB75F80C667A92DD45E9 /* VisitHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitHistoryView.swift; sourceTree = "<group>"; };
+		9E08E6E2D93AFCF872061357 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
+		634182FC645CA25E5A54C38D /* FriendListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendListView.swift; sourceTree = "<group>"; };
+		B3A479B11891DF1BED0B05BC /* TeamCampfireView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamCampfireView.swift; sourceTree = "<group>"; };
+		73AEDA1DBF737A8C3EF1990F /* AvatarEmotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEmotesView.swift; sourceTree = "<group>"; };
+		E93633D908914C59F8E2F069 /* WeeklyPhotoCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyPhotoCardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -128,9 +176,20 @@
 			isa = PBXGroup;
 			children = (
 				B2D3E4F5A6B7C8D9E0F1A2B3 /* AuthService.swift */,
+				AA01B2C3D4E5F6A7B8C9D0E1 /* AvatarEvolutionEngine.swift */,
+				AA02B3C4D5E6F7A8B9C0D1E2 /* BreakReminderManager.swift */,
+				AA03B4C5D6E7F8A9B0C1D2E3 /* FocusModeManager.swift */,
 				007B5E84C28B4F2FAD647E7F /* HapticManager.swift */,
+				AA04B5C6D7E8F9A0B1C2D3E4 /* HealthKitManager.swift */,
+				AA05B6C7D8E9F0A1B2C3D4E5 /* LiveActivityManager.swift */,
 				64E4ED6FDD298958EA1DB744 /* NetworkService.swift */,
+				AA06B7C8D9E0F1A2B3C4D5E6 /* NotificationManager.swift */,
+				AA07B8C9D0E1F2A3B4C5D6E7 /* SeasonalEventsManager.swift */,
+				AA08B9C0D1E2F3A4B5C6D7E8 /* SiriShortcutManager.swift */,
+				AA09B0C1D2E3F4A5B6C7D8E9 /* SleepGuardianManager.swift */,
+				AA10B1C2D3E4F5A6B7C8D9E0 /* SocialService.swift */,
 				68548CC1A6546E161E55B81D /* SoundManager.swift */,
+				AA11B2C3D4E5F6A7B8C9D0E1 /* VoiceLinesManager.swift */,
 				364282E1BF9F1960110F6626 /* WatchBridge.swift */,
 			);
 			path = Services;
@@ -155,6 +214,13 @@
 				6FEFC46D0D53977D14F910B1 /* MainView.swift */,
 				D2E3F4A5B6C7D8E9F0A1B2C3 /* PetCareView.swift */,
 				9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */,
+				8ECAA8CA141AD0D2360349F1 /* AchievementShowcaseView.swift */,
+				875796E4F37BD819E7C9CBE8 /* PomodoroView.swift */,
+				3790273532D9916C0570BD73 /* PhotoModeView.swift */,
+				1285517988CECE8F35566B03 /* AvatarJournalView.swift */,
+				A0283285BC31333A948F8839 /* DailyRewardView.swift */,
+				4B8BD8F0519BD402450D140D /* WardrobeView.swift */,
+				5052FF547C68F37718CD24EF /* Social */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -262,6 +328,20 @@
 				3C05CF566F178449FBE7D2CF /* Views */,
 			);
 			path = Hookbot;
+			sourceTree = "<group>";
+		};
+		5052FF547C68F37718CD24EF /* Social */ = {
+			isa = PBXGroup;
+			children = (
+				33717FAEFAA8EAE9E8EF785F /* CodingChallengeView.swift */,
+				A05AAB75F80C667A92DD45E9 /* VisitHistoryView.swift */,
+				9E08E6E2D93AFCF872061357 /* PairingView.swift */,
+				634182FC645CA25E5A54C38D /* FriendListView.swift */,
+				B3A479B11891DF1BED0B05BC /* TeamCampfireView.swift */,
+				73AEDA1DBF737A8C3EF1990F /* AvatarEmotesView.swift */,
+				E93633D908914C59F8E2F069 /* WeeklyPhotoCardView.swift */,
+			);
+			path = Social;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -430,6 +510,30 @@
 				4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */,
 				2F7D8DA5F1E23D87D838B732 /* SoundManager.swift in Sources */,
 				07BD3F555688C63668D7FA3F /* WatchBridge.swift in Sources */,
+				BB01A2B3C4D5E6F7A8B9C0D1 /* AvatarEvolutionEngine.swift in Sources */,
+				BB02A3B4C5D6E7F8A9B0C1D2 /* BreakReminderManager.swift in Sources */,
+				BB03A4B5C6D7E8F9A0B1C2D3 /* FocusModeManager.swift in Sources */,
+				BB04A5B6C7D8E9F0A1B2C3D4 /* HealthKitManager.swift in Sources */,
+				BB05A6B7C8D9E0F1A2B3C4D5 /* LiveActivityManager.swift in Sources */,
+				BB06A7B8C9D0E1F2A3B4C5D6 /* NotificationManager.swift in Sources */,
+				BB07A8B9C0D1E2F3A4B5C6D7 /* SeasonalEventsManager.swift in Sources */,
+				BB08A9B0C1D2E3F4A5B6C7D8 /* SiriShortcutManager.swift in Sources */,
+				BB09A0B1C2D3E4F5A6B7C8D9 /* SleepGuardianManager.swift in Sources */,
+				BB10A1B2C3D4E5F6A7B8C9D0 /* SocialService.swift in Sources */,
+				BB11A2B3C4D5E6F7A8B9C0D1 /* VoiceLinesManager.swift in Sources */,
+				3F518F1F2261C26884DB74C1 /* AchievementShowcaseView.swift in Sources */,
+				CF472BE4C60138BE72E062D6 /* PomodoroView.swift in Sources */,
+				06D953418DBD6ECF38D08FF0 /* PhotoModeView.swift in Sources */,
+				BA540999D90C22A42AE664B9 /* AvatarJournalView.swift in Sources */,
+				2345072C8651A88BB8151484 /* DailyRewardView.swift in Sources */,
+				C12175E777D4C27BB9928217 /* WardrobeView.swift in Sources */,
+				BAAB4CF7870020F5F12236A1 /* CodingChallengeView.swift in Sources */,
+				73E405FAD284FBC574F49312 /* VisitHistoryView.swift in Sources */,
+				57971A2D2989DE26E85D375A /* PairingView.swift in Sources */,
+				9E793FF0FEA2C17E032EE54D /* FriendListView.swift in Sources */,
+				B36A3373C95A17303D35566A /* TeamCampfireView.swift in Sources */,
+				CB005A6917FCFD260BEDBFD1 /* AvatarEmotesView.swift in Sources */,
+				3BFA25C7B55804561E2964E4 /* WeeklyPhotoCardView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

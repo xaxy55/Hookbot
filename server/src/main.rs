@@ -30,6 +30,10 @@ async fn main() {
     // Start background services
     services::device_poller::start(pool.clone(), config.poll_interval_secs, config.log_retention_hours);
 
+    // Initialize command queue for cloud-connected devices
+    let command_queue = services::command_queue::CommandQueue::new();
+    command_queue.start_expiry_task(pool.clone());
+
     // Initialize tunnel manager
     let tunnel_manager = services::tunnel_manager::TunnelManager::new(
         pool.clone(),

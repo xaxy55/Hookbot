@@ -9,6 +9,7 @@ services:
       - FIRMWARE_DIR=/app/data/firmware
       - BIND_ADDR=0.0.0.0:3000
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     restart: unless-stopped
 
   web:

@@ -383,6 +383,29 @@ fn run_migrations(conn: &Connection) {
             claimed INTEGER NOT NULL DEFAULT 0
         )",
         "CREATE INDEX IF NOT EXISTS idx_loot_drops_device ON loot_drops(device_id, dropped_at DESC)",
+        // Phase: Hosted/Cloud mode — device command queue
+        "ALTER TABLE devices ADD COLUMN connection_mode TEXT NOT NULL DEFAULT 'lan'",
+        "CREATE TABLE IF NOT EXISTS device_commands (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            command_type TEXT NOT NULL,
+            payload TEXT NOT NULL DEFAULT '{}',
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            delivered_at TEXT,
+            acknowledged_at TEXT,
+            expires_at TEXT
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_device_commands_pending ON device_commands(device_id, status, created_at)",
+        // Phase: Hosted/Cloud mode — device auth tokens
+        "CREATE TABLE IF NOT EXISTS device_tokens (
+            device_id TEXT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
+            token_hash TEXT NOT NULL,
+            claim_code TEXT,
+            last_heartbeat_at TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_device_tokens_claim ON device_tokens(claim_code)",
     ];
 
     for sql in migrations {

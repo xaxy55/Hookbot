@@ -95,8 +95,8 @@ struct HookbotShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: HookbotStatusIntent(),
             phrases: [
-                "How's my hookbot?",
-                "Check my hookbot",
+                "How's my \(.applicationName)?",
+                "Check my \(.applicationName)",
                 "What's my \(.applicationName) doing?"
             ],
             shortTitle: "Hookbot Status",
@@ -106,8 +106,8 @@ struct HookbotShortcuts: AppShortcutsProvider {
             intent: StartHookbotFocusIntent(),
             phrases: [
                 "Start \(.applicationName) focus mode",
-                "Enable hookbot focus",
-                "Hookbot, focus time"
+                "Enable \(.applicationName) focus",
+                "\(.applicationName), focus time"
             ],
             shortTitle: "Focus Mode",
             systemImageName: "moon.fill"
@@ -115,8 +115,8 @@ struct HookbotShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: SendBuddyWaveIntent(),
             phrases: [
-                "Send my buddy a wave",
-                "Wave to my hookbot friend",
+                "Send my \(.applicationName) buddy a wave",
+                "Wave to my \(.applicationName) friend",
                 "Hey \(.applicationName), wave to my buddy"
             ],
             shortTitle: "Wave to Buddy",
@@ -125,9 +125,9 @@ struct HookbotShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: CheckStreakIntent(),
             phrases: [
-                "What's my coding streak?",
+                "What's my \(.applicationName) coding streak?",
                 "Check my \(.applicationName) streak",
-                "How many days is my streak?"
+                "How many days is my \(.applicationName) streak?"
             ],
             shortTitle: "Coding Streak",
             systemImageName: "flame.fill"

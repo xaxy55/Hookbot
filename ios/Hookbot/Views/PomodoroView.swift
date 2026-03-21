@@ -153,7 +153,7 @@ struct PomodoroView: View {
         case .idle:
             return "Ready when you are. Let's crush it."
         case .work:
-            isRunning
+            return isRunning
                 ? "In the zone. Don't you dare open Twitter."
                 : "Paused. Weakness detected."
         case .shortBreak:
