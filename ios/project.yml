@@ -38,8 +38,6 @@ targets:
       path: Hookbot/Hookbot.entitlements
       properties:
         com.apple.developer.healthkit: true
-        com.apple.developer.healthkit.access:
-          - health-records
         com.apple.developer.usernotifications.time-sensitive: true
         com.apple.security.application-groups:
           - group.com.mr-ai.hookbot
