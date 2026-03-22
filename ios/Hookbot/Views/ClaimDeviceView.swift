@@ -46,6 +46,15 @@ struct ClaimDeviceView: View {
             .onDisappear {
                 claimService.stopScan()
             }
+            .onChange(of: claimService.claimState) { _, newState in
+                if case .success(let deviceId, _) = newState, !deviceId.isEmpty {
+                    engine.config.deviceId = deviceId
+                    if let data = try? JSONEncoder().encode(engine.config) {
+                        UserDefaults.standard.set(data, forKey: "hookbot_config")
+                    }
+                    network.startPolling()
+                }
+            }
         }
     }
 
