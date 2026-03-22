@@ -146,6 +146,7 @@
 		02BD8D89FEFF42D3955A76D4 /* FriendListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendListView.swift; sourceTree = "<group>"; };
 		03397893315BCC3E84C561BE /* AvatarRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarRenderer.swift; sourceTree = "<group>"; };
 		046CFAEC7691D754A8190D98 /* DESKBOTUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DESKBOTUITests.swift; sourceTree = "<group>"; };
+		061EB10D77B731B652F742F6 /* HookbotiOSWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HookbotiOSWidget.entitlements; sourceTree = "<group>"; };
 		09345F2BF92D3118AA2D2C64 /* PongGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PongGameView.swift; sourceTree = "<group>"; };
 		09EC09F3F6D77B2BC78CCE5D /* AchievementShowcaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementShowcaseView.swift; sourceTree = "<group>"; };
 		0B9AE980C2B59FAFAD453E4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -165,7 +166,7 @@
 		49D9A1D8868A5F2A66F0A7F5 /* AvatarJournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarJournalView.swift; sourceTree = "<group>"; };
 		4C8EB5505CCA83AD12556A98 /* VoiceLinesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceLinesManager.swift; sourceTree = "<group>"; };
 		545F708DE222164D96EE11FC /* SeasonalEventsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeasonalEventsManager.swift; sourceTree = "<group>"; };
-		54D7C47D418E782FC63F6973 /* Hookbot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hookbot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		54D7C47D418E782FC63F6973 /* Hookbot.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Hookbot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		578EA0DA84BCD88F5746AB06 /* BreakReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakReminderManager.swift; sourceTree = "<group>"; };
 		58838EDDAF79B0B8DE78682B /* TeamCampfireView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamCampfireView.swift; sourceTree = "<group>"; };
 		5BAE77E44DC07E2A2F72BF42 /* HookbotWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookbotWidget.swift; sourceTree = "<group>"; };
@@ -184,7 +185,7 @@
 		843995434E3E46D862C43990 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		84B2A699DF05CCAFBC594551 /* WatchSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSettingsView.swift; sourceTree = "<group>"; };
 		84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotWatchApp.swift; sourceTree = "<group>"; };
-		90F89258978F3788C22FAB43 /* HookbotUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HookbotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		90F89258978F3788C22FAB43 /* HookbotUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HookbotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		91DC5E515C2FA269780D10B7 /* WatchActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchActivityView.swift; sourceTree = "<group>"; };
 		958E05B4490FBB82AF160800 /* AvatarEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEngine.swift; sourceTree = "<group>"; };
 		97CE9225F0CB375F3DE7EB5C /* SocialService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialService.swift; sourceTree = "<group>"; };
@@ -211,7 +212,7 @@
 		DFCE0BF94E54C10B0648C14A /* DeviceClaimService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceClaimService.swift; sourceTree = "<group>"; };
 		E0B2669F833323B3A1622EC5 /* AvatarEmotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEmotesView.swift; sourceTree = "<group>"; };
 		EB5F1894C33647E074AD0A11 /* WatchMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMainView.swift; sourceTree = "<group>"; };
-		EDDD25953A89A0C10045C885 /* HookbotiOSWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HookbotiOSWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		EDDD25953A89A0C10045C885 /* HookbotiOSWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = HookbotiOSWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
 		F367097B190E6F4E7477FCE9 /* AvatarEvolutionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEvolutionEngine.swift; sourceTree = "<group>"; };
 		F7F618A96DE080E9155E458E /* SleepGuardianManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepGuardianManager.swift; sourceTree = "<group>"; };
@@ -247,6 +248,7 @@
 		1DB03EAC19CAE453BB8935AA /* HookbotiOSWidget */ = {
 			isa = PBXGroup;
 			children = (
+				061EB10D77B731B652F742F6 /* HookbotiOSWidget.entitlements */,
 				02B16179469A053126606951 /* HookbotiOSWidgetBundle.swift */,
 				5BAE77E44DC07E2A2F72BF42 /* HookbotWidget.swift */,
 				BCE6F1E4FF2742CAE0475FFC /* HookbotWidgetModels.swift */,
@@ -513,7 +515,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					00837AA4718731B110629A8A = {
 						DevelopmentTeam = 56YDP2JJ35;
@@ -718,11 +720,7 @@
 			buildSettings = {
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.watchkitapp.widget";
 				SDKROOT = watchos;
@@ -744,7 +742,9 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Hookbot uses NFC to pair with a buddy's phone by tapping devices together.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup.";
-				INFOPLIST_KEY_NSBonjourServices = _http._tcp;
+				INFOPLIST_KEY_NSBonjourServices = (
+					_http._tcp,
+				);
 				INFOPLIST_KEY_NSCameraUsageDescription = "Hookbot uses the camera to scan QR codes on devices for quick claiming.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Hookbot reads your step count to energize your avatar when you hit your daily goal.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
@@ -789,14 +789,11 @@
 		542A521DE751699994929716 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HookbotiOSWidget/HookbotiOSWidget.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HookbotiOSWidget/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.widget";
 				SDKROOT = iphoneos;
@@ -842,7 +839,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -874,12 +870,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 56YDP2JJ35;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -899,7 +893,6 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.9;
@@ -920,7 +913,9 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Hookbot uses NFC to pair with a buddy's phone by tapping devices together.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup.";
-				INFOPLIST_KEY_NSBonjourServices = _http._tcp;
+				INFOPLIST_KEY_NSBonjourServices = (
+					_http._tcp,
+				);
 				INFOPLIST_KEY_NSCameraUsageDescription = "Hookbot uses the camera to scan QR codes on devices for quick claiming.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Hookbot reads your step count to energize your avatar when you hit your daily goal.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
@@ -948,14 +943,11 @@
 		A7804874B81FCE85388D2CC9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HookbotiOSWidget/HookbotiOSWidget.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HookbotiOSWidget/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.widget";
 				SDKROOT = iphoneos;
@@ -984,7 +976,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1016,12 +1007,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 56YDP2JJ35;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1034,7 +1023,6 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.9;
@@ -1047,11 +1035,7 @@
 			buildSettings = {
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.watchkitapp.widget";
 				SDKROOT = watchos;
