@@ -7,6 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject var network: NetworkService
     var auth: AuthService?
     @State private var soundEnabled: Bool = true
+    @State private var voiceGender: VoiceGender = .male
     @State private var serverURL: String = ""
     @State private var apiKey: String = ""
     @State private var deviceId: String = ""
@@ -87,6 +88,11 @@ struct SettingsView: View {
 
                 Section("Sound") {
                     Toggle("Sound Effects", isOn: $soundEnabled)
+                    Picker("Voice", selection: $voiceGender) {
+                        ForEach(VoiceGender.allCases, id: \.self) { g in
+                            Text(g.rawValue.capitalized).tag(g)
+                        }
+                    }
                 }
 
                 Section("Accessories") {
@@ -164,6 +170,7 @@ struct SettingsView: View {
             }
             .onAppear {
                 soundEnabled = engine.config.soundEnabled
+                voiceGender = VoiceLinesManager.shared.gender
                 serverURL = engine.config.serverURL
                 apiKey = engine.config.apiKey
                 deviceId = engine.config.deviceId
@@ -266,6 +273,8 @@ struct SettingsView: View {
         let serverChanged = engine.config.serverURL != normalizedURL || engine.config.deviceId != deviceId
 
         engine.config.soundEnabled = soundEnabled
+        VoiceLinesManager.shared.gender = voiceGender
+        UserDefaults.standard.set(voiceGender.rawValue, forKey: "hookbot_voice_gender")
         engine.config.serverURL = normalizedURL
         engine.config.apiKey = apiKey
         engine.config.deviceId = deviceId

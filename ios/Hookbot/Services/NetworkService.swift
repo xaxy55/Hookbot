@@ -51,8 +51,9 @@ final class NetworkService: ObservableObject {
         pollTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
             self?.pollState()
         }
-        // Initial fetch
+        // Initial fetch + heartbeat
         pollState()
+        sendHeartbeat()
 
         print("[Network] Polling \(engine.config.serverURL) for device \(engine.config.deviceId)")
     }
@@ -78,8 +79,11 @@ final class NetworkService: ObservableObject {
                     self.isConnected = false
                 }
 
-                // Fetch tasks every 10th poll (~30s)
+                // Fetch tasks every 10th poll (~30s), heartbeat every 5th (~15s)
                 self.statsPollCount += 1
+                if self.statsPollCount % 5 == 0 {
+                    self.sendHeartbeat()
+                }
                 if self.statsPollCount % 10 == 0 {
                     self.pollTasks()
                 }
@@ -148,6 +152,38 @@ final class NetworkService: ObservableObject {
         }.resume()
     }
 
+    // MARK: - Heartbeat
+
+    /// Send heartbeat to server so it knows this device is online (cloud mode)
+    private func sendHeartbeat() {
+        guard let engine,
+              !engine.config.serverURL.isEmpty,
+              !engine.config.deviceId.isEmpty else { return }
+
+        guard let url = URL(string: "\(engine.config.serverURL)/api/devices/\(engine.config.deviceId)/state") else { return }
+        var request = authedRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let payload: [String: Any] = [
+            "state": lastKnownState.rawValue,
+            "ip": Self.localIPAddress() ?? "unknown",
+            "connection_mode": "cloud"
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+
+        session.dataTask(with: request) { _, _, _ in }.resume()
+    }
+
+    // MARK: - Helpers
+
+    /// Extract an ID from a JSON value that may be a String or a number.
+    private func stringID(from value: Any?) -> String? {
+        if let s = value as? String, !s.isEmpty { return s }
+        if let n = value as? NSNumber { return n.stringValue }
+        return nil
+    }
+
     // MARK: - Auth Helper
 
     private func authedRequest(url: URL) -> URLRequest {
@@ -212,7 +248,7 @@ final class NetworkService: ObservableObject {
                 // Try parsing as array of devices
                 if let devices = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
                    let firstDevice = devices.first,
-                   let id = firstDevice["id"] as? String {
+                   let id = self.stringID(from: firstDevice["id"]) {
                     engine.config.deviceId = id
                     if let name = firstDevice["name"] as? String {
                         print("[Network] Auto-selected device: \(name) (\(id))")
@@ -225,7 +261,7 @@ final class NetworkService: ObservableObject {
                 else if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                         let devices = json["devices"] as? [[String: Any]],
                         let firstDevice = devices.first,
-                        let id = firstDevice["id"] as? String {
+                        let id = self.stringID(from: firstDevice["id"]) {
                     engine.config.deviceId = id
                     if let name = firstDevice["name"] as? String {
                         print("[Network] Auto-selected device: \(name) (\(id))")
@@ -255,8 +291,9 @@ final class NetworkService: ObservableObject {
         let payload: [String: Any] = [
             "name": engine.config.deviceName,
             "hostname": engine.config.deviceName,
-            "ip_address": "polling",
-            "purpose": "hookbot-\(Self.platformID)"
+            "ip_address": "cloud",
+            "purpose": "hookbot-\(Self.platformID)",
+            "connection_mode": "cloud"
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
 
@@ -270,7 +307,7 @@ final class NetworkService: ObservableObject {
             }
             if let data,
                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let id = json["id"] as? String,
+               let id = self?.stringID(from: json["id"]),
                let engine = self?.engine {
                 DispatchQueue.main.async {
                     if engine.config.deviceId.isEmpty {

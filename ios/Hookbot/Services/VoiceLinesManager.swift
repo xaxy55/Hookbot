@@ -13,6 +13,11 @@ enum VoiceTone: String, Codable, CaseIterable {
     case dramatic    = "dramatic"     // theatrical
 }
 
+enum VoiceGender: String, Codable, CaseIterable {
+    case male   = "male"
+    case female = "female"
+}
+
 // MARK: - Manager
 
 final class VoiceLinesManager: NSObject, AVSpeechSynthesizerDelegate {
@@ -20,6 +25,7 @@ final class VoiceLinesManager: NSObject, AVSpeechSynthesizerDelegate {
     static let shared = VoiceLinesManager()
 
     var tone: VoiceTone = .corporate
+    var gender: VoiceGender = .male
     var isEnabled = true
     var volume: Float = 0.7
 
@@ -29,6 +35,11 @@ final class VoiceLinesManager: NSObject, AVSpeechSynthesizerDelegate {
     override private init() {
         super.init()
         synthesizer.delegate = self
+        // Restore saved gender preference (default: male)
+        if let saved = UserDefaults.standard.string(forKey: "hookbot_voice_gender"),
+           let g = VoiceGender(rawValue: saved) {
+            gender = g
+        }
     }
 
     // MARK: - State quips
@@ -188,16 +199,54 @@ final class VoiceLinesManager: NSObject, AVSpeechSynthesizerDelegate {
     }
 
     private var voiceForTone: AVSpeechSynthesisVoice? {
-        // Pick a matching system voice
+        let language: String
         switch tone {
-        case .corporate:
-            return AVSpeechSynthesisVoice(language: "en-US")
-        case .hyper:
-            return AVSpeechSynthesisVoice(language: "en-AU")
-        case .sardonic:
-            return AVSpeechSynthesisVoice(language: "en-GB")
-        case .dramatic:
-            return AVSpeechSynthesisVoice(language: "en-IE")
+        case .corporate:  language = "en-US"
+        case .hyper:      language = "en-AU"
+        case .sardonic:   language = "en-GB"
+        case .dramatic:   language = "en-IE"
         }
+
+        // Try to find a voice matching the requested gender
+        let voices = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix(language.prefix(2) + "-") || $0.language == language }
+
+        // iOS voice identifiers: male voices typically contain names like "Aaron", "Daniel", "Fred", "Oliver"
+        // Female voices: "Samantha", "Karen", "Moira", "Tessa"
+        let maleNames = ["aaron", "daniel", "fred", "oliver", "lee", "tom", "alex", "gordon", "arthur", "jamie"]
+        let femaleNames = ["samantha", "karen", "moira", "tessa", "kate", "fiona", "victoria", "zoe", "siri"]
+
+        let preferredNames = gender == .male ? maleNames : femaleNames
+        let fallbackNames = gender == .male ? femaleNames : maleNames
+
+        // First: try to find a preferred-gender voice for the exact language
+        for voice in voices where voice.language == language {
+            let id = voice.identifier.lowercased()
+            let name = voice.name.lowercased()
+            if preferredNames.contains(where: { id.contains($0) || name.contains($0) }) {
+                return voice
+            }
+        }
+
+        // Second: try any voice for the language that matches gender
+        for voice in voices {
+            let id = voice.identifier.lowercased()
+            let name = voice.name.lowercased()
+            if preferredNames.contains(where: { id.contains($0) || name.contains($0) }) {
+                return voice
+            }
+        }
+
+        // Third: avoid wrong-gender voices — pick language default only if we can't tell
+        for voice in voices where voice.language == language {
+            let id = voice.identifier.lowercased()
+            let name = voice.name.lowercased()
+            let isWrongGender = fallbackNames.contains(where: { id.contains($0) || name.contains($0) })
+            if !isWrongGender {
+                return voice
+            }
+        }
+
+        // Fallback: just use the language default
+        return AVSpeechSynthesisVoice(language: language)
     }
 }
