@@ -405,7 +405,7 @@ struct SocialHubView: View {
                     }
                 }
 
-                Section("Health & Focus") {
+                Section("Focus") {
                     NavigationLink {
                         PomodoroView()
                             .environmentObject(engine)

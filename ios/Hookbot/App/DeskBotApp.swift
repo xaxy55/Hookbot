@@ -86,9 +86,6 @@ struct HookbotApp: App {
         SocialService.shared.configure(engine: engine)
         SocialService.shared.start()
 
-        // HealthKit (13.6)
-        HealthKitManager.shared.requestAuthorization()
-
         // Seasonal events (13.5)
         SeasonalEventsManager.shared.refresh()
 

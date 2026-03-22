@@ -79,7 +79,6 @@
 		EF78118C28652960BBA837F7 /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */; };
 		F156A3AF2CC4A7BA2413911A /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
 		F4F0D14584599DDB57D66845 /* WatchNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B84137B7C09B2C196A0D2896 /* WatchNetworkService.swift */; };
-		FDA1E2045549242A2403AC63 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA977816E16D1BCCA4C49AF /* HealthKitManager.swift */; };
 		FE9DE8831D8C06E1C48BD0A1 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF64571AB7B292F2ED074EE1 /* LoginView.swift */; };
 		FF2350D11B46FB9A7B22EB30 /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
 /* End PBXBuildFile section */
@@ -189,7 +188,6 @@
 		91DC5E515C2FA269780D10B7 /* WatchActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchActivityView.swift; sourceTree = "<group>"; };
 		958E05B4490FBB82AF160800 /* AvatarEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEngine.swift; sourceTree = "<group>"; };
 		97CE9225F0CB375F3DE7EB5C /* SocialService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialService.swift; sourceTree = "<group>"; };
-		9BA977816E16D1BCCA4C49AF /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A15641C8A81C4042D8266061 /* WeeklyPhotoCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyPhotoCardView.swift; sourceTree = "<group>"; };
@@ -228,7 +226,6 @@
 				DFCE0BF94E54C10B0648C14A /* DeviceClaimService.swift */,
 				143601AAC722B8520EC3C7CE /* FocusModeManager.swift */,
 				007B5E84C28B4F2FAD647E7F /* HapticManager.swift */,
-				9BA977816E16D1BCCA4C49AF /* HealthKitManager.swift */,
 				0BD95AF6D12050ED18D77B05 /* LiveActivityManager.swift */,
 				D16341E57A503F0A2E6D2757 /* MultipeerService.swift */,
 				64E4ED6FDD298958EA1DB744 /* NetworkService.swift */,
@@ -606,7 +603,6 @@
 				7A1E5327E157FDFA5107452B /* FocusModeManager.swift in Sources */,
 				63426452746D8FBEAB74DD9C /* FriendListView.swift in Sources */,
 				83D3838B6D8A2585F9BBAD6E /* HapticManager.swift in Sources */,
-				FDA1E2045549242A2403AC63 /* HealthKitManager.swift in Sources */,
 				A9F51A8D1E3D907573869A8C /* HookbotActivityAttributes.swift in Sources */,
 				051FEAACFBA8DC2629AF6815 /* LiveActivityManager.swift in Sources */,
 				FE9DE8831D8C06E1C48BD0A1 /* LoginView.swift in Sources */,
@@ -746,8 +742,6 @@
 					_http._tcp,
 				);
 				INFOPLIST_KEY_NSCameraUsageDescription = "Hookbot uses the camera to scan QR codes on devices for quick claiming.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Hookbot reads your step count to energize your avatar when you hit your daily goal.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Hookbot saves your step challenge progress and avatar energy data to HealthKit.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -917,8 +911,6 @@
 					_http._tcp,
 				);
 				INFOPLIST_KEY_NSCameraUsageDescription = "Hookbot uses the camera to scan QR codes on devices for quick claiming.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Hookbot reads your step count to energize your avatar when you hit your daily goal.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Hookbot saves your step challenge progress and avatar energy data to HealthKit.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

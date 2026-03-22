@@ -37,7 +37,6 @@ targets:
     entitlements:
       path: Hookbot/Hookbot.entitlements
       properties:
-        com.apple.developer.healthkit: true
         com.apple.developer.usernotifications.time-sensitive: true
         com.apple.security.application-groups:
           - group.com.mr-ai.hookbot
@@ -55,8 +54,6 @@ targets:
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server."
         INFOPLIST_KEY_NSBonjourServices:
           - "_http._tcp"
-        INFOPLIST_KEY_NSHealthShareUsageDescription: "Hookbot reads your step count to energize your avatar when you hit your daily goal."
-        INFOPLIST_KEY_NSHealthUpdateUsageDescription: "Hookbot saves your step challenge progress and avatar energy data to HealthKit."
         INFOPLIST_KEY_NSSupportsLiveActivities: true
         INFOPLIST_KEY_NSCameraUsageDescription: "Hookbot uses the camera to scan QR codes on devices for quick claiming."
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup."
