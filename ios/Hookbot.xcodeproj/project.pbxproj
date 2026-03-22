@@ -791,7 +791,6 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = HookbotiOSWidget/HookbotiOSWidget.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HookbotiOSWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
@@ -945,7 +944,6 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = HookbotiOSWidget/HookbotiOSWidget.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HookbotiOSWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
