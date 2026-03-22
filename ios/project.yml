@@ -46,8 +46,6 @@ targets:
     dependencies:
       - target: HookbotiOSWidget
       - target: HookbotWatch
-        copy:
-          destination: plugins
     settings:
       base:
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
