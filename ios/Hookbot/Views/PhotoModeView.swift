@@ -58,7 +58,6 @@ struct PhotoModeView: View {
 
             // AR indicator
             VStack {
-                Spacer()
                 HStack {
                     Image(systemName: "arkit")
                         .font(.system(size: 20))
@@ -67,7 +66,8 @@ struct PhotoModeView: View {
                         .font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundStyle(.cyan.opacity(0.5))
                 }
-                .padding(.bottom, 120)
+                .padding(.top, 110)
+                Spacer()
             }
 
             // Grid overlay for AR feel
