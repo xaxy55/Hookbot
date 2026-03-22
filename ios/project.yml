@@ -58,6 +58,7 @@ targets:
         INFOPLIST_KEY_NSCameraUsageDescription: "Hookbot uses the camera to scan QR codes on devices for quick claiming."
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup."
         INFOPLIST_KEY_NFCReaderUsageDescription: "Hookbot uses NFC to pair with a buddy's phone by tapping devices together."
+        INFOPLIST_KEY_NSNearbyInteractionUsageDescription: "Hookbot uses Ultra Wideband to detect when a buddy's phone is nearby so your avatars can react to each other — wave, high-five, or celebrate when you're close."
         PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot
         GENERATE_INFOPLIST_FILE: true
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
