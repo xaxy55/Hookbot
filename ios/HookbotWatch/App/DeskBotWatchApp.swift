@@ -5,6 +5,7 @@ import WatchConnectivity
 struct HookbotWatchApp: App {
     @StateObject private var engine = AvatarEngine()
     @StateObject private var connectivity = WatchConnectivityManager()
+<<<<<<< Updated upstream
     @StateObject private var network = WatchNetworkService()
 
     var body: some Scene {
@@ -31,6 +32,17 @@ struct HookbotWatchApp: App {
                     engine.onPlayEscalationBeep = { secondsWaiting in
                         HapticManager.shared.playWaitingEscalation(secondsWaiting: secondsWaiting)
                     }
+=======
+
+    var body: some Scene {
+        WindowGroup {
+            WatchMainView()
+                .environmentObject(engine)
+                .environmentObject(connectivity)
+                .onAppear {
+                    connectivity.engine = engine
+                    connectivity.activate()
+>>>>>>> Stashed changes
                 }
         }
     }
@@ -40,7 +52,10 @@ struct HookbotWatchApp: App {
 
 final class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     weak var engine: AvatarEngine?
+<<<<<<< Updated upstream
     @Published var isReachable = false
+=======
+>>>>>>> Stashed changes
     private var session: WCSession?
 
     func activate() {
@@ -51,6 +66,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDeleg
     }
 
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+<<<<<<< Updated upstream
         DispatchQueue.main.async {
             self.isReachable = session.isReachable
         }
@@ -60,6 +76,9 @@ final class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDeleg
         DispatchQueue.main.async {
             self.isReachable = session.isReachable
         }
+=======
+        print("[Watch] Session activated: \(activationState.rawValue)")
+>>>>>>> Stashed changes
     }
 
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
@@ -73,6 +92,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDeleg
             self?.engine?.setState(state)
         }
     }
+<<<<<<< Updated upstream
 
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
         // Receive server config from iPhone app
@@ -85,4 +105,6 @@ final class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDeleg
             }
         }
     }
+=======
+>>>>>>> Stashed changes
 }

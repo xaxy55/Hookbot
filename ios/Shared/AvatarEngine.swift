@@ -63,7 +63,10 @@ final class AvatarEngine: ObservableObject {
         currentState = state
         stateTime = 0
         stateEnteredAt = Date()
+<<<<<<< Updated upstream
         UserDefaults.standard.set(state.rawValue, forKey: "hookbot_current_state")
+=======
+>>>>>>> Stashed changes
         blinking = false
         lastBeepTime = 0
         ledStateTime = 0

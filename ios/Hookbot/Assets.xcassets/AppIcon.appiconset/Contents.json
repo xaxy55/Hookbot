@@ -1,7 +1,10 @@
 {
   "images" : [
     {
+<<<<<<< Updated upstream
       "filename" : "AppIcon.png",
+=======
+>>>>>>> Stashed changes
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +16,10 @@
           "value" : "dark"
         }
       ],
+<<<<<<< Updated upstream
       "filename" : "AppIcon.png",
+=======
+>>>>>>> Stashed changes
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +31,10 @@
           "value" : "tinted"
         }
       ],
+<<<<<<< Updated upstream
       "filename" : "AppIcon.png",
+=======
+>>>>>>> Stashed changes
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"

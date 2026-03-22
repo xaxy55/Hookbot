@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+<<<<<<< Updated upstream
 		0162053190C7BC9DBA9DEDC4 /* DailyRewardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6925F42E4EC6A7C63DEE66B1 /* DailyRewardView.swift */; };
 		022226845D92B0D3589A7212 /* WeeklyPhotoCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15641C8A81C4042D8266061 /* WeeklyPhotoCardView.swift */; };
 		03595AAAB78474F4277F3D87 /* HookbotWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BAE77E44DC07E2A2F72BF42 /* HookbotWidget.swift */; };
@@ -533,10 +534,74 @@
 				03397893315BCC3E84C561BE /* AvatarRenderer.swift */,
 				7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */,
 				D82BCF6E27C8DFC94A646C7B /* HookbotActivityAttributes.swift */,
+=======
+		03D27BF41DC070407AF9E65E /* WatchAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE85CAA083FE0E93158E3F96 /* WatchAvatarView.swift */; };
+		076B2166516D160838D65E18 /* DeskBotWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5EA4282022B9FA35C832BD /* DeskBotWatchApp.swift */; };
+		0C761AFC504D19F7E341D3B3 /* WatchMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F35E3D3A744079507FE48234 /* WatchMainView.swift */; };
+		0EF3C4B819C88D3FB23A558B /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB50F52183515601E760EE8 /* SoundManager.swift */; };
+		10116752D1248B21B0453DAC /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A899DFB452154BEFD32A511 /* AvatarRenderer.swift */; };
+		189235980E7BFDFDC6D9D003 /* DeskBotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA2B95019ACF72F0B35F9903 /* DeskBotApp.swift */; };
+		197DDDEC742D11BD2D946FDE /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02D99D5549BED822D8FAF589 /* HapticManager.swift */; };
+		19B3294E088DD804BE77D7F7 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D31DD82B6AEBCCAD23F1DFEF /* ControlPanelView.swift */; };
+		2E43D69014DC7F960F134878 /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777174748AA0A8D7B3CFEBB0 /* WatchBridge.swift */; };
+		48479B1D16B14FE961CE1295 /* AvatarEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643149924CAA2A2C2B15E700 /* AvatarEngine.swift */; };
+		55A98CCF485C869CAE461401 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319190DF3BB1189A225B32CE /* SettingsView.swift */; };
+		56313EE342E0F85E8FD6AC49 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7DE0E73EEE540D9F1D5CA754 /* Assets.xcassets */; };
+		754153D2B6F99D6BD7F9EEE9 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0D56D4D38C6B0CFD364D7AF /* MainView.swift */; };
+		84C895BC95F4C5EF4E30B1BD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1BED89F6EAC8D31FA5D3DF6F /* Assets.xcassets */; };
+		A894FB930E82A3221CBE2501 /* AvatarTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD237F78F96D60AD70C61E3 /* AvatarTypes.swift */; };
+		C24BA9E2FCCD4689D8634DD5 /* AvatarTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD237F78F96D60AD70C61E3 /* AvatarTypes.swift */; };
+		C94883C47213DD127CB87C7D /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E348B27FB27539F43F7FD4 /* AvatarView.swift */; };
+		DF65985236FE41DBE8CDB2EE /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724010F0009E515276F7889D /* NetworkService.swift */; };
+		EEA504089928C88832082EED /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A899DFB452154BEFD32A511 /* AvatarRenderer.swift */; };
+		F3F724536200193584C463A7 /* AvatarEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643149924CAA2A2C2B15E700 /* AvatarEngine.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6AAE220EEB8A164DE9B41400 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 870367A9CD6E1901E2124235 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4234654C5E35FFCFC76F5BAD;
+			remoteInfo = Hookbot;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		02D99D5549BED822D8FAF589 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		1BED89F6EAC8D31FA5D3DF6F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2244DE1C3F2A9D55B28232B8 /* Hookbot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hookbot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A899DFB452154BEFD32A511 /* AvatarRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarRenderer.swift; sourceTree = "<group>"; };
+		319190DF3BB1189A225B32CE /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5C5EA4282022B9FA35C832BD /* DeskBotWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotWatchApp.swift; sourceTree = "<group>"; };
+		5FB50F52183515601E760EE8 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
+		643149924CAA2A2C2B15E700 /* AvatarEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEngine.swift; sourceTree = "<group>"; };
+		724010F0009E515276F7889D /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
+		777174748AA0A8D7B3CFEBB0 /* WatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridge.swift; sourceTree = "<group>"; };
+		7DE0E73EEE540D9F1D5CA754 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		82E348B27FB27539F43F7FD4 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
+		AFFAA4DDDD22535F488F9C99 /* HookbotWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HookbotWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BA2B95019ACF72F0B35F9903 /* DeskBotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotApp.swift; sourceTree = "<group>"; };
+		BCD237F78F96D60AD70C61E3 /* AvatarTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarTypes.swift; sourceTree = "<group>"; };
+		C0D56D4D38C6B0CFD364D7AF /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		D31DD82B6AEBCCAD23F1DFEF /* ControlPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlPanelView.swift; sourceTree = "<group>"; };
+		DE85CAA083FE0E93158E3F96 /* WatchAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAvatarView.swift; sourceTree = "<group>"; };
+		F35E3D3A744079507FE48234 /* WatchMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMainView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0A9C2E4DB7B1221DCE6A5D9A /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				643149924CAA2A2C2B15E700 /* AvatarEngine.swift */,
+				2A899DFB452154BEFD32A511 /* AvatarRenderer.swift */,
+				BCD237F78F96D60AD70C61E3 /* AvatarTypes.swift */,
+>>>>>>> Stashed changes
 			);
 			path = Shared;
 			sourceTree = "<group>";
 		};
+<<<<<<< Updated upstream
 		BC59BB3EC272C834E7ECB384 /* System */ = {
 			isa = PBXGroup;
 			children = (
@@ -562,10 +627,26 @@
 			isa = PBXGroup;
 			children = (
 				84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */,
+=======
+		2EF94A6AE43DB93E4506B539 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2244DE1C3F2A9D55B28232B8 /* Hookbot.app */,
+				AFFAA4DDDD22535F488F9C99 /* HookbotWatch.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		34AB4C04E083DACB952BA0B7 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5C5EA4282022B9FA35C832BD /* DeskBotWatchApp.swift */,
+>>>>>>> Stashed changes
 			);
 			path = App;
 			sourceTree = "<group>";
 		};
+<<<<<<< Updated upstream
 		E1F40A60B0C2DA76F4AE3C80 /* Devices */ = {
 			isa = PBXGroup;
 			children = (
@@ -604,10 +685,30 @@
 				31B215F7587EF5198A81E2E5 /* Models */,
 				06CBB800FED0EF03CF145128 /* Services */,
 				3C05CF566F178449FBE7D2CF /* Views */,
+=======
+		5566681D4CC5AFAF4B30BF2B = {
+			isa = PBXGroup;
+			children = (
+				6E276AD59C27F104A6BC8688 /* Hookbot */,
+				E71FF7525E174EDEB0EC2BC1 /* HookbotWatch */,
+				0A9C2E4DB7B1221DCE6A5D9A /* Shared */,
+				2EF94A6AE43DB93E4506B539 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		6E276AD59C27F104A6BC8688 /* Hookbot */ = {
+			isa = PBXGroup;
+			children = (
+				1BED89F6EAC8D31FA5D3DF6F /* Assets.xcassets */,
+				FFDD6685967787DA63FF2C1D /* App */,
+				9886358CAE3CAD17BD27F1DC /* Services */,
+				9E78902673F7E52794A35488 /* Views */,
+>>>>>>> Stashed changes
 			);
 			path = Hookbot;
 			sourceTree = "<group>";
 		};
+<<<<<<< Updated upstream
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -618,16 +719,81 @@
 				83B71C0FD82430537B2DB014 /* Sources */,
 				308B800743C11585009C12D4 /* Resources */,
 				FDB6BE7160543AD1B6309584 /* Embed Foundation Extensions */,
+=======
+		9886358CAE3CAD17BD27F1DC /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				02D99D5549BED822D8FAF589 /* HapticManager.swift */,
+				724010F0009E515276F7889D /* NetworkService.swift */,
+				5FB50F52183515601E760EE8 /* SoundManager.swift */,
+				777174748AA0A8D7B3CFEBB0 /* WatchBridge.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		9CCCA49DB6A1B9C27468812B /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				DE85CAA083FE0E93158E3F96 /* WatchAvatarView.swift */,
+				F35E3D3A744079507FE48234 /* WatchMainView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		9E78902673F7E52794A35488 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				82E348B27FB27539F43F7FD4 /* AvatarView.swift */,
+				D31DD82B6AEBCCAD23F1DFEF /* ControlPanelView.swift */,
+				C0D56D4D38C6B0CFD364D7AF /* MainView.swift */,
+				319190DF3BB1189A225B32CE /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E71FF7525E174EDEB0EC2BC1 /* HookbotWatch */ = {
+			isa = PBXGroup;
+			children = (
+				7DE0E73EEE540D9F1D5CA754 /* Assets.xcassets */,
+				34AB4C04E083DACB952BA0B7 /* App */,
+				9CCCA49DB6A1B9C27468812B /* Views */,
+			);
+			path = HookbotWatch;
+			sourceTree = "<group>";
+		};
+		FFDD6685967787DA63FF2C1D /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BA2B95019ACF72F0B35F9903 /* DeskBotApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3ACA0001C2596A35E4786BF1 /* HookbotWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ED396F82729FB88AB89D902B /* Build configuration list for PBXNativeTarget "HookbotWatch" */;
+			buildPhases = (
+				D96F2E8DD2C5D0A743ABCD46 /* Sources */,
+				13A28358CAB84E9E4C1FEF79 /* Resources */,
+>>>>>>> Stashed changes
 			);
 			buildRules = (
 			);
 			dependencies = (
+<<<<<<< Updated upstream
 				95E3DDA13224FCB99162B0E5 /* PBXTargetDependency */,
+=======
+				4FFFE42D90711D3CA8B47237 /* PBXTargetDependency */,
+>>>>>>> Stashed changes
 			);
 			name = HookbotWatch;
 			packageProductDependencies = (
 			);
 			productName = HookbotWatch;
+<<<<<<< Updated upstream
 			productReference = 7FF48B21F485D574BFEE833B /* HookbotWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -639,17 +805,32 @@
 				5F3F63080D02D66D882F7C2E /* Resources */,
 				3A7933F3BD096707C094EB09 /* Embed Foundation Extensions */,
 				96ED7D39005A5919294B8A82 /* Embed Watch Content */,
+=======
+			productReference = AFFAA4DDDD22535F488F9C99 /* HookbotWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		4234654C5E35FFCFC76F5BAD /* Hookbot */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E8DC4721A5BFE94E7A1B672C /* Build configuration list for PBXNativeTarget "Hookbot" */;
+			buildPhases = (
+				B75C2083F1677E6C3A3618C6 /* Sources */,
+				9E74FEACFAB16776422EC556 /* Resources */,
+>>>>>>> Stashed changes
 			);
 			buildRules = (
 			);
 			dependencies = (
+<<<<<<< Updated upstream
 				B838BCD88541C1F18D02D03D /* PBXTargetDependency */,
 				C049229A12AD971FD2B2EFE1 /* PBXTargetDependency */,
+=======
+>>>>>>> Stashed changes
 			);
 			name = Hookbot;
 			packageProductDependencies = (
 			);
 			productName = Hookbot;
+<<<<<<< Updated upstream
 			productReference = 54D7C47D418E782FC63F6973 /* Hookbot.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -709,11 +890,21 @@
 
 /* Begin PBXProject section */
 		F7A1AB380677B6739118F360 /* Project object */ = {
+=======
+			productReference = 2244DE1C3F2A9D55B28232B8 /* Hookbot.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		870367A9CD6E1901E2124235 /* Project object */ = {
+>>>>>>> Stashed changes
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
+<<<<<<< Updated upstream
 					00837AA4718731B110629A8A = {
 						DevelopmentTeam = 56YDP2JJ35;
 						ProvisioningStyle = Automatic;
@@ -738,12 +929,21 @@
 				};
 			};
 			buildConfigurationList = 6674E57AEF0675312652A33C /* Build configuration list for PBXProject "Hookbot" */;
+=======
+					3ACA0001C2596A35E4786BF1 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = B08A332EA8D4AE385971A0F3 /* Build configuration list for PBXProject "Hookbot" */;
+>>>>>>> Stashed changes
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
 				en,
 			);
+<<<<<<< Updated upstream
 			mainGroup = 7D4CE94BEFE6407C1D50CF9F;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
@@ -756,11 +956,23 @@
 				00837AA4718731B110629A8A /* HookbotWatch */,
 				E6617562021CCDEA0A23FB31 /* HookbotWidgetExtension */,
 				63B5824E34178AB4189256E5 /* HookbotiOSWidget */,
+=======
+			mainGroup = 5566681D4CC5AFAF4B30BF2B;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 2EF94A6AE43DB93E4506B539 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4234654C5E35FFCFC76F5BAD /* Hookbot */,
+				3ACA0001C2596A35E4786BF1 /* HookbotWatch */,
+>>>>>>> Stashed changes
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+<<<<<<< Updated upstream
 		308B800743C11585009C12D4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -774,12 +986,28 @@
 			buildActionMask = 2147483647;
 			files = (
 				C839B809A95F20092F26DF60 /* Assets.xcassets in Resources */,
+=======
+		13A28358CAB84E9E4C1FEF79 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				56313EE342E0F85E8FD6AC49 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9E74FEACFAB16776422EC556 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				84C895BC95F4C5EF4E30B1BD /* Assets.xcassets in Resources */,
+>>>>>>> Stashed changes
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+<<<<<<< Updated upstream
 		04892BDBEAE83EC4A58E869D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -911,12 +1139,44 @@
 			files = (
 				6302DCD81C9A7632F6A3FA91 /* ComplicationProvider.swift in Sources */,
 				073508FD8742148770DFAE1F /* HookbotWidget.swift in Sources */,
+=======
+		B75C2083F1677E6C3A3618C6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F3F724536200193584C463A7 /* AvatarEngine.swift in Sources */,
+				10116752D1248B21B0453DAC /* AvatarRenderer.swift in Sources */,
+				C24BA9E2FCCD4689D8634DD5 /* AvatarTypes.swift in Sources */,
+				C94883C47213DD127CB87C7D /* AvatarView.swift in Sources */,
+				19B3294E088DD804BE77D7F7 /* ControlPanelView.swift in Sources */,
+				189235980E7BFDFDC6D9D003 /* DeskBotApp.swift in Sources */,
+				197DDDEC742D11BD2D946FDE /* HapticManager.swift in Sources */,
+				754153D2B6F99D6BD7F9EEE9 /* MainView.swift in Sources */,
+				DF65985236FE41DBE8CDB2EE /* NetworkService.swift in Sources */,
+				55A98CCF485C869CAE461401 /* SettingsView.swift in Sources */,
+				0EF3C4B819C88D3FB23A558B /* SoundManager.swift in Sources */,
+				2E43D69014DC7F960F134878 /* WatchBridge.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D96F2E8DD2C5D0A743ABCD46 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				48479B1D16B14FE961CE1295 /* AvatarEngine.swift in Sources */,
+				EEA504089928C88832082EED /* AvatarRenderer.swift in Sources */,
+				A894FB930E82A3221CBE2501 /* AvatarTypes.swift in Sources */,
+				076B2166516D160838D65E18 /* DeskBotWatchApp.swift in Sources */,
+				03D27BF41DC070407AF9E65E /* WatchAvatarView.swift in Sources */,
+				0C761AFC504D19F7E341D3B3 /* WatchMainView.swift in Sources */,
+>>>>>>> Stashed changes
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+<<<<<<< Updated upstream
 		8C01E282C7DAC0F915E1A346 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3FB113BB92292451E5D9FF81 /* Hookbot */;
@@ -936,10 +1196,17 @@
 			isa = PBXTargetDependency;
 			target = 00837AA4718731B110629A8A /* HookbotWatch */;
 			targetProxy = 564E404B4147DAB502154107 /* PBXContainerItemProxy */;
+=======
+		4FFFE42D90711D3CA8B47237 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4234654C5E35FFCFC76F5BAD /* Hookbot */;
+			targetProxy = 6AAE220EEB8A164DE9B41400 /* PBXContainerItemProxy */;
+>>>>>>> Stashed changes
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+<<<<<<< Updated upstream
 		0A520D25C5621F9E8963EEDD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1070,6 +1337,9 @@
 			name = Debug;
 		};
 		9B83070B64205AD36DC8F262 /* Debug */ = {
+=======
+		28206D099F46CE1860626527 /* Debug */ = {
+>>>>>>> Stashed changes
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1102,11 +1372,18 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+<<<<<<< Updated upstream
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 56YDP2JJ35;
+=======
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+>>>>>>> Stashed changes
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1131,13 +1408,17 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+<<<<<<< Updated upstream
 				SWIFT_EMIT_LOC_STRINGS = YES;
+=======
+>>>>>>> Stashed changes
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.9;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
 		};
+<<<<<<< Updated upstream
 		A11108E0C2CBA8041ED32397 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1157,6 +1438,19 @@
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
 				INFOPLIST_KEY_NSNearbyInteractionUsageDescription = "Hookbot uses Ultra Wideband to detect when a buddy's phone is nearby so your avatars can react to each other — wave, high-five, or celebrate when you're close.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+=======
+		3A94CFA240E78FE87D8A2CBB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 56YDP2JJ35;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_NSBonjourServices = _http._tcp;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
+>>>>>>> Stashed changes
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -1167,16 +1461,22 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
+<<<<<<< Updated upstream
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+=======
+				PRODUCT_BUNDLE_IDENTIFIER = com.xaxy.hookbot.ios;
+				SDKROOT = iphoneos;
+>>>>>>> Stashed changes
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
+<<<<<<< Updated upstream
 		A7804874B81FCE85388D2CC9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1213,6 +1513,68 @@
 			name = Release;
 		};
 		CC9289B03D5E901D8A5200B1 /* Release */ = {
+=======
+		4EEA3DC73A22D27F999A4555 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 56YDP2JJ35;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_NSBonjourServices = _http._tcp;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xaxy.hookbot.ios;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5773D153CDAD61921FB74CD3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.xaxy.hookbot.ios;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xaxy.hookbot.ios.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		BD763CD13D931795C512DD29 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.xaxy.hookbot.ios;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xaxy.hookbot.ios.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		DF56944D1AC229DE9F31478F /* Release */ = {
+>>>>>>> Stashed changes
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1245,11 +1607,18 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+<<<<<<< Updated upstream
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 56YDP2JJ35;
+=======
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+>>>>>>> Stashed changes
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1267,13 +1636,17 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+<<<<<<< Updated upstream
 				SWIFT_EMIT_LOC_STRINGS = YES;
+=======
+>>>>>>> Stashed changes
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.9;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
+<<<<<<< Updated upstream
 		DC4BE71C7C7E7E81DB961BC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1301,19 +1674,38 @@
 			buildConfigurations = (
 				10C5A22FAC67523BF77203E0 /* Debug */,
 				A11108E0C2CBA8041ED32397 /* Release */,
+=======
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B08A332EA8D4AE385971A0F3 /* Build configuration list for PBXProject "Hookbot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				28206D099F46CE1860626527 /* Debug */,
+				DF56944D1AC229DE9F31478F /* Release */,
+>>>>>>> Stashed changes
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+<<<<<<< Updated upstream
 		3709859A5A0DB222DE13B590 /* Build configuration list for PBXNativeTarget "HookbotUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				70CC643911434A865C3048D1 /* Debug */,
 				C176FA2AD7B6E74B7A68D476 /* Release */,
+=======
+		E8DC4721A5BFE94E7A1B672C /* Build configuration list for PBXNativeTarget "Hookbot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4EEA3DC73A22D27F999A4555 /* Debug */,
+				3A94CFA240E78FE87D8A2CBB /* Release */,
+>>>>>>> Stashed changes
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+<<<<<<< Updated upstream
 		6674E57AEF0675312652A33C /* Build configuration list for PBXProject "Hookbot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1346,11 +1738,22 @@
 			buildConfigurations = (
 				6D944C8B012071CD502B44A8 /* Debug */,
 				2B66037D80644430230BE37A /* Release */,
+=======
+		ED396F82729FB88AB89D902B /* Build configuration list for PBXNativeTarget "HookbotWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD763CD13D931795C512DD29 /* Debug */,
+				5773D153CDAD61921FB74CD3 /* Release */,
+>>>>>>> Stashed changes
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
+<<<<<<< Updated upstream
 	rootObject = F7A1AB380677B6739118F360 /* Project object */;
+=======
+	rootObject = 870367A9CD6E1901E2124235 /* Project object */;
+>>>>>>> Stashed changes
 }

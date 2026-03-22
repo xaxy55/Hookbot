@@ -10,20 +10,28 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
+<<<<<<< Updated upstream
     DEVELOPMENT_TEAM: "56YDP2JJ35"
     CODE_SIGN_STYLE: Automatic
     DEAD_CODE_STRIPPING: true
     ENABLE_USER_SCRIPT_SANDBOXING: true
     SWIFT_EMIT_LOC_STRINGS: true
+=======
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+>>>>>>> Stashed changes
 
 targets:
   Hookbot:
     type: application
     platform: iOS
+<<<<<<< Updated upstream
     supportedDestinations: [iOS]
     scheme:
       testTargets:
         - HookbotUITests
+=======
+>>>>>>> Stashed changes
     sources:
       - path: Hookbot
         excludes:
@@ -37,6 +45,7 @@ targets:
       - path: Shared
         excludes:
           - "**/.DS_Store"
+<<<<<<< Updated upstream
     entitlements:
       path: Hookbot/Hookbot.entitlements
       properties:
@@ -49,12 +58,17 @@ targets:
     settings:
       base:
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
+=======
+    settings:
+      base:
+>>>>>>> Stashed changes
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_CFBundleDisplayName: "Hookbot"
+<<<<<<< Updated upstream
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.developer-tools"
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server."
         INFOPLIST_KEY_NSBonjourServices:
@@ -64,6 +78,11 @@ targets:
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup."
         INFOPLIST_KEY_NFCReaderUsageDescription: "Hookbot uses NFC to pair with a buddy's phone by tapping devices together."
         INFOPLIST_KEY_NSNearbyInteractionUsageDescription: "Hookbot uses Ultra Wideband to detect when a buddy's phone is nearby so your avatars can react to each other — wave, high-five, or celebrate when you're close."
+=======
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server."
+        INFOPLIST_KEY_NSBonjourServices:
+          - "_http._tcp"
+>>>>>>> Stashed changes
         PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot
         GENERATE_INFOPLIST_FILE: true
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -73,12 +92,16 @@ targets:
   HookbotWatch:
     type: application
     platform: watchOS
+<<<<<<< Updated upstream
     scheme:
       gatherCoverageData: false
+=======
+>>>>>>> Stashed changes
     sources:
       - path: HookbotWatch
         excludes:
           - "**/.DS_Store"
+<<<<<<< Updated upstream
           - "Complications/**"
       - path: Shared
         excludes:
@@ -88,6 +111,11 @@ targets:
       properties:
         com.apple.security.application-groups:
           - group.com.mr-ai.hookbot
+=======
+      - path: Shared
+        excludes:
+          - "**/.DS_Store"
+>>>>>>> Stashed changes
     settings:
       base:
         INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.mr-ai.hookbot
@@ -98,6 +126,7 @@ targets:
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 1.0.0
     dependencies:
+<<<<<<< Updated upstream
       - target: HookbotWidgetExtension
 
   HookbotWidgetExtension:
@@ -170,3 +199,8 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: true
         PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot.uitests
+=======
+      - target: Hookbot
+        embed: false
+        link: false
+>>>>>>> Stashed changes

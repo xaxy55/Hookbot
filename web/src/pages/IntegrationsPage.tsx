@@ -241,6 +241,75 @@ export default function IntegrationsPage() {
         </div>
       </div>
 
+      {/* GitHub Webhooks */}
+      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gray-500/10 flex items-center justify-center">
+            <GitHubIcon />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-gray-300">GitHub</h2>
+            <p className="text-[11px] text-gray-500">React to pushes, PRs, CI, issues, and stars</p>
+          </div>
+          <span className="ml-auto px-2 py-0.5 text-[10px] rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/20">Webhook</span>
+        </div>
+
+        <div className="text-xs text-gray-400 space-y-1.5">
+          <p>GitHub webhooks map repository events to avatar states:</p>
+          <div className="grid grid-cols-2 gap-1 mt-2">
+            {[
+              ['push', 'success'],
+              ['pull_request (opened)', 'thinking'],
+              ['pull_request (merged)', 'success'],
+              ['workflow_run (success)', 'success'],
+              ['workflow_run (failure)', 'error'],
+              ['issues (opened)', 'thinking'],
+              ['issues (closed)', 'success'],
+              ['check_run (success)', 'success'],
+              ['check_run (failure)', 'error'],
+              ['star', 'success'],
+            ].map(([event, state]) => (
+              <div key={event} className="flex items-center gap-2 px-2 py-1 rounded bg-gray-800/50">
+                <span className="font-mono text-gray-300">{event}</span>
+                <span className="text-gray-600">→</span>
+                <span className="text-gray-300">{state}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Webhook URL */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-gray-500 font-medium">Webhook URL</label>
+          </div>
+          <code className="block text-[11px] bg-gray-800 rounded-md px-3 py-2 text-green-400 font-mono border border-gray-700 truncate">
+            POST {apiBase}/api/hook/github
+          </code>
+        </div>
+
+        {/* Setup instructions */}
+        <div className="rounded-md border border-gray-500/20 bg-gray-500/5 p-3">
+          <p className="text-xs text-gray-300 font-medium mb-1">Setup</p>
+          <ol className="text-[11px] text-gray-400 space-y-1 list-decimal list-inside">
+            <li>Go to your GitHub repo → <span className="text-gray-300">Settings → Webhooks → Add webhook</span></li>
+            <li>Set <span className="text-gray-300">Payload URL</span> to <code className="text-green-400">{apiBase}/api/hook/github</code></li>
+            <li>Set <span className="text-gray-300">Content type</span> to <code className="text-green-400">application/json</code></li>
+            <li>Select events: <span className="text-gray-300">Pushes, Pull requests, Workflow runs, Issues, Stars</span> (or "Send me everything")</li>
+            <li>Click <span className="text-gray-300">Add webhook</span></li>
+          </ol>
+        </div>
+
+        <div className="flex items-center gap-2 pt-1">
+          <a
+            href="/settings"
+            className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-colors text-gray-300"
+          >
+            Configure in Settings
+          </a>
+        </div>
+      </div>
+
       {/* Microsoft Teams */}
       <TeamsIntegration devices={devices} />
 

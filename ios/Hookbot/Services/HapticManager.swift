@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -34,17 +35,34 @@ enum HapticManager {
         case .idle:
             let generator = UIImpactFeedbackGenerator(style: .light)
             generator.impactOccurred(intensity: 0.4)
+=======
+import UIKit
+
+// Haptic feedback as the iOS equivalent of the WS2812B LED
+
+enum HapticManager {
+    static func playStateHaptic(_ state: AvatarState) {
+        switch state {
+        case .idle:
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+>>>>>>> Stashed changes
 
         case .thinking:
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+<<<<<<< Updated upstream
                 generator.impactOccurred(intensity: 0.6)
+=======
+                generator.impactOccurred()
+>>>>>>> Stashed changes
             }
 
         case .waiting:
             let generator = UIImpactFeedbackGenerator(style: .heavy)
             generator.impactOccurred()
+<<<<<<< Updated upstream
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 generator.impactOccurred(intensity: 0.9)
             }
@@ -157,5 +175,23 @@ enum HapticManager {
             UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.3)
         }
         #endif
+=======
+
+        case .success:
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
+
+        case .taskcheck:
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred()
+
+        case .error:
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.error)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                generator.notificationOccurred(.error)
+            }
+        }
+>>>>>>> Stashed changes
     }
 }

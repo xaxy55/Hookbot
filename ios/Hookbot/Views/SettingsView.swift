@@ -4,6 +4,7 @@ struct SettingsView: View {
     @EnvironmentObject var engine: AvatarEngine
     @Environment(\.dismiss) var dismiss
 
+<<<<<<< Updated upstream
     @EnvironmentObject var network: NetworkService
     var auth: AuthService?
     @State private var soundEnabled: Bool = true
@@ -21,6 +22,14 @@ struct SettingsView: View {
     @State private var isTesting = false
     @State private var showCigarAgeGate = false
     @State private var showClaimDevice = false
+=======
+    @State private var soundEnabled: Bool = true
+    @State private var serverURL: String = ""
+    @State private var deviceName: String = "hookbot-ios"
+    @State private var accessories: AccessoriesConfig = AccessoriesConfig()
+    @State private var testResult: ServerTestResult?
+    @State private var isTesting = false
+>>>>>>> Stashed changes
 
     var body: some View {
         NavigationStack {
@@ -32,6 +41,7 @@ struct SettingsView: View {
                         .font(.system(.body, design: .monospaced))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+<<<<<<< Updated upstream
                     TextField("API Key", text: $apiKey)
                         .font(.system(.body, design: .monospaced))
                         .textInputAutocapitalization(.never)
@@ -40,6 +50,8 @@ struct SettingsView: View {
                         .font(.system(.body, design: .monospaced))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+=======
+>>>>>>> Stashed changes
 
                     Button {
                         testServerConnection()
@@ -74,6 +86,7 @@ struct SettingsView: View {
                     }
                 }
 
+<<<<<<< Updated upstream
                 Section("Cloud Device") {
                     Button {
                         showClaimDevice = true
@@ -93,10 +106,18 @@ struct SettingsView: View {
                             Text(g.rawValue.capitalized).tag(g)
                         }
                     }
+=======
+                Section("Sound") {
+                    Toggle("Sound Effects", isOn: $soundEnabled)
+>>>>>>> Stashed changes
                 }
 
                 Section("Accessories") {
                     Toggle("Top Hat", isOn: $accessories.topHat)
+<<<<<<< Updated upstream
+=======
+                    Toggle("Cigar", isOn: $accessories.cigar)
+>>>>>>> Stashed changes
                     Toggle("Crown", isOn: $accessories.crown)
                     Toggle("Devil Horns", isOn: $accessories.horns)
                     Toggle("Halo", isOn: $accessories.halo)
@@ -105,6 +126,7 @@ struct SettingsView: View {
                     Toggle("Bow Tie", isOn: $accessories.bowtie)
                 }
 
+<<<<<<< Updated upstream
                 Section {
                     Toggle("Cigar", isOn: Binding(
                         get: { accessories.cigar },
@@ -131,10 +153,14 @@ struct SettingsView: View {
                         Text(network.isConnected ? "Connected (polling)" : "Not connected")
                             .font(.system(.body, design: .monospaced))
                     }
+=======
+                Section("Network") {
+>>>>>>> Stashed changes
                     if let ip = NetworkService.localIPAddress() {
                         LabeledContent("Local IP") {
                             Text(ip).font(.system(.body, design: .monospaced))
                         }
+<<<<<<< Updated upstream
                     }
                 }
 
@@ -154,6 +180,17 @@ struct SettingsView: View {
                                 Image(systemName: "rectangle.portrait.and.arrow.right")
                                 Text("Sign Out")
                             }
+=======
+                        LabeledContent("HTTP Server") {
+                            Text("http://\(ip):8080").font(.system(.caption, design: .monospaced))
+                        }
+                    }
+                    LabeledContent("API Endpoints") {
+                        VStack(alignment: .trailing) {
+                            Text("POST /state").font(.system(.caption2, design: .monospaced))
+                            Text("GET /status").font(.system(.caption2, design: .monospaced))
+                            Text("POST /config").font(.system(.caption2, design: .monospaced))
+>>>>>>> Stashed changes
                         }
                     }
                 }
@@ -170,6 +207,7 @@ struct SettingsView: View {
             }
             .onAppear {
                 soundEnabled = engine.config.soundEnabled
+<<<<<<< Updated upstream
                 voiceGender = VoiceLinesManager.shared.gender
                 serverURL = engine.config.serverURL
                 apiKey = engine.config.apiKey
@@ -190,18 +228,29 @@ struct SettingsView: View {
             } message: {
                 Text("The cigar accessory is intended for users aged 17 and older. By enabling this, you confirm that you meet the age requirement.")
             }
+=======
+                serverURL = engine.config.serverURL
+                deviceName = engine.config.deviceName
+                accessories = engine.config.accessories
+            }
+>>>>>>> Stashed changes
         }
     }
 
     // MARK: - Test Connection
 
     private func testServerConnection() {
+<<<<<<< Updated upstream
         var urlString = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard !urlString.isEmpty else { return }
         if !urlString.hasPrefix("https://") && !urlString.hasPrefix("http://") {
             urlString = "https://\(urlString)"
         }
+=======
+        let urlString = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !urlString.isEmpty else { return }
+>>>>>>> Stashed changes
 
         // Test /api/health first, fall back to /api/devices
         guard let url = URL(string: "\(urlString)/api/health") else {
@@ -214,9 +263,12 @@ struct SettingsView: View {
 
         var request = URLRequest(url: url)
         request.timeoutInterval = 5
+<<<<<<< Updated upstream
         if !apiKey.isEmpty {
             request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
         }
+=======
+>>>>>>> Stashed changes
 
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
@@ -265,6 +317,7 @@ struct SettingsView: View {
     }
 
     private func save() {
+<<<<<<< Updated upstream
         var normalizedURL = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         if !normalizedURL.hasPrefix("https://") && !normalizedURL.hasPrefix("http://") {
@@ -278,17 +331,24 @@ struct SettingsView: View {
         engine.config.serverURL = normalizedURL
         engine.config.apiKey = apiKey
         engine.config.deviceId = deviceId
+=======
+        engine.config.soundEnabled = soundEnabled
+        engine.config.serverURL = serverURL
+>>>>>>> Stashed changes
         engine.config.deviceName = deviceName
         engine.config.accessories = accessories
 
         if let data = try? JSONEncoder().encode(engine.config) {
             UserDefaults.standard.set(data, forKey: "hookbot_config")
         }
+<<<<<<< Updated upstream
 
         // Restart polling if server or device ID changed
         if serverChanged {
             network.startPolling()
         }
+=======
+>>>>>>> Stashed changes
     }
 }
 

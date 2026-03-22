@@ -1,5 +1,8 @@
 import AVFoundation
+<<<<<<< Updated upstream
 import CoreAudioTypes
+=======
+>>>>>>> Stashed changes
 
 // Port of sound.cpp - generates buzzer-style tones matching the ESP firmware
 
@@ -25,7 +28,11 @@ final class SoundManager: ObservableObject {
 
         sourceNode = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList -> OSStatus in
             guard let self else { return noErr }
+<<<<<<< Updated upstream
             let bufferCount = Int(audioBufferList.pointee.mNumberBuffers)
+=======
+            let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
+>>>>>>> Stashed changes
 
             for frame in 0..<Int(frameCount) {
                 let sample: Float
@@ -38,6 +45,7 @@ final class SoundManager: ObservableObject {
                     sample = 0
                 }
 
+<<<<<<< Updated upstream
                 // Write to each audio buffer directly
                 withUnsafeMutablePointer(to: &audioBufferList.pointee.mBuffers) { ptr in
                     let buffers = UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: AudioBuffer.self)
@@ -45,6 +53,11 @@ final class SoundManager: ObservableObject {
                         let buf = buffers[i].mData?.assumingMemoryBound(to: Float.self)
                         buf?[frame] = sample
                     }
+=======
+                for buffer in ablPointer {
+                    let buf = buffer.mData?.assumingMemoryBound(to: Float.self)
+                    buf?[frame] = sample
+>>>>>>> Stashed changes
                 }
             }
             return noErr
@@ -57,10 +70,15 @@ final class SoundManager: ObservableObject {
         audioEngine.connect(sourceNode, to: audioEngine.mainMixerNode, format: format)
 
         do {
+<<<<<<< Updated upstream
             #if !targetEnvironment(macCatalyst)
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
             try AVAudioSession.sharedInstance().setActive(true)
             #endif
+=======
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
+            try AVAudioSession.sharedInstance().setActive(true)
+>>>>>>> Stashed changes
             try audioEngine.start()
         } catch {
             print("[Sound] Audio engine failed: \(error)")

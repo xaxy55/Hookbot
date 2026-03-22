@@ -327,6 +327,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< Updated upstream
 name = "deranged"
 version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -336,6 +337,8 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> Stashed changes
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -646,6 +649,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+<<<<<<< Updated upstream
 name = "hmac"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -655,10 +659,13 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> Stashed changes
 name = "hookbot-server"
 version = "0.1.0"
 dependencies = [
  "axum",
+<<<<<<< Updated upstream
  "axum-server",
  "base64",
  "bcrypt",
@@ -666,6 +673,10 @@ dependencies = [
  "hex",
  "hmac",
  "jsonwebtoken",
+=======
+ "chrono",
+ "hex",
+>>>>>>> Stashed changes
  "mdns-sd",
  "reqwest",
  "rusqlite",
