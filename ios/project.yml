@@ -95,9 +95,6 @@ targets:
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 1.0.0
     dependencies:
-      - target: Hookbot
-        embed: false
-        link: false
       - target: HookbotWidgetExtension
 
   HookbotWidgetExtension:

@@ -128,13 +128,6 @@
 			remoteGlobalIDString = 3FB113BB92292451E5D9FF81;
 			remoteInfo = Hookbot;
 		};
-		41E15DD8903181203F222BC8 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 3FB113BB92292451E5D9FF81;
-			remoteInfo = Hookbot;
-		};
 		564E404B4147DAB502154107 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
@@ -629,7 +622,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				1ED986F80F81E779AF02F3DB /* PBXTargetDependency */,
 				95E3DDA13224FCB99162B0E5 /* PBXTargetDependency */,
 			);
 			name = HookbotWatch;
@@ -925,11 +917,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		1ED986F80F81E779AF02F3DB /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 3FB113BB92292451E5D9FF81 /* Hookbot */;
-			targetProxy = 41E15DD8903181203F222BC8 /* PBXContainerItemProxy */;
-		};
 		8C01E282C7DAC0F915E1A346 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3FB113BB92292451E5D9FF81 /* Hookbot */;
