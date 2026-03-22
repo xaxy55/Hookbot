@@ -68,6 +68,7 @@
 		A370D82E57E9767C664D1FA8 /* CommunityStoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618AC4FF315DE8AA7DC900F5 /* CommunityStoreView.swift */; };
 		A3C8D57E95262B7D5527A056 /* HookbotTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D858223CBFCDE397023ED611 /* HookbotTabView.swift */; };
 		A4DA6413799C9E4D62E136F5 /* SoundBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C5DE7BD9165383B0C8ACDD /* SoundBoardView.swift */; };
+		A4F09D7DCA4E17B7FF64F4E3 /* HookbotWatch.app in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = 7FF48B21F485D574BFEE833B /* HookbotWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A6EC1799C2B9EAA765627ABD /* DESKBOTUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4674801F306764810C52624C /* DESKBOTUITestsLaunchTests.swift */; };
 		A8688802549002CB8C141F8D /* AnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EF51A4E511880AA69FFCEF /* AnalyticsView.swift */; };
 		A94BF661BE26201351A07163 /* SleepGuardianManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F618A96DE080E9155E458E /* SleepGuardianManager.swift */; };
@@ -92,7 +93,6 @@
 		CDFDB2BD65A8CE76EFAEA909 /* PhotoModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B1FCF86CB687CA093F9DC4 /* PhotoModeView.swift */; };
 		CFB0A1D2913AD946C45B8960 /* DeveloperInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B53778A1F62D3DBF9395B02 /* DeveloperInsightsView.swift */; };
 		D02B3F652668851897EDE831 /* CodingChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9CBA0A12CE1BA3361D4BCE1 /* CodingChallengeView.swift */; };
-		D1155B89523AEAEA90030DAB /* HookbotWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 7FF48B21F485D574BFEE833B /* HookbotWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D73CC189BA811C73A7D287B5 /* ClaimDeviceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDECC1191AD1F2E3B35C2840 /* ClaimDeviceView.swift */; };
 		DA1F8728B2187C3AC60304C7 /* HookbotActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D82BCF6E27C8DFC94A646C7B /* HookbotActivityAttributes.swift */; };
 		DCA126DEE379B8608AB713FD /* HookbotWidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE6F1E4FF2742CAE0475FFC /* HookbotWidgetModels.swift */; };
@@ -156,15 +156,15 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		96ED7D39005A5919294B8A82 /* Embed Watch Content */ = {
+		EF9198F243B79E3406D0C0B7 /* Embed Dependencies */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
+			dstPath = "";
+			dstSubfolderSpec = 13;
 			files = (
-				D1155B89523AEAEA90030DAB /* HookbotWatch.app in Embed Watch Content */,
+				A4F09D7DCA4E17B7FF64F4E3 /* HookbotWatch.app in Embed Dependencies */,
 			);
-			name = "Embed Watch Content";
+			name = "Embed Dependencies";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		FDB6BE7160543AD1B6309584 /* Embed Foundation Extensions */ = {
@@ -638,7 +638,7 @@
 				04892BDBEAE83EC4A58E869D /* Sources */,
 				5F3F63080D02D66D882F7C2E /* Resources */,
 				3A7933F3BD096707C094EB09 /* Embed Foundation Extensions */,
-				96ED7D39005A5919294B8A82 /* Embed Watch Content */,
+				EF9198F243B79E3406D0C0B7 /* Embed Dependencies */,
 			);
 			buildRules = (
 			);
@@ -1098,10 +1098,12 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 56YDP2JJ35;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1122,6 +1124,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.9;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
@@ -1235,10 +1238,12 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 56YDP2JJ35;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1252,6 +1257,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.9;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
