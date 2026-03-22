@@ -158,9 +158,92 @@ final class NetworkService: ObservableObject {
         return request
     }
 
-    // MARK: - Management Server Registration
+    // MARK: - Device Discovery & Registration
 
     func registerWithServer() {
+        guard let engine, !engine.config.serverURL.isEmpty else { return }
+
+        // If we already have a device ID, just start polling
+        if !engine.config.deviceId.isEmpty {
+            startPolling()
+            return
+        }
+
+        // First, try to fetch existing devices for this user
+        fetchUserDevices { [weak self] in
+            guard let self, let engine = self.engine else { return }
+            if !engine.config.deviceId.isEmpty {
+                // Found an existing device, start polling
+                self.startPolling()
+            } else {
+                // No existing devices — register the iPhone as a new device
+                self.registerSelfAsDevice()
+            }
+        }
+    }
+
+    /// Fetch the user's existing devices and auto-select the first one
+    private func fetchUserDevices(completion: @escaping () -> Void) {
+        guard let engine, !engine.config.serverURL.isEmpty else {
+            completion()
+            return
+        }
+
+        guard let url = URL(string: "\(engine.config.serverURL)/api/devices") else {
+            completion()
+            return
+        }
+
+        session.dataTask(with: authedRequest(url: url)) { [weak self] data, response, _ in
+            DispatchQueue.main.async {
+                guard let self, let engine = self.engine else {
+                    completion()
+                    return
+                }
+
+                guard let data,
+                      let http = response as? HTTPURLResponse,
+                      http.statusCode == 200 else {
+                    print("[Network] Failed to fetch devices, will register self")
+                    completion()
+                    return
+                }
+
+                // Try parsing as array of devices
+                if let devices = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+                   let firstDevice = devices.first,
+                   let id = firstDevice["id"] as? String {
+                    engine.config.deviceId = id
+                    if let name = firstDevice["name"] as? String {
+                        print("[Network] Auto-selected device: \(name) (\(id))")
+                    }
+                    if let encoded = try? JSONEncoder().encode(engine.config) {
+                        UserDefaults.standard.set(encoded, forKey: "hookbot_config")
+                    }
+                }
+                // Also try parsing as { devices: [...] }
+                else if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                        let devices = json["devices"] as? [[String: Any]],
+                        let firstDevice = devices.first,
+                        let id = firstDevice["id"] as? String {
+                    engine.config.deviceId = id
+                    if let name = firstDevice["name"] as? String {
+                        print("[Network] Auto-selected device: \(name) (\(id))")
+                    }
+                    if let encoded = try? JSONEncoder().encode(engine.config) {
+                        UserDefaults.standard.set(encoded, forKey: "hookbot_config")
+                    }
+                } else {
+                    print("[Network] No existing devices found")
+                }
+
+                completion()
+            }
+        }.resume()
+    }
+
+    /// Register the iPhone itself as a new device on the server
+    private func registerSelfAsDevice() {
         guard let engine, !engine.config.serverURL.isEmpty else { return }
 
         let url = URL(string: "\(engine.config.serverURL)/api/devices")!
@@ -185,7 +268,6 @@ final class NetworkService: ObservableObject {
             if let http = response as? HTTPURLResponse {
                 print("[Network] Registered with server: \(http.statusCode)")
             }
-            // If server returns the device ID, save it
             if let data,
                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let id = json["id"] as? String,
