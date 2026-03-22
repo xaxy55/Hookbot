@@ -77,6 +77,11 @@ targets:
       - path: Shared
         excludes:
           - "**/.DS_Store"
+    entitlements:
+      path: HookbotWatch/HookbotWatch.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.mr-ai.hookbot
     settings:
       base:
         INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.mr-ai.hookbot
@@ -99,6 +104,11 @@ targets:
       - path: HookbotWatch/Complications
         excludes:
           - "**/.DS_Store"
+    entitlements:
+      path: HookbotWatch/Complications/HookbotWidgetExtension.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.mr-ai.hookbot
     info:
       path: HookbotWatch/Complications/Info.plist
       properties:

@@ -160,6 +160,7 @@
 		2C3CE9DB464C7E911F7F18C0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		33B1FCF86CB687CA093F9DC4 /* PhotoModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoModeView.swift; sourceTree = "<group>"; };
 		364282E1BF9F1960110F6626 /* WatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridge.swift; sourceTree = "<group>"; };
+		3B9AD7108699DCBAFCB07680 /* HookbotWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HookbotWatch.entitlements; sourceTree = "<group>"; };
 		3C0ACB9CD77CB2EA84BEB216 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		4674801F306764810C52624C /* DESKBOTUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DESKBOTUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		49D9A1D8868A5F2A66F0A7F5 /* AvatarJournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarJournalView.swift; sourceTree = "<group>"; };
@@ -193,6 +194,7 @@
 		A15641C8A81C4042D8266061 /* WeeklyPhotoCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyPhotoCardView.swift; sourceTree = "<group>"; };
 		A3A47724B27FAFB6943D233D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A55B142570FFE4CC0F7AC495 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A5FF3633701B7708194F3A27 /* HookbotWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HookbotWidgetExtension.entitlements; sourceTree = "<group>"; };
 		A8E59AECAEA40FAF83DBAEF6 /* SiriShortcutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriShortcutManager.swift; sourceTree = "<group>"; };
 		A951A9849BB551A328D2B3FD /* WatchStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchStatsView.swift; sourceTree = "<group>"; };
 		B6206D349611E58ABB0431B2 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
@@ -259,6 +261,7 @@
 			children = (
 				C1CC860A6D555386CA4917BE /* ComplicationProvider.swift */,
 				CAF8AD9DCE1B38800DA1ACAA /* HookbotWidget.swift */,
+				A5FF3633701B7708194F3A27 /* HookbotWidgetExtension.entitlements */,
 				0B9AE980C2B59FAFAD453E4E /* Info.plist */,
 			);
 			path = Complications;
@@ -291,6 +294,7 @@
 			isa = PBXGroup;
 			children = (
 				9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */,
+				3B9AD7108699DCBAFCB07680 /* HookbotWatch.entitlements */,
 				D7F650FA895FE33B5586EFA5 /* App */,
 				30D135FC11E6BDC1652F5235 /* Complications */,
 				4E007DF837B96623D1081CB0 /* Services */,
@@ -714,6 +718,7 @@
 		0A520D25C5621F9E8963EEDD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HookbotWatch/Complications/HookbotWidgetExtension.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
@@ -768,6 +773,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HookbotWatch/HookbotWatch.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
@@ -799,6 +805,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HookbotWatch/HookbotWatch.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
@@ -1025,6 +1032,7 @@
 		DC4BE71C7C7E7E81DB961BC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HookbotWatch/Complications/HookbotWidgetExtension.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
