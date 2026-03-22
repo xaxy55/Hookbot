@@ -42,6 +42,7 @@ targets:
           - group.com.mr-ai.hookbot
     dependencies:
       - target: HookbotiOSWidget
+      - target: HookbotWatch
     settings:
       base:
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false

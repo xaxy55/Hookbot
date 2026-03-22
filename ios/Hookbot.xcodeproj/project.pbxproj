@@ -66,6 +66,7 @@
 		C9F4BF56977DC4821018C516 /* HookbotiOSWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EDDD25953A89A0C10045C885 /* HookbotiOSWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CDFDB2BD65A8CE76EFAEA909 /* PhotoModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B1FCF86CB687CA093F9DC4 /* PhotoModeView.swift */; };
 		D02B3F652668851897EDE831 /* CodingChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9CBA0A12CE1BA3361D4BCE1 /* CodingChallengeView.swift */; };
+		D1155B89523AEAEA90030DAB /* HookbotWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 7FF48B21F485D574BFEE833B /* HookbotWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D73CC189BA811C73A7D287B5 /* ClaimDeviceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDECC1191AD1F2E3B35C2840 /* ClaimDeviceView.swift */; };
 		DA1F8728B2187C3AC60304C7 /* HookbotActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D82BCF6E27C8DFC94A646C7B /* HookbotActivityAttributes.swift */; };
 		DCA126DEE379B8608AB713FD /* HookbotWidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE6F1E4FF2742CAE0475FFC /* HookbotWidgetModels.swift */; };
@@ -105,6 +106,13 @@
 			remoteGlobalIDString = 3FB113BB92292451E5D9FF81;
 			remoteInfo = Hookbot;
 		};
+		564E404B4147DAB502154107 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 00837AA4718731B110629A8A;
+			remoteInfo = HookbotWatch;
+		};
 		EC897799D042E481E45D3F56 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
@@ -124,6 +132,17 @@
 				C9F4BF56977DC4821018C516 /* HookbotiOSWidget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		96ED7D39005A5919294B8A82 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				D1155B89523AEAEA90030DAB /* HookbotWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		FDB6BE7160543AD1B6309584 /* Embed Foundation Extensions */ = {
@@ -444,11 +463,13 @@
 				04892BDBEAE83EC4A58E869D /* Sources */,
 				5F3F63080D02D66D882F7C2E /* Resources */,
 				3A7933F3BD096707C094EB09 /* Embed Foundation Extensions */,
+				96ED7D39005A5919294B8A82 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				B838BCD88541C1F18D02D03D /* PBXTargetDependency */,
+				C049229A12AD971FD2B2EFE1 /* PBXTargetDependency */,
 			);
 			name = Hookbot;
 			packageProductDependencies = (
@@ -711,6 +732,11 @@
 			isa = PBXTargetDependency;
 			target = 63B5824E34178AB4189256E5 /* HookbotiOSWidget */;
 			targetProxy = EC897799D042E481E45D3F56 /* PBXContainerItemProxy */;
+		};
+		C049229A12AD971FD2B2EFE1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 00837AA4718731B110629A8A /* HookbotWatch */;
+			targetProxy = 564E404B4147DAB502154107 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
