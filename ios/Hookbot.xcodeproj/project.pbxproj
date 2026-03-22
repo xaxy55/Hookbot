@@ -13,19 +13,29 @@
 		0515C156A218A06627632BFA /* ProximityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D41E7C2A33644788D086D7A /* ProximityService.swift */; };
 		051FEAACFBA8DC2629AF6815 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BD95AF6D12050ED18D77B05 /* LiveActivityManager.swift */; };
 		059E26B7DE33F1D35D4E3D76 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */; };
+		06FC83A3778727FC058A5B31 /* DiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38DC44969753BE1ACB4E619A /* DiagnosticsView.swift */; };
 		073508FD8742148770DFAE1F /* HookbotWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF8AD9DCE1B38800DA1ACAA /* HookbotWidget.swift */; };
 		07BD3F555688C63668D7FA3F /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 364282E1BF9F1960110F6626 /* WatchBridge.swift */; };
+		08DAA56A546B1F5EB7C13E72 /* StandingDeskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E286E2C24681999E6A34E669 /* StandingDeskView.swift */; };
 		0DDF6F16A3D3FC3189659C69 /* DESKBOTUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046CFAEC7691D754A8190D98 /* DESKBOTUITests.swift */; };
+		1BD12B821949C8DC920552C0 /* DeskLightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4ECB58681B2C6ACD9ABA7FB /* DeskLightsView.swift */; };
 		1F911629F6DC6BB9ED760626 /* WatchMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5F1894C33647E074AD0A11 /* WatchMainView.swift */; };
 		228CACA0A14C0AE093726345 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843995434E3E46D862C43990 /* AuthService.swift */; };
 		280859937075CD2397A0B7C3 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A79020E122E87418F3C8311 /* HapticManager.swift */; };
 		2F7D8DA5F1E23D87D838B732 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68548CC1A6546E161E55B81D /* SoundManager.swift */; };
 		399EF3D57059F96999216474 /* DeskBotWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */; };
+		3CC69393822B06DB812E7AD6 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DE514E94C25BEC44DEF58A /* APIService.swift */; };
 		3EB6F541C90EB0CC2C645940 /* AvatarTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */; };
 		3F3594DB7EFB6F264533284F /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151A6E66A879D9F121E3EB91 /* AvatarView.swift */; };
 		433BC92D43936593B1B097D3 /* HookbotiOSWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B16179469A053126606951 /* HookbotiOSWidgetBundle.swift */; };
 		43F5A85D4BAAA193B5F58A78 /* PomodoroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 642CDF997D3C070D9821325E /* PomodoroView.swift */; };
+		45B4CC3902E9879130DBF35E /* AnimationEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 939BF287C433FD3215554B25 /* AnimationEditorView.swift */; };
+		462BD0D1F9950BEA5494838D /* IntegrationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDBFB6E9075F61A8692118F /* IntegrationsView.swift */; };
+		4C3ABE4379343FAFE0EA6D29 /* MoodJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5705359022323E7A2AC93CE /* MoodJournalView.swift */; };
+		4C608F5558088CC9BCA9AB34 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D27AFCF8D4E960502434BC /* HomeView.swift */; };
 		4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */; };
+		5101E75E7B3C1C1C4B5B138C /* StoreModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C3046408E268D13D00AD78C /* StoreModels.swift */; };
+		534DC2F445262130EE95584A /* ActivityFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98BA41F79791C7705A06B6DA /* ActivityFeedView.swift */; };
 		57DCC8551CC9D17A35F75C14 /* WardrobeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12646482CB51601637C1E2CE /* WardrobeView.swift */; };
 		60FDF9184BE30C0FAC2AC82E /* PetCareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8F31356D2249264E8AC097 /* PetCareView.swift */; };
 		61ED41A2159A237E24DEB2F7 /* AchievementShowcaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09EC09F3F6D77B2BC78CCE5D /* AchievementShowcaseView.swift */; };
@@ -35,27 +45,41 @@
 		696CDAF55768C0421919F035 /* AvatarTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */; };
 		69BE7ECCBB8C64D610ED5831 /* DeskBotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ADD593CC146528A0CF8D232 /* DeskBotApp.swift */; };
 		6CACE744B7663A8D4D4FCAEA /* AvatarJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D9A1D8868A5F2A66F0A7F5 /* AvatarJournalView.swift */; };
+		6FA22E9269EECB2E5928DD65 /* HomeAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33865FAD9561EEC5B1272E5B /* HomeAssistantView.swift */; };
 		70F30BBAE5FA7E4DAE16FE57 /* AvatarEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958E05B4490FBB82AF160800 /* AvatarEngine.swift */; };
 		72157139BBA923C3ED6EE505 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0ACB9CD77CB2EA84BEB216 /* NotificationManager.swift */; };
 		74687949565D9BF5D3055476 /* WatchTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8C1FD09F4BC65018E7A445D /* WatchTabView.swift */; };
 		788035ECD4BE25AD7D050A79 /* HookbotActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D82BCF6E27C8DFC94A646C7B /* HookbotActivityAttributes.swift */; };
 		795F9096463D614E1D8D278E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */; };
 		7A1E5327E157FDFA5107452B /* FocusModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 143601AAC722B8520EC3C7CE /* FocusModeManager.swift */; };
+		81BE351E248F7E33E87887C3 /* OtaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 849937234EB9E131975C6193 /* OtaView.swift */; };
 		8387681CD841BE19CE263709 /* WatchActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91DC5E515C2FA269780D10B7 /* WatchActivityView.swift */; };
 		83D3838B6D8A2585F9BBAD6E /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007B5E84C28B4F2FAD647E7F /* HapticManager.swift */; };
 		852612681EE0E86FC8482672 /* WatchSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B2A699DF05CCAFBC594551 /* WatchSettingsView.swift */; };
+		864C93E95A86CCB9B638AF1D /* DeviceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EF5BE8F40DE77AC46DAE831 /* DeviceModels.swift */; };
+		87F3A89941D6F0F5F2995463 /* DeviceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0F5A8A19B6C9DADBF5155D1 /* DeviceDetailView.swift */; };
 		88C80F7713C38F65D00D8962 /* DeviceClaimService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCE0BF94E54C10B0648C14A /* DeviceClaimService.swift */; };
+		89C22B04AA85D2AA07ED6D91 /* GlobalWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA4CE70846E9E34736A060 /* GlobalWallView.swift */; };
 		8DACF8B3B12766B9175672C9 /* HookbotWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 29D23CFC76E3541E35DD929B /* HookbotWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		93B94142F7EFA4AF44F2D124 /* LogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AA920C15F138C85E8C98D0A /* LogsView.swift */; };
 		9B3E128CBED193E453DCBB3C /* TeamCampfireView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58838EDDAF79B0B8DE78682B /* TeamCampfireView.swift */; };
 		9E32267AD83F31502A1ABB68 /* WatchAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E4D4006F271E0691E8E892 /* WatchAvatarView.swift */; };
+		9EB0541354DB16589CFE1D27 /* StoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124BC044D51C4996EBC170DA /* StoreView.swift */; };
+		A370D82E57E9767C664D1FA8 /* CommunityStoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618AC4FF315DE8AA7DC900F5 /* CommunityStoreView.swift */; };
+		A3C8D57E95262B7D5527A056 /* HookbotTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D858223CBFCDE397023ED611 /* HookbotTabView.swift */; };
+		A4DA6413799C9E4D62E136F5 /* SoundBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C5DE7BD9165383B0C8ACDD /* SoundBoardView.swift */; };
 		A6EC1799C2B9EAA765627ABD /* DESKBOTUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4674801F306764810C52624C /* DESKBOTUITestsLaunchTests.swift */; };
+		A8688802549002CB8C141F8D /* AnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EF51A4E511880AA69FFCEF /* AnalyticsView.swift */; };
 		A94BF661BE26201351A07163 /* SleepGuardianManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F618A96DE080E9155E458E /* SleepGuardianManager.swift */; };
+		A9C5B384E2875257C53A03AD /* DeviceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4CED6279A44A2CF493A538 /* DeviceListView.swift */; };
 		A9F51A8D1E3D907573869A8C /* HookbotActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D82BCF6E27C8DFC94A646C7B /* HookbotActivityAttributes.swift */; };
 		AD31281422FC183F06706C17 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6206D349611E58ABB0431B2 /* PairingView.swift */; };
+		B046CA3193B1ECA620E332E4 /* LightShowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27787A6285E920E740FE0719 /* LightShowView.swift */; };
 		B217C2B121308687C0468A8A /* AvatarTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */; };
 		B290F5388208CC6E16B80627 /* AvatarEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958E05B4490FBB82AF160800 /* AvatarEngine.swift */; };
 		B74A9C85770C5DDF74DF7DB7 /* AvatarEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958E05B4490FBB82AF160800 /* AvatarEngine.swift */; };
 		BC0CE567FA41E2E7F9C36856 /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
+		BD8AD1E4DDC845FA0F7EBF40 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7EDDBAF786A478BDABC0CE /* SharedComponents.swift */; };
 		BEA1183ECC017EF6E6A85DC0 /* MultipeerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16341E57A503F0A2E6D2757 /* MultipeerService.swift */; };
 		BED9BF5514DCC59196312432 /* VoiceLinesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EB5505CCA83AD12556A98 /* VoiceLinesManager.swift */; };
 		C21B620DD5A00D3728401360 /* VisitHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF35F352408DBDA9B6E46D7 /* VisitHistoryView.swift */; };
@@ -64,7 +88,9 @@
 		C866DB9CF9300DA21A51898E /* BreakReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578EA0DA84BCD88F5746AB06 /* BreakReminderManager.swift */; };
 		C935543D379DAE0399A03D44 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64E4ED6FDD298958EA1DB744 /* NetworkService.swift */; };
 		C9F4BF56977DC4821018C516 /* HookbotiOSWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EDDD25953A89A0C10045C885 /* HookbotiOSWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CB715F61010779D12979138E /* HubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AAB7F37EBF69FBA322450CE /* HubView.swift */; };
 		CDFDB2BD65A8CE76EFAEA909 /* PhotoModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B1FCF86CB687CA093F9DC4 /* PhotoModeView.swift */; };
+		CFB0A1D2913AD946C45B8960 /* DeveloperInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B53778A1F62D3DBF9395B02 /* DeveloperInsightsView.swift */; };
 		D02B3F652668851897EDE831 /* CodingChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9CBA0A12CE1BA3361D4BCE1 /* CodingChallengeView.swift */; };
 		D1155B89523AEAEA90030DAB /* HookbotWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 7FF48B21F485D574BFEE833B /* HookbotWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D73CC189BA811C73A7D287B5 /* ClaimDeviceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDECC1191AD1F2E3B35C2840 /* ClaimDeviceView.swift */; };
@@ -75,11 +101,14 @@
 		E5779F334027E978CE2D14DD /* AvatarEvolutionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367097B190E6F4E7477FCE9 /* AvatarEvolutionEngine.swift */; };
 		E824FF03AEF704F00D73E4F0 /* SiriShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8E59AECAEA40FAF83DBAEF6 /* SiriShortcutManager.swift */; };
 		E84900E3375350C53FEB89E2 /* WatchStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A951A9849BB551A328D2B3FD /* WatchStatsView.swift */; };
+		E9AA174CF1765ED3E13B17E4 /* DiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F3BE94B0B14564510B8B3E /* DiscoveryView.swift */; };
 		EA7458AF13E1C3322235FCEE /* PongGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09345F2BF92D3118AA2D2C64 /* PongGameView.swift */; };
 		ED3AE4D9E0A6E6876D549FDC /* SeasonalEventsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 545F708DE222164D96EE11FC /* SeasonalEventsManager.swift */; };
 		EF78118C28652960BBA837F7 /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */; };
 		F156A3AF2CC4A7BA2413911A /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
 		F4F0D14584599DDB57D66845 /* WatchNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B84137B7C09B2C196A0D2896 /* WatchNetworkService.swift */; };
+		F8F3617C6AA97116D18CF154 /* StreamDeckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280B31AE27028631A78AFE1B /* StreamDeckView.swift */; };
+		FC51BBA96C265EFC7D29B747 /* TeamDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80281CBB90F81B040A38A42D /* TeamDashboardView.swift */; };
 		FE9DE8831D8C06E1C48BD0A1 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF64571AB7B292F2ED074EE1 /* LoginView.swift */; };
 		FF2350D11B46FB9A7B22EB30 /* AvatarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03397893315BCC3E84C561BE /* AvatarRenderer.swift */; };
 /* End PBXBuildFile section */
@@ -93,6 +122,13 @@
 			remoteInfo = HookbotWidgetExtension;
 		};
 		3027DCD54A14D1B61C7818C3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3FB113BB92292451E5D9FF81;
+			remoteInfo = Hookbot;
+		};
+		41E15DD8903181203F222BC8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F7A1AB380677B6739118F360 /* Project object */;
 			proxyType = 1;
@@ -130,7 +166,7 @@
 		96ED7D39005A5919294B8A82 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "";
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
 				D1155B89523AEAEA90030DAB /* HookbotWatch.app in Embed Watch Content */,
@@ -160,29 +196,40 @@
 		061EB10D77B731B652F742F6 /* HookbotiOSWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HookbotiOSWidget.entitlements; sourceTree = "<group>"; };
 		09345F2BF92D3118AA2D2C64 /* PongGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PongGameView.swift; sourceTree = "<group>"; };
 		09EC09F3F6D77B2BC78CCE5D /* AchievementShowcaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementShowcaseView.swift; sourceTree = "<group>"; };
+		0AA920C15F138C85E8C98D0A /* LogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogsView.swift; sourceTree = "<group>"; };
 		0B9AE980C2B59FAFAD453E4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0BD95AF6D12050ED18D77B05 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 		0D41E7C2A33644788D086D7A /* ProximityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProximityService.swift; sourceTree = "<group>"; };
+		124BC044D51C4996EBC170DA /* StoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreView.swift; sourceTree = "<group>"; };
 		12646482CB51601637C1E2CE /* WardrobeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeView.swift; sourceTree = "<group>"; };
 		143601AAC722B8520EC3C7CE /* FocusModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeManager.swift; sourceTree = "<group>"; };
 		151A6E66A879D9F121E3EB91 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 		1A79020E122E87418F3C8311 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		1A8F31356D2249264E8AC097 /* PetCareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetCareView.swift; sourceTree = "<group>"; };
+		27787A6285E920E740FE0719 /* LightShowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightShowView.swift; sourceTree = "<group>"; };
+		280B31AE27028631A78AFE1B /* StreamDeckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamDeckView.swift; sourceTree = "<group>"; };
 		29D23CFC76E3541E35DD929B /* HookbotWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HookbotWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2C3CE9DB464C7E911F7F18C0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		33865FAD9561EEC5B1272E5B /* HomeAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeAssistantView.swift; sourceTree = "<group>"; };
 		33B1FCF86CB687CA093F9DC4 /* PhotoModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoModeView.swift; sourceTree = "<group>"; };
+		33F3BE94B0B14564510B8B3E /* DiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryView.swift; sourceTree = "<group>"; };
 		364282E1BF9F1960110F6626 /* WatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridge.swift; sourceTree = "<group>"; };
+		38DC44969753BE1ACB4E619A /* DiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsView.swift; sourceTree = "<group>"; };
+		3AAB7F37EBF69FBA322450CE /* HubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubView.swift; sourceTree = "<group>"; };
 		3B9AD7108699DCBAFCB07680 /* HookbotWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HookbotWatch.entitlements; sourceTree = "<group>"; };
 		3C0ACB9CD77CB2EA84BEB216 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		3D7EDDBAF786A478BDABC0CE /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
 		4674801F306764810C52624C /* DESKBOTUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DESKBOTUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		49D9A1D8868A5F2A66F0A7F5 /* AvatarJournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarJournalView.swift; sourceTree = "<group>"; };
 		4C8EB5505CCA83AD12556A98 /* VoiceLinesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceLinesManager.swift; sourceTree = "<group>"; };
+		53DE514E94C25BEC44DEF58A /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		545F708DE222164D96EE11FC /* SeasonalEventsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeasonalEventsManager.swift; sourceTree = "<group>"; };
 		54D7C47D418E782FC63F6973 /* Hookbot.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Hookbot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		578EA0DA84BCD88F5746AB06 /* BreakReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakReminderManager.swift; sourceTree = "<group>"; };
 		58838EDDAF79B0B8DE78682B /* TeamCampfireView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamCampfireView.swift; sourceTree = "<group>"; };
 		5BAE77E44DC07E2A2F72BF42 /* HookbotWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookbotWidget.swift; sourceTree = "<group>"; };
 		5EFA7C0FF72A2EE9E044D48B /* Hookbot.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Hookbot.entitlements; sourceTree = "<group>"; };
+		618AC4FF315DE8AA7DC900F5 /* CommunityStoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityStoreView.swift; sourceTree = "<group>"; };
 		642CDF997D3C070D9821325E /* PomodoroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroView.swift; sourceTree = "<group>"; };
 		64E4ED6FDD298958EA1DB744 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		68548CC1A6546E161E55B81D /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
@@ -192,48 +239,67 @@
 		766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlPanelView.swift; sourceTree = "<group>"; };
 		77E4D4006F271E0691E8E892 /* WatchAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAvatarView.swift; sourceTree = "<group>"; };
 		7ADD593CC146528A0CF8D232 /* DeskBotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotApp.swift; sourceTree = "<group>"; };
+		7B53778A1F62D3DBF9395B02 /* DeveloperInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperInsightsView.swift; sourceTree = "<group>"; };
 		7F34933579A3BFBA1A63D45E /* AvatarTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarTypes.swift; sourceTree = "<group>"; };
 		7FF48B21F485D574BFEE833B /* HookbotWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HookbotWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		80281CBB90F81B040A38A42D /* TeamDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamDashboardView.swift; sourceTree = "<group>"; };
 		843995434E3E46D862C43990 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		849937234EB9E131975C6193 /* OtaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtaView.swift; sourceTree = "<group>"; };
 		84B2A699DF05CCAFBC594551 /* WatchSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSettingsView.swift; sourceTree = "<group>"; };
 		84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotWatchApp.swift; sourceTree = "<group>"; };
+		87EF51A4E511880AA69FFCEF /* AnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsView.swift; sourceTree = "<group>"; };
+		8EF5BE8F40DE77AC46DAE831 /* DeviceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModels.swift; sourceTree = "<group>"; };
 		90F89258978F3788C22FAB43 /* HookbotUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HookbotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		91DC5E515C2FA269780D10B7 /* WatchActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchActivityView.swift; sourceTree = "<group>"; };
+		939BF287C433FD3215554B25 /* AnimationEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationEditorView.swift; sourceTree = "<group>"; };
 		958E05B4490FBB82AF160800 /* AvatarEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEngine.swift; sourceTree = "<group>"; };
 		97CE9225F0CB375F3DE7EB5C /* SocialService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialService.swift; sourceTree = "<group>"; };
+		98BA41F79791C7705A06B6DA /* ActivityFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityFeedView.swift; sourceTree = "<group>"; };
+		9C3046408E268D13D00AD78C /* StoreModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreModels.swift; sourceTree = "<group>"; };
 		9D4A29829D15CAF1CA7DC2C2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A0F5A8A19B6C9DADBF5155D1 /* DeviceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceDetailView.swift; sourceTree = "<group>"; };
 		A15641C8A81C4042D8266061 /* WeeklyPhotoCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyPhotoCardView.swift; sourceTree = "<group>"; };
 		A3A47724B27FAFB6943D233D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A55B142570FFE4CC0F7AC495 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A5FF3633701B7708194F3A27 /* HookbotWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HookbotWidgetExtension.entitlements; sourceTree = "<group>"; };
+		A7D27AFCF8D4E960502434BC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		A8E59AECAEA40FAF83DBAEF6 /* SiriShortcutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriShortcutManager.swift; sourceTree = "<group>"; };
 		A951A9849BB551A328D2B3FD /* WatchStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchStatsView.swift; sourceTree = "<group>"; };
+		AFDBFB6E9075F61A8692118F /* IntegrationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationsView.swift; sourceTree = "<group>"; };
+		B0C5DE7BD9165383B0C8ACDD /* SoundBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundBoardView.swift; sourceTree = "<group>"; };
 		B6206D349611E58ABB0431B2 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
 		B84137B7C09B2C196A0D2896 /* WatchNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchNetworkService.swift; sourceTree = "<group>"; };
 		BCE6F1E4FF2742CAE0475FFC /* HookbotWidgetModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookbotWidgetModels.swift; sourceTree = "<group>"; };
 		C1CC860A6D555386CA4917BE /* ComplicationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationProvider.swift; sourceTree = "<group>"; };
+		C5705359022323E7A2AC93CE /* MoodJournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodJournalView.swift; sourceTree = "<group>"; };
+		C5CA4CE70846E9E34736A060 /* GlobalWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalWallView.swift; sourceTree = "<group>"; };
 		CAF8AD9DCE1B38800DA1ACAA /* HookbotWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookbotWidget.swift; sourceTree = "<group>"; };
 		CF64571AB7B292F2ED074EE1 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		D16341E57A503F0A2E6D2757 /* MultipeerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerService.swift; sourceTree = "<group>"; };
 		D58843C0A483E0021A5ECB79 /* SharedARView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedARView.swift; sourceTree = "<group>"; };
 		D82BCF6E27C8DFC94A646C7B /* HookbotActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookbotActivityAttributes.swift; sourceTree = "<group>"; };
+		D858223CBFCDE397023ED611 /* HookbotTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookbotTabView.swift; sourceTree = "<group>"; };
 		D8C1FD09F4BC65018E7A445D /* WatchTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTabView.swift; sourceTree = "<group>"; };
 		D9CBA0A12CE1BA3361D4BCE1 /* CodingChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingChallengeView.swift; sourceTree = "<group>"; };
 		DDECC1191AD1F2E3B35C2840 /* ClaimDeviceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaimDeviceView.swift; sourceTree = "<group>"; };
 		DFCE0BF94E54C10B0648C14A /* DeviceClaimService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceClaimService.swift; sourceTree = "<group>"; };
 		E0B2669F833323B3A1622EC5 /* AvatarEmotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEmotesView.swift; sourceTree = "<group>"; };
+		E286E2C24681999E6A34E669 /* StandingDeskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingDeskView.swift; sourceTree = "<group>"; };
 		EB5F1894C33647E074AD0A11 /* WatchMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMainView.swift; sourceTree = "<group>"; };
 		EDDD25953A89A0C10045C885 /* HookbotiOSWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = HookbotiOSWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
 		F367097B190E6F4E7477FCE9 /* AvatarEvolutionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEvolutionEngine.swift; sourceTree = "<group>"; };
+		F4ECB58681B2C6ACD9ABA7FB /* DeskLightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskLightsView.swift; sourceTree = "<group>"; };
 		F7F618A96DE080E9155E458E /* SleepGuardianManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepGuardianManager.swift; sourceTree = "<group>"; };
+		FD4CED6279A44A2CF493A538 /* DeviceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceListView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		06CBB800FED0EF03CF145128 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				53DE514E94C25BEC44DEF58A /* APIService.swift */,
 				843995434E3E46D862C43990 /* AuthService.swift */,
 				F367097B190E6F4E7477FCE9 /* AvatarEvolutionEngine.swift */,
 				578EA0DA84BCD88F5746AB06 /* BreakReminderManager.swift */,
@@ -279,6 +345,35 @@
 			path = Complications;
 			sourceTree = "<group>";
 		};
+		31B215F7587EF5198A81E2E5 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				8EF5BE8F40DE77AC46DAE831 /* DeviceModels.swift */,
+				9C3046408E268D13D00AD78C /* StoreModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		350A9E56D96918F734DFF59A /* Integrations */ = {
+			isa = PBXGroup;
+			children = (
+				33865FAD9561EEC5B1272E5B /* HomeAssistantView.swift */,
+				AFDBFB6E9075F61A8692118F /* IntegrationsView.swift */,
+				280B31AE27028631A78AFE1B /* StreamDeckView.swift */,
+			);
+			path = Integrations;
+			sourceTree = "<group>";
+		};
+		38B97A86152543C3CDD9E6E8 /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				A7D27AFCF8D4E960502434BC /* HomeView.swift */,
+				D858223CBFCDE397023ED611 /* HookbotTabView.swift */,
+				3AAB7F37EBF69FBA322450CE /* HubView.swift */,
+			);
+			path = Navigation;
+			sourceTree = "<group>";
+		};
 		3C05CF566F178449FBE7D2CF /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -297,7 +392,18 @@
 				9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */,
 				D58843C0A483E0021A5ECB79 /* SharedARView.swift */,
 				12646482CB51601637C1E2CE /* WardrobeView.swift */,
+				D74DD5D0BF8CB0DE52540A20 /* Activity */,
+				69A825168143119384BC7276 /* Community */,
+				84C624B6CE8F49DD267BE20E /* Components */,
+				E5E89905DF75B0DA93B7A4A5 /* Desk */,
+				E1F40A60B0C2DA76F4AE3C80 /* Devices */,
+				702835769CC1343FCD33CC96 /* Fun */,
+				350A9E56D96918F734DFF59A /* Integrations */,
+				38B97A86152543C3CDD9E6E8 /* Navigation */,
 				889F07D9A03F79F04EE8F774 /* Social */,
+				3F785526BDC52EFD425AE96E /* Store */,
+				BC59BB3EC272C834E7ECB384 /* System */,
+				54FAA2534A6C036CA29D72B6 /* Wellness */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -315,6 +421,14 @@
 			path = HookbotWatch;
 			sourceTree = "<group>";
 		};
+		3F785526BDC52EFD425AE96E /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				124BC044D51C4996EBC170DA /* StoreView.swift */,
+			);
+			path = Store;
+			sourceTree = "<group>";
+		};
 		4E007DF837B96623D1081CB0 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -322,6 +436,32 @@
 				B84137B7C09B2C196A0D2896 /* WatchNetworkService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		54FAA2534A6C036CA29D72B6 /* Wellness */ = {
+			isa = PBXGroup;
+			children = (
+				C5705359022323E7A2AC93CE /* MoodJournalView.swift */,
+			);
+			path = Wellness;
+			sourceTree = "<group>";
+		};
+		69A825168143119384BC7276 /* Community */ = {
+			isa = PBXGroup;
+			children = (
+				618AC4FF315DE8AA7DC900F5 /* CommunityStoreView.swift */,
+			);
+			path = Community;
+			sourceTree = "<group>";
+		};
+		702835769CC1343FCD33CC96 /* Fun */ = {
+			isa = PBXGroup;
+			children = (
+				939BF287C433FD3215554B25 /* AnimationEditorView.swift */,
+				27787A6285E920E740FE0719 /* LightShowView.swift */,
+				B0C5DE7BD9165383B0C8ACDD /* SoundBoardView.swift */,
+			);
+			path = Fun;
 			sourceTree = "<group>";
 		};
 		73890AFDE0437EFEA421E1B8 /* Views */ = {
@@ -349,14 +489,24 @@
 			);
 			sourceTree = "<group>";
 		};
+		84C624B6CE8F49DD267BE20E /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				3D7EDDBAF786A478BDABC0CE /* SharedComponents.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		889F07D9A03F79F04EE8F774 /* Social */ = {
 			isa = PBXGroup;
 			children = (
 				E0B2669F833323B3A1622EC5 /* AvatarEmotesView.swift */,
 				D9CBA0A12CE1BA3361D4BCE1 /* CodingChallengeView.swift */,
 				02BD8D89FEFF42D3955A76D4 /* FriendListView.swift */,
+				C5CA4CE70846E9E34736A060 /* GlobalWallView.swift */,
 				B6206D349611E58ABB0431B2 /* PairingView.swift */,
 				58838EDDAF79B0B8DE78682B /* TeamCampfireView.swift */,
+				80281CBB90F81B040A38A42D /* TeamDashboardView.swift */,
 				6AF35F352408DBDA9B6E46D7 /* VisitHistoryView.swift */,
 				A15641C8A81C4042D8266061 /* WeeklyPhotoCardView.swift */,
 			);
@@ -394,12 +544,51 @@
 			path = Shared;
 			sourceTree = "<group>";
 		};
+		BC59BB3EC272C834E7ECB384 /* System */ = {
+			isa = PBXGroup;
+			children = (
+				38DC44969753BE1ACB4E619A /* DiagnosticsView.swift */,
+				33F3BE94B0B14564510B8B3E /* DiscoveryView.swift */,
+				0AA920C15F138C85E8C98D0A /* LogsView.swift */,
+				849937234EB9E131975C6193 /* OtaView.swift */,
+			);
+			path = System;
+			sourceTree = "<group>";
+		};
+		D74DD5D0BF8CB0DE52540A20 /* Activity */ = {
+			isa = PBXGroup;
+			children = (
+				98BA41F79791C7705A06B6DA /* ActivityFeedView.swift */,
+				87EF51A4E511880AA69FFCEF /* AnalyticsView.swift */,
+				7B53778A1F62D3DBF9395B02 /* DeveloperInsightsView.swift */,
+			);
+			path = Activity;
+			sourceTree = "<group>";
+		};
 		D7F650FA895FE33B5586EFA5 /* App */ = {
 			isa = PBXGroup;
 			children = (
 				84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		E1F40A60B0C2DA76F4AE3C80 /* Devices */ = {
+			isa = PBXGroup;
+			children = (
+				A0F5A8A19B6C9DADBF5155D1 /* DeviceDetailView.swift */,
+				FD4CED6279A44A2CF493A538 /* DeviceListView.swift */,
+			);
+			path = Devices;
+			sourceTree = "<group>";
+		};
+		E5E89905DF75B0DA93B7A4A5 /* Desk */ = {
+			isa = PBXGroup;
+			children = (
+				F4ECB58681B2C6ACD9ABA7FB /* DeskLightsView.swift */,
+				E286E2C24681999E6A34E669 /* StandingDeskView.swift */,
+			);
+			path = Desk;
 			sourceTree = "<group>";
 		};
 		F1C17BEEFCA8866F48D9D3CB /* HookbotUITests */ = {
@@ -419,6 +608,7 @@
 				5EFA7C0FF72A2EE9E044D48B /* Hookbot.entitlements */,
 				A55B142570FFE4CC0F7AC495 /* Info.plist */,
 				8A03C8999E692EEE93D0A597 /* App */,
+				31B215F7587EF5198A81E2E5 /* Models */,
 				06CBB800FED0EF03CF145128 /* Services */,
 				3C05CF566F178449FBE7D2CF /* Views */,
 			);
@@ -439,6 +629,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				1ED986F80F81E779AF02F3DB /* PBXTargetDependency */,
 				95E3DDA13224FCB99162B0E5 /* PBXTargetDependency */,
 			);
 			name = HookbotWatch;
@@ -601,7 +792,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3CC69393822B06DB812E7AD6 /* APIService.swift in Sources */,
 				61ED41A2159A237E24DEB2F7 /* AchievementShowcaseView.swift in Sources */,
+				534DC2F445262130EE95584A /* ActivityFeedView.swift in Sources */,
+				A8688802549002CB8C141F8D /* AnalyticsView.swift in Sources */,
+				45B4CC3902E9879130DBF35E /* AnimationEditorView.swift in Sources */,
 				228CACA0A14C0AE093726345 /* AuthService.swift in Sources */,
 				E42FD5C227BCF0F71793D13C /* AvatarEmotesView.swift in Sources */,
 				B74A9C85770C5DDF74DF7DB7 /* AvatarEngine.swift in Sources */,
@@ -613,20 +808,38 @@
 				C866DB9CF9300DA21A51898E /* BreakReminderManager.swift in Sources */,
 				D73CC189BA811C73A7D287B5 /* ClaimDeviceView.swift in Sources */,
 				D02B3F652668851897EDE831 /* CodingChallengeView.swift in Sources */,
+				A370D82E57E9767C664D1FA8 /* CommunityStoreView.swift in Sources */,
 				059E26B7DE33F1D35D4E3D76 /* ControlPanelView.swift in Sources */,
 				0162053190C7BC9DBA9DEDC4 /* DailyRewardView.swift in Sources */,
 				69BE7ECCBB8C64D610ED5831 /* DeskBotApp.swift in Sources */,
+				1BD12B821949C8DC920552C0 /* DeskLightsView.swift in Sources */,
+				CFB0A1D2913AD946C45B8960 /* DeveloperInsightsView.swift in Sources */,
 				88C80F7713C38F65D00D8962 /* DeviceClaimService.swift in Sources */,
+				87F3A89941D6F0F5F2995463 /* DeviceDetailView.swift in Sources */,
+				A9C5B384E2875257C53A03AD /* DeviceListView.swift in Sources */,
+				864C93E95A86CCB9B638AF1D /* DeviceModels.swift in Sources */,
+				06FC83A3778727FC058A5B31 /* DiagnosticsView.swift in Sources */,
+				E9AA174CF1765ED3E13B17E4 /* DiscoveryView.swift in Sources */,
 				7A1E5327E157FDFA5107452B /* FocusModeManager.swift in Sources */,
 				63426452746D8FBEAB74DD9C /* FriendListView.swift in Sources */,
+				89C22B04AA85D2AA07ED6D91 /* GlobalWallView.swift in Sources */,
 				83D3838B6D8A2585F9BBAD6E /* HapticManager.swift in Sources */,
+				6FA22E9269EECB2E5928DD65 /* HomeAssistantView.swift in Sources */,
+				4C608F5558088CC9BCA9AB34 /* HomeView.swift in Sources */,
 				A9F51A8D1E3D907573869A8C /* HookbotActivityAttributes.swift in Sources */,
+				A3C8D57E95262B7D5527A056 /* HookbotTabView.swift in Sources */,
+				CB715F61010779D12979138E /* HubView.swift in Sources */,
+				462BD0D1F9950BEA5494838D /* IntegrationsView.swift in Sources */,
+				B046CA3193B1ECA620E332E4 /* LightShowView.swift in Sources */,
 				051FEAACFBA8DC2629AF6815 /* LiveActivityManager.swift in Sources */,
 				FE9DE8831D8C06E1C48BD0A1 /* LoginView.swift in Sources */,
+				93B94142F7EFA4AF44F2D124 /* LogsView.swift in Sources */,
 				E121B6972428789C62702CCD /* MainView.swift in Sources */,
+				4C3ABE4379343FAFE0EA6D29 /* MoodJournalView.swift in Sources */,
 				BEA1183ECC017EF6E6A85DC0 /* MultipeerService.swift in Sources */,
 				C935543D379DAE0399A03D44 /* NetworkService.swift in Sources */,
 				72157139BBA923C3ED6EE505 /* NotificationManager.swift in Sources */,
+				81BE351E248F7E33E87887C3 /* OtaView.swift in Sources */,
 				AD31281422FC183F06706C17 /* PairingView.swift in Sources */,
 				60FDF9184BE30C0FAC2AC82E /* PetCareView.swift in Sources */,
 				CDFDB2BD65A8CE76EFAEA909 /* PhotoModeView.swift in Sources */,
@@ -636,11 +849,18 @@
 				ED3AE4D9E0A6E6876D549FDC /* SeasonalEventsManager.swift in Sources */,
 				4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */,
 				C7D4A9891AE95B6F21FED557 /* SharedARView.swift in Sources */,
+				BD8AD1E4DDC845FA0F7EBF40 /* SharedComponents.swift in Sources */,
 				E824FF03AEF704F00D73E4F0 /* SiriShortcutManager.swift in Sources */,
 				A94BF661BE26201351A07163 /* SleepGuardianManager.swift in Sources */,
 				635312A71B5E87A64E04A2E9 /* SocialService.swift in Sources */,
+				A4DA6413799C9E4D62E136F5 /* SoundBoardView.swift in Sources */,
 				2F7D8DA5F1E23D87D838B732 /* SoundManager.swift in Sources */,
+				08DAA56A546B1F5EB7C13E72 /* StandingDeskView.swift in Sources */,
+				5101E75E7B3C1C1C4B5B138C /* StoreModels.swift in Sources */,
+				9EB0541354DB16589CFE1D27 /* StoreView.swift in Sources */,
+				F8F3617C6AA97116D18CF154 /* StreamDeckView.swift in Sources */,
 				9B3E128CBED193E453DCBB3C /* TeamCampfireView.swift in Sources */,
+				FC51BBA96C265EFC7D29B747 /* TeamDashboardView.swift in Sources */,
 				C21B620DD5A00D3728401360 /* VisitHistoryView.swift in Sources */,
 				BED9BF5514DCC59196312432 /* VoiceLinesManager.swift in Sources */,
 				57DCC8551CC9D17A35F75C14 /* WardrobeView.swift in Sources */,
@@ -705,6 +925,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		1ED986F80F81E779AF02F3DB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3FB113BB92292451E5D9FF81 /* Hookbot */;
+			targetProxy = 41E15DD8903181203F222BC8 /* PBXContainerItemProxy */;
+		};
 		8C01E282C7DAC0F915E1A346 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3FB113BB92292451E5D9FF81 /* Hookbot */;

@@ -12,7 +12,7 @@ struct HookbotApp: App {
         WindowGroup {
             Group {
                 if auth.isAuthenticated {
-                    MainView(auth: auth)
+                    HookbotTabView(auth: auth)
                         .environmentObject(engine)
                         .environmentObject(network)
                         .environmentObject(sound)
