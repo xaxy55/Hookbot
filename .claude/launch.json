@@ -4,7 +4,7 @@
     {
       "name": "web",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "cd ${workspaceFolder}/web && npm run dev"],
+      "runtimeArgs": ["-c", "cd ${workspaceFolder}/web && VITE_API_BASE_URL=https://bot.mr-ai.no npm run dev"],
       "port": 5173
     },
     {

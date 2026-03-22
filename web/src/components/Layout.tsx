@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getHealth, getDevices, logout } from '../api/client';
 import { useTheme } from '../hooks/useTheme';
 import { useKeyboardShortcuts, SHORTCUT_LIST } from '../hooks/useKeyboardShortcuts';
+import { useHotkeyContext, SECTION_SHORTCUTS } from '../hooks/useHotkeys';
 
 const NAV_SECTIONS = [
   {
@@ -91,8 +92,14 @@ const NAV_SECTIONS = [
   },
 ];
 
-function NavSection({ label, defaultOpen, children }: { label: string; defaultOpen: boolean; children: React.ReactNode }) {
+function NavSection({ label, defaultOpen, collapsed, children }: { label: string; defaultOpen: boolean; collapsed: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
+
+  if (collapsed) {
+    // In collapsed mode, always show items (no section headers)
+    return <div className="space-y-0.5 mb-2">{children}</div>;
+  }
+
   return (
     <div>
       <button
@@ -124,6 +131,7 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { modHeld, sidebarCollapsed, toggleSidebar } = useHotkeyContext();
   const [showShortcuts, setShowShortcuts] = useState(false);
 
   const { data: health } = useQuery({
@@ -150,24 +158,57 @@ export default function Layout() {
   return (
     <div className="flex h-screen bg-canvas text-fg">
       {/* Sidebar */}
-      <aside className="w-56 flex-shrink-0 border-r border-edge bg-surface light:shadow-[1px_0_8px_rgba(0,0,0,0.04)] flex flex-col">
+      <aside className={`${sidebarCollapsed ? 'w-14' : 'w-56'} flex-shrink-0 border-r border-edge bg-surface light:shadow-[1px_0_8px_rgba(0,0,0,0.04)] flex flex-col transition-all duration-200 overflow-hidden`}>
         {/* Logo */}
-        <div className="h-14 flex items-center gap-2 px-5 border-b border-edge">
-          <span className="text-lg font-bold text-brand tracking-wider">Hookbot</span>
+        <div className="h-14 flex items-center gap-2 px-5 border-b border-edge min-w-0">
+          {sidebarCollapsed ? (
+            <button onClick={toggleSidebar} className="w-4 h-4 mx-auto text-brand" title="Expand sidebar (⌘B)">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="4" /></svg>
+            </button>
+          ) : (
+            <span className="text-lg font-bold text-brand tracking-wider whitespace-nowrap">Hookbot</span>
+          )}
         </div>
 
         {/* Nav sections */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          {NAV_SECTIONS.map((section) => {
+        <nav className={`flex-1 overflow-y-auto py-4 ${sidebarCollapsed ? 'px-1.5' : 'px-3'} space-y-1`}>
+          {NAV_SECTIONS.map((section, sectionIdx) => {
             const sectionHasActive = section.items.some((item) => isActive(item.path));
+            const sectionNum = sectionIdx + 1;
+            const shortcutPath = SECTION_SHORTCUTS[sectionNum];
             return (
               <NavSection
                 key={section.label}
                 label={section.label}
+                collapsed={sidebarCollapsed}
                 defaultOpen={sectionHasActive || ['Control', 'Firmware'].includes(section.label)}
               >
                 {section.items.map((item) => {
                   const active = isActive(item.path);
+                  const isShortcutTarget = shortcutPath === item.path;
+
+                  if (sidebarCollapsed) {
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`relative flex items-center justify-center p-2 rounded-lg transition-colors ${
+                          active
+                            ? 'bg-brand/10 text-brand-fg'
+                            : 'text-muted hover:text-fg hover:bg-inset/60'
+                        }`}
+                        title={item.label}
+                      >
+                        <item.icon active={active} />
+                        {modHeld && isShortcutTarget && (
+                          <span className="absolute -top-1 -right-1 bg-brand/20 text-brand-fg text-[9px] font-mono font-bold rounded px-1 leading-tight animate-[scale-in_0.15s_ease-out]">
+                            {sectionNum}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  }
+
                   return (
                     <Link
                       key={item.path}
@@ -179,7 +220,12 @@ export default function Layout() {
                       }`}
                     >
                       <item.icon active={active} />
-                      {item.label}
+                      <span className="whitespace-nowrap">{item.label}</span>
+                      {modHeld && isShortcutTarget && (
+                        <kbd className="ml-auto bg-brand/20 text-brand-fg text-[10px] font-mono font-bold rounded px-1.5 py-0.5 leading-none animate-[scale-in_0.15s_ease-out]">
+                          ⌘{sectionNum}
+                        </kbd>
+                      )}
                     </Link>
                   );
                 })}
@@ -192,7 +238,22 @@ export default function Layout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="h-14 flex items-center justify-end gap-3 px-6 border-b border-edge bg-canvas/80 backdrop-blur-sm">
+        <header className="h-14 flex items-center gap-3 px-6 border-b border-edge bg-canvas/80 backdrop-blur-sm">
+          {/* Left spacer */}
+          <div className="flex-1" />
+
+          {/* Center: Global Wall */}
+          <Link
+            to="/global-wall"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-subtle hover:text-fg hover:bg-inset transition-colors"
+          >
+            <GlobeSmallIcon />
+            Global
+          </Link>
+
+          {/* Right spacer to balance center */}
+          <div className="flex-1" />
+
           {/* Keyboard shortcuts help */}
           <div className="relative">
             <button
@@ -261,6 +322,15 @@ export default function Layout() {
               <MoonIcon />
             </button>
           </div>
+
+          {/* Account */}
+          <Link
+            to="/account"
+            className="p-1.5 rounded-lg text-subtle hover:text-fg hover:bg-inset transition-colors"
+            title="Account"
+          >
+            <UserSmallIcon />
+          </Link>
 
           {/* Logout */}
           <button
@@ -552,6 +622,24 @@ function MicNavIcon({ active }: { active: boolean }) {
       <path d="M3 7.5a5 5 0 0010 0" />
       <line x1="8" y1="13" x2="8" y2="15" />
       <line x1="5.5" y1="15" x2="10.5" y2="15" />
+    </svg>
+  );
+}
+
+function GlobeSmallIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
+      <circle cx="8" cy="8" r="6" />
+      <path d="M2 8h12M8 2c2 2 3 4 3 6s-1 4-3 6M8 2c-2 2-3 4-3 6s1 4 3 6" />
+    </svg>
+  );
+}
+
+function UserSmallIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+      <circle cx="8" cy="5" r="3" />
+      <path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5" />
     </svg>
   );
 }

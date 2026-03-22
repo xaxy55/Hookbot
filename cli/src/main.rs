@@ -324,11 +324,9 @@ async fn login_cmd(server: &str, password: Option<String>, save: bool) -> Result
             }
 
             println!("  Credentials saved to {}", path.dimmed());
-            let preview_len = 4.min(key.len());
-            println!("  API key: {}…{}", &key[..preview_len], "****".dimmed());
+            println!("  API key: {}", "****".dimmed());
         } else {
-            let preview_len = 4.min(key.len());
-            println!("  API key: {}…{}", &key[..preview_len], "****".dimmed());
+            println!("  API key: {}", "****".dimmed());
             println!("  {}", "Tip: run with --save to persist credentials".dimmed());
         }
     }

@@ -10,12 +10,17 @@ struct HookbotWidget: Widget {
         }
         .configurationDisplayName("Hookbot")
         .description("Shows your Hookbot's current state and level.")
-        .supportedFamilies([
-            .accessoryCircular,
-            .accessoryRectangular,
-            .accessoryInline,
-            .accessoryCorner
-        ])
+        .supportedFamilies({
+            var families: [WidgetFamily] = [
+                .accessoryCircular,
+                .accessoryRectangular,
+                .accessoryInline,
+            ]
+            #if os(watchOS)
+            families.append(.accessoryCorner)
+            #endif
+            return families
+        }())
     }
 }
 
@@ -31,8 +36,6 @@ struct HookbotComplicationEntryView: View {
             HookbotComplicationRectangular(entry: entry)
         case .accessoryInline:
             HookbotComplicationInline(entry: entry)
-        case .accessoryCorner:
-            HookbotComplicationCircular(entry: entry)
         default:
             HookbotComplicationCircular(entry: entry)
         }

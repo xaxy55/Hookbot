@@ -36,6 +36,16 @@ async fn set_server_url(
 }
 
 #[tauri::command]
+async fn set_api_key(
+    key: String,
+    state: tauri::State<'_, Arc<Mutex<HookbotClient>>>,
+) -> Result<(), String> {
+    let mut client = state.lock().await;
+    client.set_api_key(&key);
+    Ok(())
+}
+
+#[tauri::command]
 async fn fetch_status(
     state: tauri::State<'_, Arc<Mutex<HookbotClient>>>,
 ) -> Result<StatusPayload, String> {
@@ -139,6 +149,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             get_config,
             set_server_url,
+            set_api_key,
             fetch_status,
         ])
         .setup(|app| {

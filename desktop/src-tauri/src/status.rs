@@ -60,6 +60,20 @@ impl HookbotClient {
         self.base_url = url.trim_end_matches('/').to_string();
     }
 
+    pub fn set_api_key(&mut self, key: &str) {
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert(
+            reqwest::header::AUTHORIZATION,
+            reqwest::header::HeaderValue::from_str(&format!("Bearer {key}"))
+                .unwrap_or_else(|_| reqwest::header::HeaderValue::from_static("")),
+        );
+        self.client = reqwest::Client::builder()
+            .default_headers(headers)
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .expect("Failed to rebuild HTTP client");
+    }
+
     pub async fn get_devices(&self) -> Result<Vec<DeviceStatus>, String> {
         let url = format!("{}/api/devices", self.base_url);
         self.client

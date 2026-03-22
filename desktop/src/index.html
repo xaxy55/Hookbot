@@ -483,7 +483,7 @@
       }
       const key = document.getElementById('api-key').value.trim();
       if (key) {
-        localStorage.setItem('hookbot_api_key', key);
+        await invoke('set_api_key', { key });
       }
       settingsPanel.classList.remove('visible');
       mainContent.style.display = 'block';

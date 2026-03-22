@@ -1,7 +1,9 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HotkeysProvider } from '@tanstack/react-hotkeys';
 import { ToastProvider } from './components/Toast';
 import { getAuthStatus } from './api/client';
+import { HotkeyContext, useHotkeySetup, useNavigationHotkeys } from './hooks/useHotkeys';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import DevicesPage from './pages/DevicesPage';
@@ -69,10 +71,22 @@ function AuthGuard({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function HotkeyWrapper({ children }: { children: ReactNode }) {
+  const ctx = useHotkeySetup();
+  useNavigationHotkeys();
+  return (
+    <HotkeyContext.Provider value={ctx}>
+      {children}
+    </HotkeyContext.Provider>
+  );
+}
+
 export default function App() {
   return (
+    <HotkeysProvider>
     <ToastProvider>
     <BrowserRouter>
+      <HotkeyWrapper>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<AuthGuard><Layout /></AuthGuard>}>
@@ -119,7 +133,9 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
+      </HotkeyWrapper>
     </BrowserRouter>
     </ToastProvider>
+    </HotkeysProvider>
   );
 }
