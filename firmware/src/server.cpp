@@ -83,7 +83,8 @@ void loadConfigFromNVS() {
     String hostname = prefs.getString("hostname", "");
     if (hostname.length() == 0) hostname = defaultHostname;
     strncpy(runtimeConfig.hostname, hostname.c_str(), sizeof(runtimeConfig.hostname) - 1);
-    String mgmt = prefs.getString("mgmtServer", DEFAULT_MGMT_SERVER);
+    String mgmt = prefs.getString("mgmtServer", "");
+    if (mgmt.length() == 0) mgmt = DEFAULT_MGMT_SERVER;
     strncpy(runtimeConfig.mgmtServer, mgmt.c_str(), sizeof(runtimeConfig.mgmtServer) - 1);
     String apiKey = prefs.getString("apiKey", "");
     strncpy(runtimeConfig.apiKey, apiKey.c_str(), sizeof(runtimeConfig.apiKey) - 1);

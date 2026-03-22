@@ -4,7 +4,7 @@ import {
   getBuddies, createBuddy, acceptBuddy, deleteBuddy,
   getRaids, createRaid,
   getSharedStreaks, createSharedStreak, deleteSharedStreak,
-  getPresence, updatePresence,
+  getPresence,
   getReactions, sendReaction,
   getDevices,
 } from '../api/client';

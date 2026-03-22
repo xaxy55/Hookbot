@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTunnels, createTunnel, deleteTunnel, startTunnel, stopTunnel, quickConnectTunnel, getTunnelMetrics, getTunnelLogs } from '../api/client';
-import type { TunnelConfig, TunnelMetrics, TunnelLogEntry } from '../api/client';
+import type { TunnelConfig, TunnelLogEntry } from '../api/client';
 import { useToast } from '../hooks/useToast';
 
 function formatUptime(secs: number | null | undefined): string {

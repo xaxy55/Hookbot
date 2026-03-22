@@ -262,7 +262,6 @@ export default function QRCode({ value, size = 200, fgColor = 'currentColor', bg
   const moduleCount = matrix.length;
   const quietZone = 4;
   const total = moduleCount + quietZone * 2;
-  const cellSize = size / total;
 
   return (
     <svg

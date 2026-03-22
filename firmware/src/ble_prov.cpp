@@ -209,8 +209,12 @@ static void stopBLE() {
 }
 
 void init() {
-    // Start BLE immediately if WiFi isn't connected
-    if (!HookbotServer::isConnected()) {
+    // Track current WiFi state so update() detects transitions correctly
+    wifiWasConnected = HookbotServer::isConnected();
+
+    // Start BLE if WiFi isn't connected (for provisioning)
+    // OR if WiFi is connected but device still needs cloud pairing
+    if (!wifiWasConnected || needsBlePairing()) {
         startBLE();
     }
 }
