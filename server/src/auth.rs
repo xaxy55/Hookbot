@@ -133,15 +133,35 @@ pub async fn require_auth(
 }
 
 /// Look up a user by their per-user API key from the request headers.
+/// Checks both the user's default api_key and any active personal access tokens.
 fn check_user_api_key(req: &Request<Body>, db: &DbPool) -> Option<String> {
     let key = extract_api_key_from_headers(req)?;
     let conn = db.lock().unwrap();
-    conn.query_row(
+
+    // Check default user api_key first
+    if let Ok(id) = conn.query_row(
         "SELECT id FROM users WHERE api_key = ?1",
         [&key],
-        |row| row.get(0),
-    )
-    .ok()
+        |row| row.get::<_, String>(0),
+    ) {
+        return Some(id);
+    }
+
+    // Check personal access tokens (user_api_tokens)
+    if let Ok(user_id) = conn.query_row(
+        "SELECT user_id FROM user_api_tokens WHERE token = ?1 AND revoked_at IS NULL",
+        [&key],
+        |row| row.get::<_, String>(0),
+    ) {
+        // Update last_used_at
+        let _ = conn.execute(
+            "UPDATE user_api_tokens SET last_used_at = datetime('now') WHERE token = ?1",
+            [&key],
+        );
+        return Some(user_id);
+    }
+
+    None
 }
 
 /// Extract API key from Authorization: Bearer or X-API-Key header.

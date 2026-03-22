@@ -47,6 +47,31 @@ export const logout = () =>
 export const getAuthStatus = () =>
   request<{ authenticated: boolean; workos_enabled?: boolean }>('/auth/status');
 
+// Account
+export const getMe = () =>
+  request<{ id: string; email: string; name: string; api_key: string; created_at: string }>('/auth/me');
+
+export const updateAccount = (data: { name?: string }) =>
+  request<{ id: string; email: string; name: string; api_key: string; created_at: string }>('/account', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+export const getApiTokens = () =>
+  request<{ id: string; name: string; token_preview: string; created_at: string; last_used_at: string | null }[]>('/account/tokens');
+
+export const createApiToken = (data: { name: string }) =>
+  request<{ id: string; name: string; token: string }>('/account/tokens', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const revokeApiToken = (id: string) =>
+  request<{ ok: boolean }>(`/account/tokens/${id}`, { method: 'DELETE' });
+
+export const generateQrLogin = () =>
+  request<{ code: string; expires_at: string }>('/account/qr-login', { method: 'POST' });
+
 // Devices
 export const getDevices = () => request<DeviceWithStatus[]>('/devices');
 

@@ -115,6 +115,11 @@ async fn main() {
         .route("/auth/login", get(auth::workos_login))
         .route("/auth/callback", get(auth::workos_callback));
 
+    // QR login exchange — public (no auth), needs DB pool
+    let qr_exchange_routes = Router::new()
+        .route("/api/auth/qr-exchange", post(routes::account::exchange_qr_login))
+        .with_state(pool.clone());
+
     // Device API routes — authenticated by device token, not user auth
     let device_api_routes = Router::new()
         .route("/api/device/register", post(routes::device_api::register))
@@ -343,11 +348,11 @@ async fn main() {
         .with_state(pool.clone());
 
     // Phase 9: Game command routes (send game_start/stop/input to devices)
+    // Note: separated from protected_routes to avoid Handler trait issues with route_layer
     let game_command_routes = Router::new()
         .route("/api/games/start", post(routes::mini_games::start_game))
         .route("/api/games/stop", post(routes::mini_games::stop_game))
-        .route("/api/games/input", post(routes::mini_games::game_input))
-        .with_state((pool.clone(), command_queue.clone()));
+        .route("/api/games/input", post(routes::mini_games::game_input));
 
     // Phase 9: Boss battle routes
     let boss_routes = Router::new()
@@ -398,6 +403,14 @@ async fn main() {
         .route("/api/devices/claim", post(routes::device_api::claim_device))
         .with_state(pool.clone());
 
+    // Account management routes (tokens, QR login, profile)
+    let account_routes = Router::new()
+        .route("/api/account", put(routes::account::update_account))
+        .route("/api/account/tokens", get(routes::account::list_tokens).post(routes::account::create_token))
+        .route("/api/account/tokens/{id}", delete(routes::account::revoke_token))
+        .route("/api/account/qr-login", post(routes::account::generate_qr_login))
+        .with_state(pool.clone());
+
     // Protected routes — require API key or session cookie
     let protected_routes = Router::new()
         .merge(device_routes)
@@ -425,16 +438,21 @@ async fn main() {
         .merge(monitor_routes)
         .merge(tamagotchi_routes)
         .merge(mini_game_routes)
-        .merge(game_command_routes)
         .merge(boss_routes)
         .merge(easter_egg_routes)
         .merge(insights_routes)
         .merge(auth_mgmt_routes)
         .merge(claim_routes)
+        .merge(account_routes)
         .route_layer(middleware::from_fn(auth::require_auth));
+
+    // Game command routes — auth is enforced by the Extension layer
+    let game_command_protected = game_command_routes;
 
     let app = Router::new()
         .merge(public_routes)
+        .merge(qr_exchange_routes)
+        .merge(game_command_protected)
         .merge(device_api_routes)
         .merge(device_api_token_routes)
         .merge(device_api_command_routes)

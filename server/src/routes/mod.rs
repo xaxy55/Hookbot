@@ -39,3 +39,4 @@ pub mod boss_battle;
 pub mod easter_eggs;
 pub mod developer_insights;
 pub mod device_api;
+pub mod account;

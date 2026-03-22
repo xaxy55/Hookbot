@@ -1,4 +1,6 @@
 use axum::extract::{Query, State};
+use axum::response::IntoResponse;
+use axum::Extension;
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -191,50 +193,65 @@ pub struct GameCommandRequest {
 
 /// POST /api/games/start — send game_start command to device
 pub async fn start_game(
-    State((db, queue)): State<(DbPool, CommandQueue)>,
+    Extension(db): Extension<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Json(input): Json<GameCommandRequest>,
-) -> Result<Json<serde_json::Value>, AppError> {
-    let conn = db.lock().unwrap();
-    let device_id = resolve_device_id(&conn, input.device_id.as_deref())?;
+) -> Json<serde_json::Value> {
+    let result = {
+        let conn = db.lock().unwrap();
+        resolve_device_id(&conn, input.device_id.as_deref())
+    };
+    let device_id = match result {
+        Ok(id) => id,
+        Err(_) => return Json(json!({ "error": "Device not found" })),
+    };
     let game = input.game.as_deref().unwrap_or("snake");
-    drop(conn);
 
-    queue.enqueue(&db, &device_id, "game_start", &json!({ "game": game }))
-        .map_err(|e| AppError::Internal(e))?;
+    let _ = queue.enqueue(&db, &device_id, "game_start", &json!({ "game": game }));
     queue.notify_device(&device_id).await;
 
-    Ok(Json(json!({ "ok": true, "game": game })))
+    Json(json!({ "ok": true, "game": game }))
 }
 
 /// POST /api/games/stop — send game_stop command to device
 pub async fn stop_game(
-    State((db, queue)): State<(DbPool, CommandQueue)>,
+    Extension(db): Extension<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Json(input): Json<GameCommandRequest>,
-) -> Result<Json<serde_json::Value>, AppError> {
-    let conn = db.lock().unwrap();
-    let device_id = resolve_device_id(&conn, input.device_id.as_deref())?;
-    drop(conn);
+) -> Json<serde_json::Value> {
+    let result = {
+        let conn = db.lock().unwrap();
+        resolve_device_id(&conn, input.device_id.as_deref())
+    };
+    let device_id = match result {
+        Ok(id) => id,
+        Err(_) => return Json(json!({ "error": "Device not found" })),
+    };
 
-    queue.enqueue(&db, &device_id, "game_stop", &json!({}))
-        .map_err(|e| AppError::Internal(e))?;
+    let _ = queue.enqueue(&db, &device_id, "game_stop", &json!({}));
     queue.notify_device(&device_id).await;
 
-    Ok(Json(json!({ "ok": true })))
+    Json(json!({ "ok": true }))
 }
 
 /// POST /api/games/input — send game_input command to device
 pub async fn game_input(
-    State((db, queue)): State<(DbPool, CommandQueue)>,
+    Extension(db): Extension<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
     Json(input): Json<GameCommandRequest>,
-) -> Result<Json<serde_json::Value>, AppError> {
-    let conn = db.lock().unwrap();
-    let device_id = resolve_device_id(&conn, input.device_id.as_deref())?;
-    drop(conn);
+) -> Json<serde_json::Value> {
+    let result = {
+        let conn = db.lock().unwrap();
+        resolve_device_id(&conn, input.device_id.as_deref())
+    };
+    let device_id = match result {
+        Ok(id) => id,
+        Err(_) => return Json(json!({ "error": "Device not found" })),
+    };
 
     let direction = input.direction.unwrap_or(0);
-    queue.enqueue(&db, &device_id, "game_input", &json!({ "direction": direction }))
-        .map_err(|e| AppError::Internal(e))?;
+    let _ = queue.enqueue(&db, &device_id, "game_input", &json!({ "direction": direction }));
     queue.notify_device(&device_id).await;
 
-    Ok(Json(json!({ "ok": true, "direction": direction })))
+    Json(json!({ "ok": true, "direction": direction }))
 }

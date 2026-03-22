@@ -406,6 +406,27 @@ fn run_migrations(conn: &Connection) {
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )",
         "CREATE INDEX IF NOT EXISTS idx_device_tokens_claim ON device_tokens(claim_code)",
+        // User API tokens (personal access tokens)
+        "CREATE TABLE IF NOT EXISTS user_api_tokens (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            token TEXT UNIQUE NOT NULL,
+            token_preview TEXT NOT NULL,
+            name TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            last_used_at TEXT,
+            revoked_at TEXT
+        )",
+        "CREATE INDEX IF NOT EXISTS idx_user_api_tokens_token ON user_api_tokens(token)",
+        "CREATE INDEX IF NOT EXISTS idx_user_api_tokens_user ON user_api_tokens(user_id, revoked_at)",
+        // QR login codes (temporary, for mobile app login)
+        "CREATE TABLE IF NOT EXISTS qr_login_codes (
+            code TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            used INTEGER NOT NULL DEFAULT 0,
+            expires_at TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
     ];
 
     for sql in migrations {

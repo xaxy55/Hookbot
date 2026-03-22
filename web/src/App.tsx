@@ -43,6 +43,7 @@ import HomeAssistantPage from './pages/HomeAssistantPage';
 import DeskOccupancyPage from './pages/DeskOccupancyPage';
 import MonitorsPage from './pages/MonitorsPage';
 import DeveloperInsightsPage from './pages/DeveloperInsightsPage';
+import AccountPage from './pages/AccountPage';
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -111,6 +112,7 @@ export default function App() {
           <Route path="/monitors" element={<MonitorsPage />} />
           <Route path="/insights" element={<DeveloperInsightsPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/account" element={<AccountPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/logs" element={<LogsPage />} />
           <Route path="/diagnostics" element={<DiagnosticsPage />} />

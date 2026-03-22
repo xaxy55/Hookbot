@@ -82,6 +82,7 @@ const NAV_SECTIONS = [
   {
     label: 'Settings',
     items: [
+      { path: '/account', label: 'Account', icon: UserIcon },
       { path: '/users', label: 'Users', icon: UsersIcon },
       { path: '/mood-learning', label: 'Mood Learning', icon: BrainIcon },
       { path: '/settings', label: 'Config', icon: GearIcon },
@@ -502,6 +503,15 @@ function GlobeIcon({ active }: { active: boolean }) {
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
       <circle cx="8" cy="8" r="6" />
       <path d="M2 8h12M8 2c-2 2-2 4-2 6s0 4 2 6M8 2c2 2 2 4 2 6s0 4-2 6" />
+    </svg>
+  );
+}
+
+function UserIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={active ? 'text-brand-fg' : 'text-subtle'}>
+      <circle cx="8" cy="5" r="2.5" />
+      <path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5" />
     </svg>
   );
 }
