@@ -740,6 +740,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Hookbot/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Hookbot uses NFC to pair with a buddy's phone by tapping devices together.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup.";
@@ -912,6 +913,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Hookbot/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Hookbot uses NFC to pair with a buddy's phone by tapping devices together.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup.";
