@@ -1,6 +1,7 @@
 import WidgetKit
 import SwiftUI
 
+@main
 struct HookbotWidget: Widget {
     let kind = "HookbotComplication"
 
