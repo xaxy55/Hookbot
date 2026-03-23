@@ -149,11 +149,6 @@ pub struct GitHubHookQuery {
     pub device_id: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct GitHubHookQuery {
-    pub device_id: Option<String>,
-}
-
 #[derive(Debug, Serialize)]
 pub struct DeviceWithStatus {
     #[serde(flatten)]

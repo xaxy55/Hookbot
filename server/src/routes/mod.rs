@@ -11,11 +11,8 @@ pub mod discovery;
 pub mod firmware;
 pub mod gamification;
 pub mod github;
-<<<<<<< Updated upstream
 pub mod groups;
 pub mod homeassistant;
-=======
->>>>>>> Stashed changes
 pub mod hooks;
 pub mod monitors;
 pub mod mood;

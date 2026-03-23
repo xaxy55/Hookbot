@@ -2,7 +2,6 @@ import SwiftUI
 
 struct WatchMainView: View {
     @EnvironmentObject var engine: AvatarEngine
-<<<<<<< Updated upstream
     @EnvironmentObject var network: WatchNetworkService
     @EnvironmentObject var connectivity: WatchConnectivityManager
 
@@ -26,19 +25,12 @@ struct WatchMainView: View {
             .padding(.horizontal, 4)
 
             // Avatar — takes most of the screen
-=======
-
-    var body: some View {
-        VStack(spacing: 4) {
-            // Avatar - takes most of the screen
->>>>>>> Stashed changes
             WatchAvatarView()
                 .environmentObject(engine)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // State indicator
             Text(engine.currentState.displayName.uppercased())
-<<<<<<< Updated upstream
                 .font(.system(size: 11, weight: .black, design: .monospaced))
                 .foregroundColor(stateColor)
 
@@ -59,24 +51,10 @@ struct WatchMainView: View {
                 WatchStateButton(state: .error, emoji: "💀", engine: engine, network: network)
             }
             .padding(.bottom, 2)
-=======
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(stateColor)
-
-            // Quick state buttons
-            HStack(spacing: 8) {
-                WatchStateButton(state: .idle, emoji: "😏", engine: engine)
-                WatchStateButton(state: .thinking, emoji: "🤔", engine: engine)
-                WatchStateButton(state: .success, emoji: "😈", engine: engine)
-                WatchStateButton(state: .error, emoji: "💀", engine: engine)
-            }
-            .padding(.bottom, 4)
->>>>>>> Stashed changes
         }
         .background(glowBackground)
     }
 
-<<<<<<< Updated upstream
     private var connectionColor: Color {
         if network.isConnected { return .green }
         if connectivity.isReachable { return .blue }
@@ -89,8 +67,6 @@ struct WatchMainView: View {
         return "OFFLINE"
     }
 
-=======
->>>>>>> Stashed changes
     private var stateColor: Color {
         switch engine.currentState {
         case .idle:      return Color(red: 0.55, green: 0, blue: 0)
@@ -106,21 +82,12 @@ struct WatchMainView: View {
         let led = engine.ledColor
         return RadialGradient(
             gradient: Gradient(colors: [
-<<<<<<< Updated upstream
                 Color(red: Double(led.r), green: Double(led.g), blue: Double(led.b)).opacity(0.4),
                 .black
             ]),
             center: .center,
             startRadius: 5,
             endRadius: 80
-=======
-                Color(red: Double(led.r), green: Double(led.g), blue: Double(led.b)).opacity(0.3),
-                .clear
-            ]),
-            center: .center,
-            startRadius: 10,
-            endRadius: 100
->>>>>>> Stashed changes
         )
         .ignoresSafeArea()
     }
@@ -130,15 +97,11 @@ struct WatchStateButton: View {
     let state: AvatarState
     let emoji: String
     let engine: AvatarEngine
-<<<<<<< Updated upstream
     let network: WatchNetworkService
-=======
->>>>>>> Stashed changes
 
     var body: some View {
         Button {
             engine.setState(state)
-<<<<<<< Updated upstream
             network.sendState(state)
             HapticManager.shared.playStateHaptic(state)
         } label: {
@@ -150,17 +113,6 @@ struct WatchStateButton: View {
         .background(
             Circle()
                 .fill(engine.currentState == state ? Color.white.opacity(0.25) : Color.white.opacity(0.05))
-=======
-        } label: {
-            Text(emoji)
-                .font(.system(size: 16))
-        }
-        .buttonStyle(.plain)
-        .frame(width: 30, height: 30)
-        .background(
-            Circle()
-                .fill(engine.currentState == state ? Color.white.opacity(0.2) : Color.clear)
->>>>>>> Stashed changes
         )
     }
 }

@@ -1,15 +1,11 @@
 import SwiftUI
-<<<<<<< Updated upstream
 import UserNotifications
-=======
->>>>>>> Stashed changes
 
 @main
 struct HookbotApp: App {
     @StateObject private var engine = AvatarEngine()
     @StateObject private var network = NetworkService()
     @StateObject private var sound = SoundManager()
-<<<<<<< Updated upstream
     @StateObject private var auth = AuthService()
 
     var body: some Scene {
@@ -36,21 +32,6 @@ struct HookbotApp: App {
                 }
                 WatchBridge.shared.activate()
             }
-=======
-
-    var body: some Scene {
-        WindowGroup {
-            MainView()
-                .environmentObject(engine)
-                .environmentObject(network)
-                .environmentObject(sound)
-                .onAppear {
-                    setupBindings()
-                    network.startServer(engine: engine)
-                    loadConfig()
-                    WatchBridge.shared.activate()
-                }
->>>>>>> Stashed changes
         }
     }
 
@@ -58,7 +39,6 @@ struct HookbotApp: App {
         engine.onPlaySound = { [weak sound] state in
             sound?.playStateSound(state)
             WatchBridge.shared.sendState(state)
-<<<<<<< Updated upstream
 
             // Voice lines (13.3)
             VoiceLinesManager.shared.playQuip(for: state)
@@ -76,8 +56,6 @@ struct HookbotApp: App {
                 AvatarEvolutionEngine.shared.recordError()
             default: break
             }
-=======
->>>>>>> Stashed changes
         }
         engine.onPlayEscalationBeep = { [weak sound] secs in
             sound?.playEscalationBeep(secs: secs)
@@ -85,7 +63,6 @@ struct HookbotApp: App {
         engine.onHaptic = { state in
             HapticManager.playStateHaptic(state)
         }
-<<<<<<< Updated upstream
 
         // Observe set-state requests from Siri Shortcuts / Focus mode
         NotificationCenter.default.addObserver(
@@ -114,13 +91,10 @@ struct HookbotApp: App {
 
         // Siri Shortcuts (13.1)
         HookbotShortcuts.updateAppShortcutParameters()
-=======
->>>>>>> Stashed changes
     }
 
     private func loadConfig() {
         if let data = UserDefaults.standard.data(forKey: "hookbot_config"),
-<<<<<<< Updated upstream
            var config = try? JSONDecoder().decode(RuntimeConfig.self, from: data) {
             // Normalize serverURL to ensure it has an https scheme
             if !config.serverURL.isEmpty,
@@ -128,9 +102,6 @@ struct HookbotApp: App {
                !config.serverURL.hasPrefix("http://") {
                 config.serverURL = "https://\(config.serverURL)"
             }
-=======
-           let config = try? JSONDecoder().decode(RuntimeConfig.self, from: data) {
->>>>>>> Stashed changes
             engine.config = config
         }
     }

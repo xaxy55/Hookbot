@@ -55,17 +55,10 @@ struct TaskItem: Identifiable {
 
 struct AccessoriesConfig: Codable {
     var topHat: Bool = true
-<<<<<<< Updated upstream
     var cigar: Bool = false
     var glasses: Bool = false
     var monocle: Bool = false
     var bowtie: Bool = true
-=======
-    var cigar: Bool = true
-    var glasses: Bool = false
-    var monocle: Bool = false
-    var bowtie: Bool = false
->>>>>>> Stashed changes
     var crown: Bool = false
     var horns: Bool = false
     var halo: Bool = false
@@ -78,11 +71,8 @@ struct RuntimeConfig: Codable {
     var soundVolume: Int = 50
     var accessories: AccessoriesConfig = AccessoriesConfig()
     var serverURL: String = ""
-<<<<<<< Updated upstream
     var apiKey: String = ""
     var deviceId: String = ""
-=======
->>>>>>> Stashed changes
     var deviceName: String = "hookbot-ios"
 }
 

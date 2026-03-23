@@ -1,7 +1,4 @@
-<<<<<<< Updated upstream
 #if !targetEnvironment(macCatalyst)
-=======
->>>>>>> Stashed changes
 import WatchConnectivity
 
 // Forwards state changes from the iPhone to the Apple Watch
@@ -37,7 +34,6 @@ final class WatchBridge: NSObject, WCSessionDelegate {
         session.activate()
     }
 }
-<<<<<<< Updated upstream
 #else
 // Stub for Mac Catalyst where WatchConnectivity is unavailable
 final class WatchBridge {
@@ -46,5 +42,3 @@ final class WatchBridge {
     func sendState(_ state: AvatarState, tool: String = "", detail: String = "") {}
 }
 #endif
-=======
->>>>>>> Stashed changes

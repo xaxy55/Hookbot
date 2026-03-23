@@ -38,20 +38,16 @@ if [ -f "$GLOBAL_CONFIG" ]; then
     SERVER_HOST=$(jq -r '.host // "http://localhost:3000"' "$GLOBAL_CONFIG")
 fi
 
-<<<<<<< Updated upstream
 API_KEY=""
 if [ -f "$GLOBAL_CONFIG" ]; then
     API_KEY=$(jq -r '.api_key // ""' "$GLOBAL_CONFIG")
 fi
 
-=======
->>>>>>> Stashed changes
 echo -e "${CYAN}Server:${NC} $SERVER_HOST"
 read -r -p "Change server host? [y/N] " change_host
 if [[ "$change_host" =~ ^[Yy]$ ]]; then
     read -r -p "Enter server host (e.g. http://localhost:3000): " SERVER_HOST
 fi
-<<<<<<< Updated upstream
 
 if [ -n "$API_KEY" ]; then
     echo -e "${CYAN}API Key:${NC} ${API_KEY:0:8}..."
@@ -62,22 +58,16 @@ if [ -n "$API_KEY" ]; then
 else
     read -r -p "Enter API key (required for server auth): " API_KEY
 fi
-=======
->>>>>>> Stashed changes
 echo ""
 
 # --- Fetch devices from server ---
 echo -e "${CYAN}Fetching devices from server...${NC}"
 DEVICES_JSON=""
-<<<<<<< Updated upstream
 CURL_AUTH_HEADER=""
 if [ -n "$API_KEY" ]; then
     CURL_AUTH_HEADER="-H X-API-Key:$API_KEY"
 fi
 if DEVICES_JSON=$(curl -sf --connect-timeout 3 $CURL_AUTH_HEADER "$SERVER_HOST/api/devices" 2>/dev/null); then
-=======
-if DEVICES_JSON=$(curl -sf --connect-timeout 3 "$SERVER_HOST/api/devices" 2>/dev/null); then
->>>>>>> Stashed changes
     DEVICE_COUNT=$(echo "$DEVICES_JSON" | jq 'length')
     if [ "$DEVICE_COUNT" -gt 0 ]; then
         echo -e "${GREEN}Found $DEVICE_COUNT device(s):${NC}"
@@ -256,12 +246,8 @@ if [ "$INSTALL_TYPE" = "global" ]; then
         --arg host "$SERVER_HOST" \
         --arg mode "server" \
         --arg device_id "$DEVICE_ID" \
-<<<<<<< Updated upstream
         --arg api_key "$API_KEY" \
         '{host: $host, mode: $mode} | if $device_id != "" then . + {device_id: $device_id} else . end | if $api_key != "" then . + {api_key: $api_key} else . end')
-=======
-        'if $device_id == "" then {host: $host, mode: $mode} else {host: $host, mode: $mode, device_id: $device_id} end')
->>>>>>> Stashed changes
     echo "$CONFIG_CONTENT" | jq '.' > "$GLOBAL_CONFIG"
     echo -e "${GREEN}Global config updated:${NC} $GLOBAL_CONFIG"
 else
@@ -271,12 +257,8 @@ else
         --arg host "$SERVER_HOST" \
         --arg mode "server" \
         --arg device_id "$DEVICE_ID" \
-<<<<<<< Updated upstream
         --arg api_key "$API_KEY" \
         '{host: $host, mode: $mode} | if $device_id != "" then . + {device_id: $device_id} else . end | if $api_key != "" then . + {api_key: $api_key} else . end')
-=======
-        'if $device_id == "" then {host: $host, mode: $mode} else {host: $host, mode: $mode, device_id: $device_id} end')
->>>>>>> Stashed changes
     echo "$CONFIG_CONTENT" | jq '.' > "$HOOKBOT_FILE"
     echo -e "${GREEN}Project config created:${NC} $HOOKBOT_FILE"
 fi
@@ -305,13 +287,9 @@ echo ""
 if [ "$INSTALL_TYPE" = "project" ]; then
     echo -e "${YELLOW}Tip:${NC} Add .hookbot to your project's .gitignore"
 fi
-<<<<<<< Updated upstream
 if [ -n "$API_KEY" ]; then
     echo -e "Test with: ${CYAN}curl -X POST $SERVER_HOST/api/hook -H 'Content-Type: application/json' -H 'X-API-Key: $API_KEY' -d '{\"event\":\"PreToolUse\"}'${NC}"
 else
     echo -e "Test with: ${CYAN}curl -X POST $SERVER_HOST/api/hook -H 'Content-Type: application/json' -d '{\"event\":\"PreToolUse\"}'${NC}"
 fi
-=======
-echo -e "Test with: ${CYAN}curl -X POST $SERVER_HOST/api/hook -H 'Content-Type: application/json' -d '{\"event\":\"PreToolUse\"}'${NC}"
->>>>>>> Stashed changes
 echo ""

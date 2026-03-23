@@ -298,7 +298,6 @@ export default function Settings() {
         </div>
       </div>
 
-<<<<<<< Updated upstream
       {/* QR Code Quick Pair */}
       <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
         <div className="flex items-center justify-between">
@@ -345,8 +344,6 @@ export default function Settings() {
         </div>
       </div>
 
-=======
->>>>>>> Stashed changes
       {/* GitHub Webhook */}
       <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
         <h2 className="text-sm font-semibold text-fg-2">GitHub Webhook</h2>
@@ -393,7 +390,6 @@ export default function Settings() {
         </div>
       </div>
 
-<<<<<<< Updated upstream
       {/* Project Routing */}
       <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
         <div className="flex items-center justify-between">
@@ -676,8 +672,6 @@ export default function Settings() {
         )}
       </div>
 
-=======
->>>>>>> Stashed changes
       {/* Status Log Retention */}
       <div className="rounded-lg border border-edge bg-surface p-5 space-y-4">
         <h2 className="text-sm font-semibold text-fg-2">Status Log Retention</h2>

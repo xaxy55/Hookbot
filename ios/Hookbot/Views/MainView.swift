@@ -4,7 +4,6 @@ struct MainView: View {
     @EnvironmentObject var engine: AvatarEngine
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @State private var showSettings = false
-<<<<<<< Updated upstream
     @State private var showPetCare = false
     @State private var showSocialHub = false
     @State private var showPhotoMode = false
@@ -14,8 +13,6 @@ struct MainView: View {
     @StateObject private var sleepGuardian = SleepGuardianManager.shared
     @StateObject private var seasonalEvents = SeasonalEventsManager.shared
     @StateObject private var evolution = AvatarEvolutionEngine.shared
-=======
->>>>>>> Stashed changes
 
     var isLandscape: Bool { verticalSizeClass == .compact }
 
@@ -26,7 +23,6 @@ struct MainView: View {
 
                 VStack(spacing: 0) {
                     if !isLandscape {
-<<<<<<< Updated upstream
                         statusBar
                     }
 
@@ -39,23 +35,6 @@ struct MainView: View {
                     if evolution.isLeveledUp && !isLandscape {
                         levelUpToast
                             .transition(.move(edge: .top).combined(with: .opacity))
-=======
-                        // Status bar (portrait only)
-                        HStack {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 8, height: 8)
-                            Text(engine.currentState.displayName.uppercased())
-                                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                                .foregroundColor(.gray)
-                            Spacer()
-                            Text("DESTROYER OF WORLDS")
-                                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                                .foregroundColor(Color(white: 0.3))
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 8)
->>>>>>> Stashed changes
                     }
 
                     // Avatar - fills all available space
@@ -71,7 +50,6 @@ struct MainView: View {
                             .padding(.bottom, 8)
                     }
                 }
-<<<<<<< Updated upstream
 
                 if breakReminder.shouldShowBreakPrompt {
                     breakPromptOverlay
@@ -99,14 +77,11 @@ struct MainView: View {
                     .transition(.opacity)
                     .zIndex(10)
                 }
-=======
->>>>>>> Stashed changes
             }
             .background(Color.black)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(isLandscape ? .hidden : .visible, for: .navigationBar)
             .toolbar {
-<<<<<<< Updated upstream
                 ToolbarItem(placement: .topBarLeading) {
                     HStack(spacing: 12) {
                         Button {
@@ -176,24 +151,10 @@ struct MainView: View {
             }
             .fullScreenCover(isPresented: $showPhotoMode) {
                 PhotoModeView()
-=======
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .foregroundColor(.gray)
-                    }
-                }
-            }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
->>>>>>> Stashed changes
                     .environmentObject(engine)
             }
         }
         .preferredColorScheme(.dark)
-<<<<<<< Updated upstream
         .onAppear {
             breakReminder.startTracking()
         }
@@ -326,10 +287,6 @@ struct MainView: View {
 
     // MARK: - Glow background
 
-=======
-    }
-
->>>>>>> Stashed changes
     private var glowBackground: some View {
         let led = engine.ledColor
         let glowColor = Color(
@@ -337,7 +294,6 @@ struct MainView: View {
             green: Double(led.g),
             blue: Double(led.b)
         )
-<<<<<<< Updated upstream
         let seasonColor = seasonalEvents.activeSeason.themeColor
         return ZStack {
             RadialGradient(
@@ -471,14 +427,3 @@ struct SocialHubView: View {
         .preferredColorScheme(.dark)
     }
 }
-=======
-        return RadialGradient(
-            gradient: Gradient(colors: [glowColor.opacity(0.4), .clear]),
-            center: .center,
-            startRadius: 50,
-            endRadius: 300
-        )
-        .ignoresSafeArea()
-    }
-}
->>>>>>> Stashed changes

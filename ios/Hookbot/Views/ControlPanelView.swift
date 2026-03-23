@@ -37,10 +37,7 @@ struct ControlPanelView: View {
                         )
                 }
                 .buttonStyle(.plain)
-<<<<<<< Updated upstream
                 .accessibilityIdentifier("state_\(state.rawValue)")
-=======
->>>>>>> Stashed changes
             }
         }
         .padding(.horizontal)

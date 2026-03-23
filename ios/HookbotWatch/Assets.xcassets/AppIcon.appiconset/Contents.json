@@ -1,10 +1,7 @@
 {
   "images" : [
     {
-<<<<<<< Updated upstream
       "filename" : "AppIcon.png",
-=======
->>>>>>> Stashed changes
       "idiom" : "universal",
       "platform" : "watchos",
       "size" : "1024x1024"
