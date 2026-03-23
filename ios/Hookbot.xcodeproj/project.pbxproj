@@ -159,7 +159,7 @@
 		96ED7D39005A5919294B8A82 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstPath = "$(CONTENTS_FOLDER_PATH)/PlugIns";
 			dstSubfolderSpec = 16;
 			files = (
 				D1155B89523AEAEA90030DAB /* HookbotWatch.app in Embed Watch Content */,
