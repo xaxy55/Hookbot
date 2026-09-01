@@ -44,6 +44,26 @@ make up  # Docker Compose
 - **TypeScript/React:** Follow existing patterns in `web/src/`
 - **C++ (firmware):** Follow existing conventions in `firmware/src/`
 
+## Continuous Integration
+
+GitHub Actions are scoped by path so a change only triggers what it affects:
+
+| Workflow | Runs on |
+|----------|---------|
+| Deploy Web to Cloudflare Pages | pushes to `main` touching `web/**` |
+| Infrastructure | pushes/PRs touching `infra/*.tf` |
+| Build and Push Docker Images | `v*` tags, or manually via `workflow_dispatch` |
+| Deploy Server to GCE | manual only (GCE billing is disabled) |
+| App Store Screenshots | manual only |
+
+**The iOS app is built by Xcode Cloud, not by GitHub Actions.** The repo only
+holds its hook scripts (`ios/ci_scripts/`); the triggers live in App Store
+Connect, so no path filter here can gate them. To stop the app rebuilding on
+commits that touch no Apple files, set it in **App Store Connect → Xcode Cloud →
+(workflow) → Edit → Start Conditions → Branch Changes → Files and Folders** and
+restrict it to `ios/`. Xcode Cloud also honours `[ci skip]` in a commit message,
+which is a per-commit escape hatch rather than a fix.
+
 ## Reporting Issues
 
 Open a GitHub issue with:

@@ -1,11 +1,11 @@
 name: Deploy Server to GCE
 
+# Manual only. The GCE project has billing disabled, so this failed on every
+# push that touched server/** ("denied: This API method requires billing to be
+# enabled"), and the server is now self-hosted behind Caddy instead. Restore the
+# push trigger below if the GCE deployment is ever brought back.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "server/**"
 
 env:
   IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/hookbot/server
