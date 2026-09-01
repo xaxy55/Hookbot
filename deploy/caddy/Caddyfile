@@ -8,6 +8,15 @@
 	# and without exposing port 80.
 	tls {
 		dns cloudflare {$CLOUDFLARE_API_TOKEN}
+		# This network transparently redirects all port-53 DNS to a local server
+		# that answers authoritatively for this zone with internal addresses and
+		# does not carry the public _acme-challenge TXT. Setting `resolvers` does
+		# not help — those queries are intercepted too — so the self-check can
+		# never observe a record that is in fact published (confirmed over DoH).
+		# Skip the check and let Let's Encrypt validate from the public internet,
+		# where the record is visible. The delay gives Cloudflare time to publish.
+		propagation_delay 30s
+		propagation_timeout -1
 	}
 
 	encode zstd gzip

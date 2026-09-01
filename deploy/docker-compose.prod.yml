@@ -24,12 +24,11 @@ services:
       - server
       - web
 
+  # Images are built by the "Build and Push Docker Images" workflow, not on the
+  # host — this box is a 1-core/512MB LXC and cannot compile the server.
   server:
-    build:
-      context: ../server
-      args:
-        # Small host: keep rustc single-threaded so the build fits in RAM.
-        CARGO_BUILD_JOBS: "${CARGO_BUILD_JOBS:-default}"
+    image: ${SERVER_IMAGE:-xaxyxy/hookbot-server:latest}
+    pull_policy: always
     restart: unless-stopped
     expose:
       - "3000"
@@ -44,7 +43,8 @@ services:
       - db-data:/app/data
 
   web:
-    build: ../web
+    image: ${WEB_IMAGE:-xaxyxy/hookbot-web:latest}
+    pull_policy: always
     restart: unless-stopped
     expose:
       - "80"
