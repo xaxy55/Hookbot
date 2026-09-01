@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { uploadFirmware } from '../api/client';
+import { BOARDS } from '../types/boards';
 
 export default function OtaUpload() {
   const qc = useQueryClient();
@@ -51,8 +52,9 @@ export default function OtaUpload() {
           className="w-full px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
         >
           <option value="">Device type (optional)</option>
-          <option value="esp32_oled">ESP32 OLED</option>
-          <option value="esp32_4848s040c_lcd">ESP32-S3 LCD Touch</option>
+          {Object.entries(BOARDS).map(([deviceType, board]) => (
+            <option key={deviceType} value={deviceType}>{board.label}</option>
+          ))}
         </select>
       </div>
 

@@ -1,4 +1,6 @@
-#ifndef BOARD_ESP32_4848S040C
+#include "config.h"
+
+#ifndef DISPLAY_LGFX
 
 #include "display.h"
 #include <Wire.h>
@@ -42,4 +44,4 @@ int16_t centerY() { return SCREEN_HEIGHT / 2; }
 
 } // namespace Display
 
-#endif // !BOARD_ESP32_4848S040C
+#endif // !DISPLAY_LGFX

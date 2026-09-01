@@ -1,4 +1,6 @@
-#ifdef BOARD_ESP32_4848S040C
+#include "config.h"
+
+#ifdef DISPLAY_TOUCH
 
 #include "touch_ui.h"
 #include "display.h"
@@ -1444,4 +1446,4 @@ bool isOverlayActive() {
 
 } // namespace TouchUI
 
-#endif // BOARD_ESP32_4848S040C
+#endif // DISPLAY_TOUCH

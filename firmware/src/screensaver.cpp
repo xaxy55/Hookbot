@@ -26,8 +26,8 @@ static const uint32_t ANIM_CYCLE_MS = 30000;  // Switch animation every 30s
 static float skullX, skullY, skullDx, skullDy;
 
 static void initBouncingSkull() {
-    skullX = esp_random() % (SCREEN_WIDTH - 20) + 10;
-    skullY = esp_random() % (SCREEN_HEIGHT - 16) + 8;
+    skullX = esp_random() % (SAFE_WIDTH - 20) + SAFE_LEFT + 10;
+    skullY = esp_random() % (SAFE_HEIGHT - 16) + SAFE_TOP + 8;
     skullDx = 0.8f + (esp_random() % 100) / 200.0f;
     skullDy = 0.6f + (esp_random() % 100) / 200.0f;
     if (esp_random() % 2) skullDx = -skullDx;
@@ -40,10 +40,10 @@ static void drawBouncingSkull(DisplayCanvas* d) {
     skullY += skullDy;
 
     // Bounce off edges
-    if (skullX < 8 || skullX > SCREEN_WIDTH - 8) skullDx = -skullDx;
-    if (skullY < 8 || skullY > SCREEN_HEIGHT - 8) skullDy = -skullDy;
-    skullX = constrain(skullX, 8, SCREEN_WIDTH - 8);
-    skullY = constrain(skullY, 8, SCREEN_HEIGHT - 8);
+    if (skullX < SAFE_LEFT + 8 || skullX > SAFE_RIGHT - 8) skullDx = -skullDx;
+    if (skullY < SAFE_TOP + 8 || skullY > SAFE_BOTTOM - 8) skullDy = -skullDy;
+    skullX = constrain(skullX, SAFE_LEFT + 8, SAFE_RIGHT - 8);
+    skullY = constrain(skullY, SAFE_TOP + 8, SAFE_BOTTOM - 8);
 
     int16_t x = (int16_t)skullX;
     int16_t y = (int16_t)skullY;

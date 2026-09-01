@@ -5,6 +5,7 @@ import type { BuildStatus } from '../api/client';
 import type { OtaJob } from '../types';
 import OtaUpload from '../components/OtaUpload';
 import FirmwareFlasher from '../components/FirmwareFlasher';
+import { BOARDS, boardBadge, boardBadgeClass, boardLabel } from '../types/boards';
 
 const CONFETTI_COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
 
@@ -25,11 +26,6 @@ function groupIntoBatches(jobs: OtaJob[]): OtaJob[][] {
   }
   return batches;
 }
-
-const DEVICE_TYPE_LABELS: Record<string, string> = {
-  esp32_oled: 'ESP32 OLED (128x64)',
-  esp32_4848s040c_lcd: 'ESP32-S3 LCD (480x480 Touch)',
-};
 
 
 export default function OtaPage() {
@@ -180,8 +176,9 @@ export default function OtaPage() {
               onChange={(e) => setBuildEnv(e.target.value)}
               className="w-full px-3 py-1.5 text-sm bg-inset border border-edge rounded-md text-fg"
             >
-              <option value="esp32">ESP32 OLED (SSD1306)</option>
-              <option value="esp32-4848s040c">ESP32-S3 LCD (480x480 Touch)</option>
+              {Object.values(BOARDS).map((board) => (
+                <option key={board.env} value={board.env}>{board.label}</option>
+              ))}
             </select>
           </div>
           <div>
@@ -213,7 +210,7 @@ export default function OtaPage() {
                 {buildResult.firmware.filename} ({(buildResult.firmware.size_bytes / 1024).toFixed(0)} KB)
                 {buildResult.firmware.device_type && (
                   <span className="ml-2 text-purple-400">
-                    [{DEVICE_TYPE_LABELS[buildResult.firmware.device_type] || buildResult.firmware.device_type}]
+                    [{boardLabel(buildResult.firmware.device_type)}]
                   </span>
                 )}
               </p>
@@ -252,13 +249,13 @@ export default function OtaPage() {
             {firmwares?.map((fw) => (
               <option key={fw.id} value={fw.id}>
                 v{fw.version} - {fw.filename} ({(fw.size_bytes / 1024).toFixed(0)} KB)
-                {fw.device_type ? ` [${DEVICE_TYPE_LABELS[fw.device_type] || fw.device_type}]` : ''}
+                {fw.device_type ? ` [${boardBadge(fw.device_type)}]` : ''}
               </option>
             ))}
           </select>
           {selectedFirmware?.device_type && (
             <p className="text-xs text-purple-400 mt-1">
-              Target: {DEVICE_TYPE_LABELS[selectedFirmware.device_type] || selectedFirmware.device_type}
+              Target: {boardLabel(selectedFirmware.device_type)}
             </p>
           )}
         </div>
@@ -284,12 +281,8 @@ export default function OtaPage() {
                   <span>{d.name}</span>
                   <span className="text-subtle text-xs">({d.ip_address})</span>
                   {d.device_type && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
-                      d.device_type === 'esp32_4848s040c_lcd'
-                        ? 'border-cyan-800 text-cyan-400 bg-cyan-900/20'
-                        : 'border-amber-800 text-amber-400 bg-amber-900/20'
-                    }`}>
-                      {d.device_type === 'esp32_4848s040c_lcd' ? 'LCD' : 'OLED'}
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${boardBadgeClass(d.device_type)}`}>
+                      {boardBadge(d.device_type)}
                     </span>
                   )}
                   {isMismatch && <span className="text-[10px] text-red-500">type mismatch!</span>}

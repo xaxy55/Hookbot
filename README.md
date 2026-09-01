@@ -21,7 +21,7 @@ graph LR
 
 ## Features
 
-- **Animated avatar** — 6 emotional states, 8 accessories, customizable face parameters on a 128x64 OLED (or 480x480 LCD)
+- **Animated avatar** — 6 emotional states, 8 accessories, customizable face parameters on a 128x64 OLED (or a 480x480 / 240x240 round colour LCD)
 - **Claude Code integration** — Hooks into tool use, task completion, errors, and builds to trigger real-time reactions
 - **XP & leveling** — Earn XP from coding activity, level up your bot, unlock achievements and streaks
 - **Analytics dashboard** — Charts for tool usage, coding hours, session trends, and device diagnostics
@@ -84,7 +84,7 @@ Devices connect outbound to the public server at `bot.mr-ai.no`. No port forward
 - [Rust](https://rustup.rs/) (for the server)
 - [Node.js](https://nodejs.org/) 18+ (for the web UI)
 - [PlatformIO](https://platformio.org/) (for firmware)
-- An ESP32 board with SSD1306 OLED (or ESP32-4848S040C for LCD)
+- An ESP32 board with SSD1306 OLED (or ESP32-4848S040C for a 480x480 touch LCD, or a Seeed XIAO ESP32-C6 with a GC9A01 240x240 round LCD)
 
 ### 1. Server
 

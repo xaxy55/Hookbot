@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getDevices, getOtaJobs, getFirmware, getGamificationStats, getDeviceConfig, updateDeviceConfig } from '../api/client';
 import { Link } from 'react-router-dom';
 import StateIndicator from '../components/StateIndicator';
+import { boardBadge, boardBadgeClass } from '../types/boards';
 
 export default function Dashboard() {
   const { data: devices } = useQuery({
@@ -146,12 +147,8 @@ export default function Dashboard() {
                   <td className="px-4 py-3 text-subtle text-xs font-mono">{d.ip_address}</td>
                   <td className="px-4 py-3">
                     {d.device_type && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
-                        d.device_type === 'esp32_4848s040c_lcd'
-                          ? 'border-cyan-800 text-cyan-400 bg-cyan-900/20'
-                          : 'border-amber-800 text-amber-400 bg-amber-900/20'
-                      }`}>
-                        {d.device_type === 'esp32_4848s040c_lcd' ? 'LCD' : 'OLED'}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${boardBadgeClass(d.device_type)}`}>
+                        {boardBadge(d.device_type)}
                       </span>
                     )}
                   </td>

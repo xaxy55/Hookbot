@@ -1,0 +1,8 @@
+# 4MB flash, two OTA slots, no filesystem (the firmware uses NVS only).
+# min_spiffs.csv's 0x1E0000 app slots are too small for this build; dropping the
+# SPIFFS partition buys each slot another 64KB.
+# Name,   Type, SubType, Offset,   Size,    Flags
+nvs,      data, nvs,     0x9000,   0x5000,
+otadata,  data, ota,     0xe000,   0x2000,
+app0,     app,  ota_0,   0x10000,  0x1F0000,
+app1,     app,  ota_1,   0x200000, 0x1F0000,

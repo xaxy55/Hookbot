@@ -1,4 +1,4 @@
-#ifdef BOARD_ESP32_4848S040C
+#ifdef BOARD_ESP32_4848S040C  // 480x480 ST7701S RGB panel + GT911 touch
 
 #define LGFX_USE_V1
 #include "display.h"

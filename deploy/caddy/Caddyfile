@@ -1,0 +1,30 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# Domain comes from the server's .env — never hardcode it here, the repo is public.
+{$HOOKBOT_DOMAIN} {
+	# DNS-01 challenge, so certificates work even behind Cloudflare's proxy
+	# and without exposing port 80.
+	tls {
+		dns cloudflare {$CLOUDFLARE_API_TOKEN}
+	}
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# API to the Rust server; everything else is the static SPA.
+	handle /api/* {
+		reverse_proxy server:3000
+	}
+
+	handle {
+		reverse_proxy web:80
+	}
+}

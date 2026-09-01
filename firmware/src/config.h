@@ -30,14 +30,44 @@
 
 // ─── Board-specific display configuration ─────────────────────────
 
-#ifdef BOARD_ESP32_4848S040C
+// Boards fall into two families:
+//   DISPLAY_LGFX  - colour LCD driven by LovyanGFX, rendered via a 120x120
+//                   virtual canvas that is scaled up on flush
+//   (default)     - monochrome SSD1306 OLED driven by Adafruit_GFX
+// DISPLAY_TOUCH is set only on panels that actually have a touch controller.
+
+#if defined(BOARD_ESP32_4848S040C)
   // ESP32-4848S040C: 4.0" 480x480 IPS LCD (ST7701S + GT911 touch)
+  #define DISPLAY_LGFX
+  #define DISPLAY_TOUCH
   // Virtual canvas resolution (scaled 4x to 480x480)
   #define SCREEN_WIDTH   120
   #define SCREEN_HEIGHT  120
   #define LCD_PHYS_WIDTH  480
   #define LCD_PHYS_HEIGHT 480
   #define LCD_SCALE       4
+#elif defined(BOARD_XIAO_C6_GC9A01)
+  // Seeed Studio XIAO ESP32-C6 + 1.28" GC9A01 240x240 round SPI LCD (no touch)
+  #define DISPLAY_LGFX
+  #define DISPLAY_ROUND
+  // Virtual canvas resolution (scaled 2x to 240x240)
+  #define SCREEN_WIDTH   120
+  #define SCREEN_HEIGHT  120
+  #define LCD_PHYS_WIDTH  240
+  #define LCD_PHYS_HEIGHT 240
+  #define LCD_SCALE       2
+  // The panel is a circle inscribed in the 240x240 square, so the corners of
+  // the virtual canvas fall outside the glass. Anything further than
+  // DISPLAY_SAFE_RADIUS from the canvas centre is hidden by the bezel.
+  #define DISPLAY_SAFE_RADIUS (SCREEN_WIDTH / 2)
+
+  // GC9A01 wiring (XIAO silkscreen pin -> ESP32-C6 GPIO)
+  #define TFT_BL     0   // D0
+  #define TFT_CS     1   // D1
+  #define TFT_RST    2   // D2
+  #define TFT_DC    21   // D3
+  #define TFT_SCK   19   // D8
+  #define TFT_MOSI  18   // D10
 #else
   // Default: SSD1306 OLED 128x64 I2C
   #define SCREEN_WIDTH   128
@@ -46,6 +76,27 @@
   #define OLED_SCL        22
   #define OLED_ADDR     0x3C
 #endif
+
+// ─── Safe drawing area ────────────────────────────────────────────
+// A round panel hides the canvas corners behind the bezel. SAFE_* describe the
+// largest axis-aligned rectangle that is fully visible, so edge-anchored UI
+// (status text, progress bars, badges) can be placed against it instead of
+// against the raw canvas edge. On rectangular panels the inset is 0 and these
+// are exactly the canvas bounds, so layout there is unchanged.
+#ifdef DISPLAY_ROUND
+  // Largest square inscribed in the circle has side = diameter / sqrt(2),
+  // leaving (120 - 84.85) / 2 = 17.6 -> 18px on each side.
+  #define DISPLAY_INSET 18
+#else
+  #define DISPLAY_INSET 0
+#endif
+
+#define SAFE_LEFT   (DISPLAY_INSET)
+#define SAFE_TOP    (DISPLAY_INSET)
+#define SAFE_RIGHT  (SCREEN_WIDTH  - DISPLAY_INSET)
+#define SAFE_BOTTOM (SCREEN_HEIGHT - DISPLAY_INSET)
+#define SAFE_WIDTH  (SAFE_RIGHT - SAFE_LEFT)
+#define SAFE_HEIGHT (SAFE_BOTTOM - SAFE_TOP)
 
 // ─── WS2812B LED ─────────────────────────────────────────────────
 #ifndef NO_LED

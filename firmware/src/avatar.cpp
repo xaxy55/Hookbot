@@ -343,8 +343,10 @@ static void drawTaskList(DisplayCanvas* d) {
     const TaskList& tasks = HookbotServer::getTasks();
     if (tasks.count == 0) return;
 
-    int16_t startX = 72;  // Right side of screen
-    int16_t startY = 2;
+    // 72 is tuned to clear the avatar on the rectangular panels; a round panel
+    // has no usable pixels out there, so hug the safe rect instead.
+    int16_t startX = DISPLAY_INSET ? (SAFE_RIGHT - 48) : 72;
+    int16_t startY = SAFE_TOP + 2;
     int16_t lineH = 9;    // 8px font + 1px gap
     int16_t maxVisible = min((uint8_t)6, tasks.count);
 
@@ -395,7 +397,7 @@ static void drawTaskList(DisplayCanvas* d) {
         d->setCursor(startX + 10, y + 1);
 
         // Calculate max chars that fit (screen width - label start) / 6px per char
-        int16_t maxChars = (SCREEN_WIDTH - startX - 10) / 6;
+        int16_t maxChars = (SAFE_RIGHT - startX - 10) / 6;
         char truncated[MAX_TASK_LEN];
         strncpy(truncated, item.label, maxChars);
         truncated[maxChars] = '\0';
@@ -403,7 +405,7 @@ static void drawTaskList(DisplayCanvas* d) {
 
         // Strikethrough for done items
         if (item.status == 2) {
-            int16_t textW = min((int16_t)(strlen(truncated) * 6), (int16_t)(SCREEN_WIDTH - startX - 10));
+            int16_t textW = min((int16_t)(strlen(truncated) * 6), (int16_t)(SAFE_RIGHT - startX - 10));
             d->drawFastHLine(startX + 10, y + 4, textW, COLOR_WHITE);
         }
     }
@@ -414,8 +416,8 @@ static void drawTaskList(DisplayCanvas* d) {
         int16_t totalH = maxVisible * lineH;
         int16_t thumbH = max((int16_t)4, (int16_t)(totalH * maxVisible / tasks.count));
         int16_t thumbY = startY + (int16_t)((float)scrollOffset / (tasks.count - maxVisible) * (totalH - thumbH));
-        d->drawFastVLine(SCREEN_WIDTH - 2, startY, totalH, COLOR_WHITE);
-        d->fillRect(SCREEN_WIDTH - 3, thumbY, 3, thumbH, COLOR_WHITE);
+        d->drawFastVLine(SAFE_RIGHT - 2, startY, totalH, COLOR_WHITE);
+        d->fillRect(SAFE_RIGHT - 3, thumbY, 3, thumbH, COLOR_WHITE);
     }
 }
 
@@ -713,7 +715,7 @@ static void drawFace(DisplayCanvas* d) {
         if (strlen(branch.name) > 0 && (millis() - branch.lastUpdatedAt) < 600000) {
             d->setTextSize(1);
             d->setTextColor(COLOR_WHITE);
-            d->setCursor(2, SCREEN_HEIGHT - 18);
+            d->setCursor(SAFE_LEFT + 2, SAFE_BOTTOM - 18);
             char truncBranch[18];
             strncpy(truncBranch, branch.name, 17);
             truncBranch[17] = '\0';
@@ -726,9 +728,9 @@ static void drawFace(DisplayCanvas* d) {
         && strlen(HookbotServer::getCurrentTool().name) > 0) {
         const ToolInfo& tool = HookbotServer::getCurrentTool();
 
-        int16_t toolY = SCREEN_HEIGHT - 8;  // Bottom area
-        int16_t iconX = 2;
-        int16_t textX = 14;
+        int16_t toolY = SAFE_BOTTOM - 8;  // Bottom area
+        int16_t iconX = SAFE_LEFT + 2;
+        int16_t textX = SAFE_LEFT + 14;
 
         // Draw tool-specific icon (8x8 area)
         if (strcmp(tool.name, "Read") == 0) {
@@ -782,9 +784,9 @@ static void drawFace(DisplayCanvas* d) {
         // Animated progress indicator
         if (currentState == AvatarState::THINKING) {
             float phase = (float)stateTime / 300.0f;
-            int16_t barX = 2;
-            int16_t barY = SCREEN_HEIGHT - 10;
-            int16_t barW = SCREEN_WIDTH - 4;
+            int16_t barX = SAFE_LEFT + 2;
+            int16_t barY = SAFE_BOTTOM - 10;
+            int16_t barW = SAFE_WIDTH - 4;
             // Scanning line effect
             int16_t scanPos = barX + (int16_t)(fmodf(phase, 1.0f) * barW);
             d->drawPixel(scanPos, barY, COLOR_WHITE);
@@ -862,7 +864,7 @@ static void drawFace(DisplayCanvas* d) {
             int16_t zx = cx + 22 + (int16_t)drift;
             int16_t zy = cy - 10 - (int16_t)rise;
             int16_t zSize = 2 + i;  // Gets bigger
-            if (zy >= 0 && zx < SCREEN_WIDTH - zSize) {
+            if (zy >= SAFE_TOP && zx < SAFE_RIGHT - zSize) {
                 // Draw a Z
                 d->drawFastHLine(zx, zy, zSize, COLOR_WHITE);
                 d->drawLine(zx + zSize - 1, zy, zx, zy + zSize - 1, COLOR_WHITE);
@@ -883,7 +885,7 @@ static void drawFace(DisplayCanvas* d) {
             for (int side = -1; side <= 1; side += 2) {
                 int16_t mx = cx + side * (30 + m * 7);
                 int16_t my = cy - 8 + mBounce;
-                if (mx > 2 && mx < SCREEN_WIDTH - 2) {
+                if (mx > SAFE_LEFT + 2 && mx < SAFE_RIGHT - 2) {
                     // ! mark: line + dot
                     d->drawFastVLine(mx, my - 4, 6, COLOR_WHITE);
                     d->drawPixel(mx, my + 4, COLOR_WHITE);
@@ -936,8 +938,8 @@ static void drawNotifications(DisplayCanvas* d) {
     NotificationData* notifs = HookbotServer::getNotifications();
     int count = HookbotServer::getNotificationCount();
 
-    int16_t badgeX = SCREEN_WIDTH - 2;  // Right-aligned
-    int16_t badgeY = 1;
+    int16_t badgeX = SAFE_RIGHT - 2;  // Right-aligned
+    int16_t badgeY = SAFE_TOP + 1;
 
     for (int i = 0; i < count; i++) {
         if (!notifs[i].active || notifs[i].unread <= 0) continue;
@@ -1168,9 +1170,9 @@ static void drawXpBar(DisplayCanvas* d) {
     if (currentState != AvatarState::IDLE && currentState != AvatarState::SUCCESS) return;
 
     // Draw at bottom of screen
-    int16_t barY = SCREEN_HEIGHT - 9;
-    int16_t barX = 2;
-    int16_t barW = SCREEN_WIDTH - 4;
+    int16_t barY = SAFE_BOTTOM - 9;
+    int16_t barX = SAFE_LEFT + 2;
+    int16_t barW = SAFE_WIDTH - 4;
     int16_t barH = 4;
 
     // Level text: "Lv5" on the left
@@ -1203,7 +1205,7 @@ static void drawDndIndicator(DisplayCanvas* d) {
     // Small "DND" text in the top-right corner
     d->setTextSize(1);
     d->setTextColor(0x781F); // purple-ish tint
-    d->setCursor(SCREEN_WIDTH - 22, 2);
+    d->setCursor(SAFE_RIGHT - 22, SAFE_TOP + 2);
     d->print("DND");
 }
 

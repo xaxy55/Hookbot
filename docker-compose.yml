@@ -1,7 +1,11 @@
 services:
   server:
     build: ./server
-    network_mode: host
+    # Published on a normal bridge network so the web container can reach it by
+    # service name. LAN mDNS device auto-discovery needs host networking instead
+    # — see docker-compose.host-net.yml.
+    ports:
+      - "3000:3000"
     volumes:
       - db-data:/app/data
     environment:

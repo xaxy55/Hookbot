@@ -1,0 +1,55 @@
+# Production stack for a single host: Caddy terminates TLS and proxies to the
+# API server and the static web bundle.
+#
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d --build
+#
+# All configuration comes from deploy/.env, which is NEVER committed.
+services:
+  caddy:
+    build: ./caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - HOOKBOT_DOMAIN=${HOOKBOT_DOMAIN}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - server
+      - web
+
+  server:
+    build:
+      context: ../server
+      args:
+        # Small host: keep rustc single-threaded so the build fits in RAM.
+        CARGO_BUILD_JOBS: "${CARGO_BUILD_JOBS:-}"
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - DATABASE_URL=/app/data/hookbot.db
+      - FIRMWARE_DIR=/app/data/firmware
+      - BIND_ADDR=0.0.0.0:3000
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - API_KEY=${API_KEY}
+    volumes:
+      - db-data:/app/data
+
+  web:
+    build: ../web
+    restart: unless-stopped
+    expose:
+      - "80"
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:

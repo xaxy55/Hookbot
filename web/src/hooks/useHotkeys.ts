@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 import { useHotkey, useHeldKeys } from '@tanstack/react-hotkeys';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,6 +21,8 @@ export function useHotkeyContext() {
 }
 
 /** Section index → first nav path */
+const SECTION_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+
 export const SECTION_SHORTCUTS: Record<number, string> = {
   1: '/',           // Control → Overview
   2: '/ota',        // Firmware → OTA
@@ -67,11 +69,12 @@ export function useHotkeySetup() {
 export function useNavigationHotkeys() {
   const navigate = useNavigate();
 
-  for (const [num, path] of Object.entries(SECTION_SHORTCUTS)) {
+  // Literal digits (not Object.keys) so `Mod+${num}` narrows to a valid Hotkey
+  for (const num of SECTION_NUMBERS) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useHotkey(`Mod+${num}`, (e) => {
       e.preventDefault();
-      navigate(path);
+      navigate(SECTION_SHORTCUTS[num]);
     });
   }
 }

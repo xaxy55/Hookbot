@@ -2,7 +2,7 @@
 
 #include "config.h"
 
-#ifdef BOARD_ESP32_4848S040C
+#ifdef DISPLAY_LGFX
   #include <LovyanGFX.hpp>
   typedef lgfx::LGFX_Sprite DisplayCanvas;
   #define COLOR_WHITE 0xFFFFU
@@ -14,7 +14,8 @@
   #define COLOR_BLACK SSD1306_BLACK
 #endif
 
-// Display subsystem - abstracts SSD1306 OLED and ESP32-4848S040C LCD
+// Display subsystem - abstracts the SSD1306 OLED and the LovyanGFX LCDs
+// (ESP32-4848S040C 480x480 square, XIAO ESP32-C6 + GC9A01 240x240 round)
 namespace Display {
     void init();
     void clear();
@@ -26,9 +27,12 @@ namespace Display {
     int16_t centerX();
     int16_t centerY();
 
-#ifdef BOARD_ESP32_4848S040C
+#ifdef DISPLAY_TOUCH
     bool getTouchPoint(int16_t& x, int16_t& y);
     void touchTest();
+#endif
+
+#ifdef DISPLAY_LGFX
     void setBrightness(uint8_t level);
 #endif
 }

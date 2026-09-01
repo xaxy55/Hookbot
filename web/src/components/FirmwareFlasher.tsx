@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getFirmware } from '../api/client';
+import { boardBadge, boardLabel } from '../types/boards';
 
 const BASE = '/api';
 
@@ -164,13 +165,13 @@ export default function FirmwareFlasher() {
           {firmwares?.map((fw) => (
             <option key={fw.id} value={fw.id}>
               v{fw.version} - {fw.filename} ({(fw.size_bytes / 1024).toFixed(0)} KB)
-              {fw.device_type ? ` [${fw.device_type === 'esp32_4848s040c_lcd' ? 'LCD' : 'OLED'}]` : ''}
+              {fw.device_type ? ` [${boardBadge(fw.device_type)}]` : ''}
             </option>
           ))}
         </select>
         {selectedFirmware?.device_type && (
           <p className="text-xs text-purple-400 mt-1">
-            Target: {selectedFirmware.device_type === 'esp32_4848s040c_lcd' ? 'ESP32-S3 LCD Touch' : 'ESP32 OLED'}
+            Target: {boardLabel(selectedFirmware.device_type)}
           </p>
         )}
       </div>

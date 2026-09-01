@@ -549,8 +549,10 @@ void init(std::function<void(AvatarState)> onStateChange) {
         doc["ip"] = WiFi.localIP().toString();
         doc["hostname"] = runtimeConfig.hostname;
         doc["firmware_version"] = FIRMWARE_VERSION;
-#ifdef BOARD_ESP32_4848S040C
+#if defined(BOARD_ESP32_4848S040C)
         doc["device_type"] = "esp32_4848s040c_lcd";
+#elif defined(BOARD_XIAO_C6_GC9A01)
+        doc["device_type"] = "xiao_c6_gc9a01_round";
 #else
         doc["device_type"] = "esp32_oled";
 #endif
@@ -594,8 +596,10 @@ void init(std::function<void(AvatarState)> onStateChange) {
         doc["freeHeap"] = ESP.getFreeHeap();
         doc["uptime"] = millis();
         doc["chip_model"] = ESP.getChipModel();
-#ifdef BOARD_ESP32_4848S040C
+#if defined(BOARD_ESP32_4848S040C)
         doc["device_type"] = "esp32_4848s040c_lcd";
+#elif defined(BOARD_XIAO_C6_GC9A01)
+        doc["device_type"] = "xiao_c6_gc9a01_round";
 #else
         doc["device_type"] = "esp32_oled";
 #endif
@@ -613,7 +617,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
         caps.add("microphone");
         caps.add("speaker");
 #endif
-#ifdef BOARD_ESP32_4848S040C
+#ifdef DISPLAY_TOUCH
         caps.add("touch");
 #endif
 

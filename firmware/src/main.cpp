@@ -24,7 +24,7 @@
 #ifndef NO_AUDIO
 #include "audio.h"
 #endif
-#ifdef BOARD_ESP32_4848S040C
+#ifdef DISPLAY_TOUCH
 #include "touch_ui.h"
 #endif
 
@@ -62,9 +62,9 @@ static void setState(AvatarState state) {
 #endif
 }
 
-// ─── Touch input (LCD board only) ───────────────────────────────
+// ─── Touch input (touch-capable panels only) ────────────────────
 
-#if defined(BOARD_ESP32_4848S040C) && !defined(NO_DISPLAY)
+#if defined(DISPLAY_TOUCH) && !defined(NO_DISPLAY)
 static uint32_t lastTouchTime = 0;
 static bool wasTouchingMain = false;
 
@@ -202,9 +202,11 @@ void setup() {
     Serial.println("=== THE CEO HAS ARRIVED. TREMBLE. ===");
 
     BleProv::init();
-#ifdef BOARD_ESP32_4848S040C
+#ifdef DISPLAY_LGFX
+    Display::setBrightness(255);  // Full backlight — adjusted later by config/touch UI
+#endif
+#ifdef DISPLAY_TOUCH
     TouchUI::init();
-    Display::setBrightness(255);  // Full backlight — touch UI adjusts via slider
     Display::touchTest();
 #endif
 }
@@ -283,7 +285,7 @@ void loop() {
     }
 #endif
 
-#if defined(BOARD_ESP32_4848S040C) && !defined(NO_DISPLAY)
+#if defined(DISPLAY_TOUCH) && !defined(NO_DISPLAY)
     handleTouch(delta);
 #endif
 
@@ -308,7 +310,7 @@ void loop() {
     } else {
         Avatar::draw();
     }
-#ifdef BOARD_ESP32_4848S040C
+#ifdef DISPLAY_TOUCH
     TouchUI::draw();  // Draw touch overlay on top of avatar
 #endif
     Display::flush();

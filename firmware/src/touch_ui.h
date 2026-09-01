@@ -2,7 +2,7 @@
 
 #include "config.h"
 
-#ifdef BOARD_ESP32_4848S040C
+#ifdef DISPLAY_TOUCH
 
 #include <Arduino.h>
 

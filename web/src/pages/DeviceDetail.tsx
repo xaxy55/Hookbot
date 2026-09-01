@@ -6,6 +6,7 @@ import type { ConfigExportData } from '../api/client';
 import type { ServoChannel, SensorChannelConfig, SensorReading } from '../api/client';
 import StateIndicator from '../components/StateIndicator';
 import type { AvatarState } from '../types';
+import { boardBadge, boardHeaderBadgeClass } from '../types/boards';
 
 const STATES: AvatarState[] = ['idle', 'thinking', 'waiting', 'success', 'taskcheck', 'error'];
 
@@ -133,12 +134,8 @@ export default function DeviceDetail() {
         </div>
         <div className="flex items-center gap-2">
           {device.device_type && (
-            <span className={`px-2 py-1 rounded-full text-[10px] border font-mono ${
-              device.device_type === 'esp32_4848s040c_lcd'
-                ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
-                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-            }`}>
-              {device.device_type === 'esp32_4848s040c_lcd' ? 'LCD Touch' : 'OLED'}
+            <span className={`px-2 py-1 rounded-full text-[10px] border font-mono ${boardHeaderBadgeClass(device.device_type)}`}>
+              {boardBadge(device.device_type)}
             </span>
           )}
           {currentFirmware && (

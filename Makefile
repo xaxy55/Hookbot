@@ -15,6 +15,7 @@ DIM    := \033[2m
 
 .PHONY: help \
         test \
+        firmware firmware-c6 firmware-c6-upload \
         server web up build \
         lint lint-fix lint-server lint-web lint-ios lint-fix-ios swift-check \
         update update-server update-web \
@@ -54,6 +55,10 @@ help: ## Show this help
 # ============================================================
 #  Development
 # ============================================================
+# The C6 board is on the pioarduino platform, which conflicts with the official
+# espressif32 platform over shared package names — keep it in its own store.
+PIO_C6_CORE_DIR ?= $(HOME)/.platformio-pioarduino
+
 ADMIN_PASSWORD ?= $(shell grep '^ADMIN_PASSWORD=' .env 2>/dev/null | cut -d= -f2)
 
 server: ## Start backend dev server (port 3000, debug logging)
@@ -106,6 +111,15 @@ screenshots: ## Generate App Store screenshots via UI tests
 # ============================================================
 #  Testing
 # ============================================================
+firmware: ## Build firmware for the OLED and 4848 LCD boards
+	cd firmware && pio run -e esp32 -e esp32-4848s040c
+
+firmware-c6: ## Build firmware for the XIAO ESP32-C6 round LCD board
+	cd firmware && PLATFORMIO_CORE_DIR=$(PIO_C6_CORE_DIR) pio run -e xiao-c6-gc9a01
+
+firmware-c6-upload: ## Flash the XIAO ESP32-C6 round LCD board over USB
+	cd firmware && PLATFORMIO_CORE_DIR=$(PIO_C6_CORE_DIR) pio run -e xiao-c6-gc9a01 --target upload
+
 test: ## Run Playwright tests
 	@printf "$(MAGENTA)>> Running Playwright tests...$(RESET)\n"
 	npx playwright test

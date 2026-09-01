@@ -1,0 +1,12 @@
+# Overlay that puts the server on the host network, which mDNS device
+# auto-discovery needs to see Hookbot devices on the LAN.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.host-net.yml up --build
+#
+# Linux only. On macOS and Windows the container host is a VM rather than your
+# LAN, so host networking cannot see your devices and also hides the server
+# from the web container — use the plain docker-compose.yml there.
+services:
+  server:
+    network_mode: host
+    ports: !reset []

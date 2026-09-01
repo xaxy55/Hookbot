@@ -12,7 +12,7 @@ use crate::models::Firmware;
 
 #[derive(Debug, Deserialize)]
 pub struct BuildRequest {
-    /// PlatformIO environment name: "esp32" or "esp32-4848s040c"
+    /// PlatformIO environment name, one of BUILD_ENVIRONMENTS
     pub environment: String,
     /// Optional version string for the built firmware
     pub version: Option<String>,
@@ -28,9 +28,13 @@ pub struct BuildStatus {
     pub build_log: Option<String>,
 }
 
+/// PlatformIO environments that may be built through this endpoint.
+const BUILD_ENVIRONMENTS: [&str; 3] = ["esp32", "esp32-4848s040c", "xiao-c6-gc9a01"];
+
 fn env_to_device_type(env: &str) -> &str {
     match env {
         "esp32-4848s040c" => "esp32_4848s040c_lcd",
+        "xiao-c6-gc9a01" => "xiao_c6_gc9a01_round",
         "esp32" => "esp32_oled",
         _ => "unknown",
     }
@@ -43,10 +47,11 @@ pub async fn build_firmware(
     let env = &input.environment;
 
     // Validate environment name
-    if env != "esp32" && env != "esp32-4848s040c" {
+    if !BUILD_ENVIRONMENTS.contains(&env.as_str()) {
         return Err(AppError::BadRequest(format!(
-            "Invalid environment '{}'. Must be 'esp32' or 'esp32-4848s040c'",
-            env
+            "Invalid environment '{}'. Must be one of: {}",
+            env,
+            BUILD_ENVIRONMENTS.join(", ")
         )));
     }
 
