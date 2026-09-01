@@ -82,7 +82,16 @@ export default function BleSetupPage() {
 
     try {
       const bleDevice = await (navigator as any).bluetooth.requestDevice({
-        filters: [{ namePrefix: 'Hookbot' }],
+        // Match on the service UUID as well as the name. `filters` is OR'd, so
+        // either is enough. A namePrefix-only filter hides boards whose OS-level
+        // name does not match what they advertise: the ESP32-C6 advertises
+        // "Hookbot-XXXX" correctly, but macOS reports a stale cached GAP name,
+        // and Chrome filters on the name the OS reports. Every board advertises
+        // this service UUID, so this matches regardless of naming.
+        filters: [
+          { namePrefix: 'Hookbot' },
+          { services: [BLE_SERVICE_UUID] },
+        ],
         optionalServices: [BLE_SERVICE_UUID],
       });
 
