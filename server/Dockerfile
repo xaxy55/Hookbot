@@ -3,9 +3,10 @@ WORKDIR /build
 COPY Cargo.toml Cargo.lock* ./
 COPY src ./src
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
-# Empty by default (cargo picks its own parallelism). Set to 1 on small hosts —
+# "default" lets cargo pick its own parallelism. Set to 1 on small hosts —
 # parallel rustc processes are what blow the memory budget on a 1-core/512MB box.
-ARG CARGO_BUILD_JOBS=
+# Must not be empty: cargo rejects "" with "should be `default` or a number".
+ARG CARGO_BUILD_JOBS=default
 ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
 RUN cargo build --release
 

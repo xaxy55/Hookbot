@@ -29,7 +29,7 @@ services:
       context: ../server
       args:
         # Small host: keep rustc single-threaded so the build fits in RAM.
-        CARGO_BUILD_JOBS: "${CARGO_BUILD_JOBS:-}"
+        CARGO_BUILD_JOBS: "${CARGO_BUILD_JOBS:-default}"
     restart: unless-stopped
     expose:
       - "3000"
