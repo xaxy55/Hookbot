@@ -19,10 +19,13 @@ public:
             auto cfg = _bus_instance.config();
             cfg.spi_host   = SPI2_HOST;
             cfg.spi_mode   = 0;
-            // 80MHz: a 240x240x16bpp frame is ~115KB, so at 40MHz the transfer
-            // alone took ~23ms of the 33ms frame budget and the display was the
-            // bottleneck. The GC9A01 is rated well above this.
-            cfg.freq_write = 80000000;
+            // 40MHz, not 80. TFT_SCK/TFT_MOSI are not the C6's IO_MUX pins for
+            // SPI2, so the signals route through the GPIO matrix, which caps
+            // reliable SPI at ~40MHz. At 80MHz the panel dropped the high byte
+            // of each RGB565 pixel, so white (0xFFFF) arrived as 0x00FF — the
+            // whole avatar rendered blue. The GC9A01 die is rated higher, but
+            // the routing between the C6 and it is not.
+            cfg.freq_write = 40000000;
             cfg.freq_read  = 16000000;
             cfg.spi_3wire  = true;   // no MISO line on these modules
             cfg.use_lock   = true;
@@ -94,6 +97,28 @@ void init() {
     canvas->setColorDepth(16);
     canvas->createSprite(SCREEN_WIDTH, SCREEN_HEIGHT);
     canvas->fillSprite(0);
+
+#ifdef DISPLAY_COLOR_TEST
+    // Build with -DDISPLAY_COLOR_TEST to prove the colour path end to end:
+    // four labelled bars drawn straight to the panel, bypassing the sprite.
+    // If these read R/G/B/W top to bottom, the panel, the SPI clock and the
+    // channel order are all correct and any colour bug is in the drawing code.
+    {
+        const uint16_t bars[4]  = { 0xF800, 0x07E0, 0x001F, 0xFFFF };
+        const char*    names[4] = { "RED", "GREEN", "BLUE", "WHITE" };
+        const int      h        = LCD_PHYS_HEIGHT / 4;
+        for (int i = 0; i < 4; i++) {
+            lcd->fillRect(0, h * i, LCD_PHYS_WIDTH, h, bars[i]);
+            lcd->setTextColor(0x0000);
+            lcd->setTextSize(2);
+            lcd->setCursor(70, h * i + h / 2 - 8);
+            lcd->print(names[i]);
+        }
+        Serial.println("[Display] COLOUR TEST: bars are R/G/B/W top to bottom");
+        delay(8000);
+        lcd->fillScreen(0);
+    }
+#endif
 
     Serial.println("[Display] XIAO ESP32-C6 + GC9A01 240x240 round LCD initialized");
     Serial.printf("[Display] Virtual canvas: %dx%d (%dx scale, round safe radius %d)\n",
