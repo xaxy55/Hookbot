@@ -39,6 +39,11 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
       - API_KEY=${API_KEY}
+      # Spotify uses PKCE, so there is no client secret to pass through.
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID:-}
+      - SPOTIFY_REDIRECT_URI=${SPOTIFY_REDIRECT_URI:-}
+      # Where the server sends the browser back to after OAuth.
+      - FRONTEND_URL=${FRONTEND_URL:-}
     volumes:
       - db-data:/app/data
 
