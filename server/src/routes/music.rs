@@ -2,9 +2,11 @@ use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::{Extension, Json};
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine as _;
 use hmac::{Hmac, Mac};
 use serde::Deserialize;
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 use std::sync::Arc;
 
 use crate::config::AppConfig;
@@ -27,38 +29,62 @@ fn urlencode(s: &str) -> String {
         .collect()
 }
 
-/// The OAuth `state` is signed rather than stored: it carries the device id
-/// through the round trip, and the HMAC proves we issued it, so a stray
-/// callback cannot bind someone else's Spotify account to a device.
-fn sign_state(secret: &[u8; 32], device_id: &str, issued_at: i64) -> String {
-    let payload = format!("{}:{}", device_id, issued_at);
+fn hmac_bytes(secret: &[u8; 32], msg: &str) -> [u8; 32] {
     let mut mac = <Hmac<Sha256>>::new_from_slice(secret).expect("HMAC accepts any key length");
-    mac.update(payload.as_bytes());
-    let sig = hex::encode(mac.finalize().into_bytes());
+    mac.update(msg.as_bytes());
+    mac.finalize().into_bytes().into()
+}
+
+/// The OAuth `state` is signed rather than stored: it carries the device id
+/// through the round trip, the random nonce makes it unguessable, and the HMAC
+/// proves we issued it — so a stray or forged callback cannot bind someone
+/// else's Spotify account to a device.
+fn sign_state(secret: &[u8; 32], device_id: &str, issued_at: i64, nonce: &str) -> String {
+    let payload = format!("{}:{}:{}", device_id, issued_at, nonce);
+    let sig = hex::encode(hmac_bytes(secret, &payload));
     format!("{}:{}", payload, sig)
 }
 
-fn verify_state(secret: &[u8; 32], state: &str) -> Option<String> {
+/// Returns the payload (device_id, issued_at, nonce) only if the signature is
+/// ours and still fresh.
+fn verify_state(secret: &[u8; 32], state: &str) -> Option<(String, String)> {
     let (payload, sig) = state.rsplit_once(':')?;
-    let (device_id, issued_at) = payload.rsplit_once(':')?;
-    let issued_at: i64 = issued_at.parse().ok()?;
+    let mut parts = payload.splitn(3, ':');
+    let device_id = parts.next()?;
+    let issued_at: i64 = parts.next()?.parse().ok()?;
+    let nonce = parts.next()?;
 
     // 10 minutes is plenty for a consent screen and keeps a leaked link short-lived.
     if (chrono::Utc::now().timestamp() - issued_at).abs() > 600 {
         return None;
     }
-    let expected = sign_state(secret, device_id, issued_at);
+
+    let expected = sign_state(secret, device_id, issued_at, nonce);
     let expected_sig = expected.rsplit_once(':')?.1;
-    // Constant-time compare so a mismatch cannot be probed byte by byte.
     if sig.len() != expected_sig.len() {
         return None;
     }
+    // Constant-time compare so a mismatch cannot be probed byte by byte.
     let equal = sig
         .bytes()
         .zip(expected_sig.bytes())
         .fold(0u8, |acc, (a, b)| acc | (a ^ b))
         == 0;
-    equal.then(|| device_id.to_string())
+    equal.then(|| (device_id.to_string(), payload.to_string()))
+}
+
+/// PKCE verifier, derived rather than stored. It is an HMAC of the state
+/// payload under session_secret, so only this server can compute it, it is
+/// unique per authorization attempt (the payload carries a random nonce), and
+/// it is never put in a URL, a cookie, or the database. base64url of 32 bytes
+/// is 43 characters, which is exactly RFC 7636's minimum length and uses only
+/// unreserved characters.
+fn pkce_verifier(secret: &[u8; 32], state_payload: &str) -> String {
+    URL_SAFE_NO_PAD.encode(hmac_bytes(secret, &format!("spotify-pkce:{}", state_payload)))
+}
+
+fn pkce_challenge(verifier: &str) -> String {
+    URL_SAFE_NO_PAD.encode(Sha256::digest(verifier.as_bytes()))
 }
 
 #[derive(Debug, Deserialize)]
@@ -88,13 +114,25 @@ pub async fn spotify_authorize(
         resolve_device_id(&conn, q.device_id.as_deref())?
     };
 
-    let state = sign_state(&config.session_secret, &device_id, chrono::Utc::now().timestamp());
+    // Random nonce so the state cannot be guessed or replayed.
+    let nonce = uuid::Uuid::new_v4().simple().to_string();
+    let state = sign_state(
+        &config.session_secret,
+        &device_id,
+        chrono::Utc::now().timestamp(),
+        &nonce,
+    );
+    let payload = state.rsplit_once(':').map(|(p, _)| p).unwrap_or_default();
+    let challenge = pkce_challenge(&pkce_verifier(&config.session_secret, payload));
+
     let url = format!(
-        "https://accounts.spotify.com/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}&state={}",
+        "https://accounts.spotify.com/authorize?client_id={}&response_type=code&redirect_uri={}\
+         &scope={}&state={}&code_challenge_method=S256&code_challenge={}",
         urlencode(client_id),
         urlencode(redirect_uri),
         urlencode(SPOTIFY_SCOPES),
         urlencode(&state),
+        urlencode(&challenge),
     );
     Ok(Redirect::to(&url))
 }
@@ -116,23 +154,28 @@ pub async fn spotify_callback(
     };
 
     if let Some(err) = q.error {
-        return fail(&err);
+        // Reflect only a conservative subset: this value comes from the query
+        // string and ends up in a redirect URL the frontend renders.
+        let safe: String = err
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == '-')
+            .take(64)
+            .collect();
+        return fail(if safe.is_empty() { "denied" } else { &safe });
     }
     let (Some(code), Some(state)) = (q.code, q.state) else {
         return fail("missing_code");
     };
-    let Some(device_id) = verify_state(&config.session_secret, &state) else {
+    let Some((device_id, state_payload)) = verify_state(&config.session_secret, &state) else {
         return fail("invalid_state");
     };
     let (client_id, redirect_uri) = match spotify_credentials(&config) {
         Ok(v) => v,
         Err(_) => return fail("not_configured"),
     };
-    let Some(client_secret) = config.spotify_client_secret.as_deref() else {
-        return fail("not_configured");
-    };
+    let verifier = pkce_verifier(&config.session_secret, &state_payload);
 
-    let tokens = match exchange_code(client_id, client_secret, redirect_uri, &code).await {
+    let tokens = match exchange_code(client_id, redirect_uri, &code, &verifier).await {
         Ok(t) => t,
         Err(e) => {
             tracing::warn!("Spotify token exchange failed: {}", e);
@@ -183,24 +226,27 @@ fn spotify_credentials(config: &AppConfig) -> Result<(&str, &str), AppError> {
     ) {
         (Some(id), Some(uri)) => Ok((id, uri)),
         _ => Err(AppError::BadRequest(
-            "Spotify is not configured. Set SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET and SPOTIFY_REDIRECT_URI.".into(),
+            "Spotify is not configured. Set SPOTIFY_CLIENT_ID and SPOTIFY_REDIRECT_URI.".into(),
         )),
     }
 }
 
 async fn exchange_code(
     client_id: &str,
-    client_secret: &str,
     redirect_uri: &str,
     code: &str,
+    code_verifier: &str,
 ) -> Result<SpotifyTokens, String> {
+    // PKCE: the verifier replaces the client secret, so nothing confidential
+    // has to be deployed alongside the server.
     let res = reqwest::Client::new()
         .post("https://accounts.spotify.com/api/token")
-        .basic_auth(client_id, Some(client_secret))
         .form(&[
             ("grant_type", "authorization_code"),
             ("code", code),
             ("redirect_uri", redirect_uri),
+            ("client_id", client_id),
+            ("code_verifier", code_verifier),
         ])
         .send()
         .await
@@ -416,19 +462,18 @@ async fn access_token(
         return Ok(Some(access));
     }
 
-    let (Some(refresh), Some(client_id), Some(client_secret)) = (
-        refresh,
-        config.spotify_client_id.as_deref(),
-        config.spotify_client_secret.as_deref(),
-    ) else {
+    let (Some(refresh), Some(client_id)) = (refresh, config.spotify_client_id.as_deref()) else {
         // Expired with no way to refresh — the user has to reconnect.
         return Ok(Some(access));
     };
 
     let res = reqwest::Client::new()
         .post("https://accounts.spotify.com/api/token")
-        .basic_auth(client_id, Some(client_secret))
-        .form(&[("grant_type", "refresh_token"), ("refresh_token", &refresh)])
+        .form(&[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", &refresh),
+            ("client_id", client_id),
+        ])
         .send()
         .await
         .map_err(|e| AppError::Internal(format!("Spotify refresh failed: {e}")))?;
@@ -510,4 +555,80 @@ pub async fn music_action(
         "provider": "spotify",
         "action": input.action,
     })))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SECRET: [u8; 32] = [7u8; 32];
+
+    fn now() -> i64 {
+        chrono::Utc::now().timestamp()
+    }
+
+    #[test]
+    fn round_trips_a_valid_state() {
+        let state = sign_state(&SECRET, "dev-1", now(), "nonce-a");
+        let (device_id, _) = verify_state(&SECRET, &state).expect("valid state accepted");
+        assert_eq!(device_id, "dev-1");
+    }
+
+    #[test]
+    fn rejects_a_tampered_device_id() {
+        let state = sign_state(&SECRET, "dev-1", now(), "nonce-a");
+        let forged = state.replace("dev-1", "dev-2");
+        assert!(verify_state(&SECRET, &forged).is_none());
+    }
+
+    #[test]
+    fn rejects_a_forged_signature() {
+        let payload = format!("dev-1:{}:nonce-a", now());
+        let forged = format!("{}:{}", payload, "0".repeat(64));
+        assert!(verify_state(&SECRET, &forged).is_none());
+    }
+
+    #[test]
+    fn rejects_a_state_signed_with_another_key() {
+        let state = sign_state(&[9u8; 32], "dev-1", now(), "nonce-a");
+        assert!(verify_state(&SECRET, &state).is_none());
+    }
+
+    #[test]
+    fn rejects_an_expired_state() {
+        let state = sign_state(&SECRET, "dev-1", now() - 601, "nonce-a");
+        assert!(verify_state(&SECRET, &state).is_none());
+    }
+
+    #[test]
+    fn verifier_is_unique_per_nonce_and_never_guessable_without_the_key() {
+        let p1 = format!("dev-1:{}:nonce-a", now());
+        let p2 = format!("dev-1:{}:nonce-b", now());
+        let v1 = pkce_verifier(&SECRET, &p1);
+        let v2 = pkce_verifier(&SECRET, &p2);
+        assert_ne!(v1, v2, "a fresh nonce must yield a fresh verifier");
+        assert_ne!(
+            v1,
+            pkce_verifier(&[9u8; 32], &p1),
+            "another key must not reproduce the verifier"
+        );
+        assert_eq!(v1, pkce_verifier(&SECRET, &p1), "same input is stable");
+    }
+
+    #[test]
+    fn verifier_meets_rfc7636_length_and_charset() {
+        let v = pkce_verifier(&SECRET, "dev-1:123:nonce");
+        assert!((43..=128).contains(&v.len()), "len was {}", v.len());
+        assert!(v
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '.' | '_' | '~')));
+    }
+
+    #[test]
+    fn challenge_is_s256_of_the_verifier() {
+        let v = pkce_verifier(&SECRET, "dev-1:123:nonce");
+        let expected = URL_SAFE_NO_PAD.encode(Sha256::digest(v.as_bytes()));
+        assert_eq!(pkce_challenge(&v), expected);
+        assert_ne!(pkce_challenge(&v), v, "the verifier must not be sent as-is");
+    }
 }
