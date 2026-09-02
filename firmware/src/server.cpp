@@ -83,8 +83,12 @@ void loadConfigFromNVS() {
     String hostname = prefs.getString("hostname", "");
     if (hostname.length() == 0) hostname = defaultHostname;
     strncpy(runtimeConfig.hostname, hostname.c_str(), sizeof(runtimeConfig.hostname) - 1);
-    String mgmt = prefs.getString("mgmtServer", "");
-    if (mgmt.length() == 0) mgmt = DEFAULT_MGMT_SERVER;
+    // Fall back to the compile-time default only when the key was never set.
+    // An explicitly empty value means the user disabled cloud mode (see
+    // DEFAULT_MGMT_SERVER in config.h); replacing it with the built-in server
+    // made that impossible, and left the device retrying a server it could not
+    // reach — TLS handshakes that stole CPU from the render loop.
+    String mgmt = prefs.getString("mgmtServer", DEFAULT_MGMT_SERVER);
     strncpy(runtimeConfig.mgmtServer, mgmt.c_str(), sizeof(runtimeConfig.mgmtServer) - 1);
     String apiKey = prefs.getString("apiKey", "");
     strncpy(runtimeConfig.apiKey, apiKey.c_str(), sizeof(runtimeConfig.apiKey) - 1);

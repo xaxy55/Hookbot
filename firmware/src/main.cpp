@@ -260,7 +260,8 @@ void loop() {
     }
 #endif
     HookbotServer::update();
-    CloudClient::update();
+    // CloudClient runs on its own task — its HTTPS calls are synchronous and a
+    // TLS handshake here costs seconds of dropped frames.
     ArduinoOTA.handle();
     BleProv::update();
 #ifndef NO_AUDIO

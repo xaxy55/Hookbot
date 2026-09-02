@@ -19,7 +19,10 @@ public:
             auto cfg = _bus_instance.config();
             cfg.spi_host   = SPI2_HOST;
             cfg.spi_mode   = 0;
-            cfg.freq_write = 40000000;
+            // 80MHz: a 240x240x16bpp frame is ~115KB, so at 40MHz the transfer
+            // alone took ~23ms of the 33ms frame budget and the display was the
+            // bottleneck. The GC9A01 is rated well above this.
+            cfg.freq_write = 80000000;
             cfg.freq_read  = 16000000;
             cfg.spi_3wire  = true;   // no MISO line on these modules
             cfg.use_lock   = true;

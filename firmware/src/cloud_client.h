@@ -10,8 +10,10 @@ namespace CloudClient {
     /// Initialize cloud client with state change callback.
     void init(std::function<void(AvatarState)> onStateChange);
 
-    /// Called from main loop. Handles heartbeat, command polling, registration.
-    void update();
+    /// Runs on its own FreeRTOS task, started by init(). Not called from the
+    /// main loop: registration, heartbeat and command polling are synchronous
+    /// HTTPS calls, and a TLS handshake on this chip costs seconds. Driving
+    /// them from the render loop froze the display for ~5s at a time.
 
     /// Whether the device has a cloud server configured.
     bool isEnabled();

@@ -31,9 +31,24 @@ static uint32_t lastHeartbeat = 0;
 static uint32_t lastCommandPoll = 0;
 static uint32_t lastRegisterAttempt = 0;
 
-static const uint32_t HEARTBEAT_INTERVAL_MS    = 5000;   // 5 seconds
-static const uint32_t COMMAND_POLL_INTERVAL_MS  = 2000;   // 2 seconds (short poll)
+// Each of these does a full TLS handshake, which is seconds of CPU on this
+// chip. At 5s/2s the cloud task starved the renderer and doubled frame time
+// even after moving it off the main loop. The dashboard talks to a LAN device
+// directly, so cloud polling only needs to be timely, not instant.
+static const uint32_t HEARTBEAT_INTERVAL_MS    = 30000;  // 30 seconds
+static const uint32_t COMMAND_POLL_INTERVAL_MS  = 10000;  // 10 seconds
 static const uint32_t REGISTER_RETRY_MS         = 15000;  // 15 seconds between retries
+static const uint32_t REGISTER_RETRY_MAX_MS     = 300000; // back off to 5 minutes
+
+// These calls are synchronous and run from the main loop, so every millisecond
+// spent here is a frame the display does not draw. Keep the ceiling low: an
+// unreachable management server used to stall the UI for ~12s per attempt.
+static const uint16_t HTTP_TIMEOUT_MS          = 3000;
+static const int32_t  HTTP_CONNECT_TIMEOUT_MS  = 2000;
+
+// Grows on consecutive registration failures so a server that is down (or
+// simply wrong) degrades to a rare blip instead of a stutter every 15s.
+static uint32_t registerBackoffMs = REGISTER_RETRY_MS;
 
 // --- TLS support ---
 static WiFiClientSecure secureClient;
@@ -48,15 +63,24 @@ static void httpBeginSmart(HTTPClient& http, const String& url) {
             tlsInitialized = true;
             Serial.println("[Cloud] TLS initialized with ISRG Root X1 CA cert");
         }
+        // The client is shared across calls. Without an explicit stop the
+        // previous session's socket is still half-open, and the next request
+        // blocks until it times out: registration (the first call) succeeded
+        // while every heartbeat and command poll after it silently timed out,
+        // costing ~5s of the main loop each time.
+        secureClient.stop();
         http.begin(secureClient, url);
     } else {
+        insecureClient.stop();
         http.begin(insecureClient, url);
     }
+    http.setReuse(false);
 }
 
 // --- Forward declarations ---
 static void loadCloudConfig();
 static void saveCloudConfig();
+static void serviceOnce();
 static void attemptRegistration();
 static void sendHeartbeat();
 static void pollCommands();
@@ -64,6 +88,16 @@ static void executeCommand(const char* type, JsonObject payload, const char* cmd
 static AvatarState stringToState(const char* str);
 
 // --- Public API ---
+
+/// Owns every blocking network call so the render loop never waits on one.
+/// The ESP32-C6 is single-core, but FreeRTOS deschedules this task while it
+/// blocks on socket I/O, so the display keeps drawing through a handshake.
+static void cloudTask(void*) {
+    for (;;) {
+        serviceOnce();
+        vTaskDelay(pdMS_TO_TICKS(250));
+    }
+}
 
 void init(std::function<void(AvatarState)> onStateChange) {
     stateCallback = onStateChange;
@@ -82,19 +116,31 @@ void init(std::function<void(AvatarState)> onStateChange) {
         } else {
             Serial.println("[Cloud] Not yet registered, will attempt on next update");
         }
+
+        // 16KB: a TLS handshake plus HTTPClient and the JSON documents do not
+        // fit in a default task stack.
+        xTaskCreate(cloudTask, "cloud", 16384, nullptr, 1, nullptr);
     }
 }
 
-void update() {
+/// One service pass. Blocking — only ever called from cloudTask.
+static void serviceOnce() {
     if (!enabled || WiFi.status() != WL_CONNECTED) return;
 
     uint32_t now = millis();
 
     // Step 1: Register if not yet registered
     if (!registered) {
-        if (now - lastRegisterAttempt >= REGISTER_RETRY_MS || lastRegisterAttempt == 0) {
+        if (now - lastRegisterAttempt >= registerBackoffMs || lastRegisterAttempt == 0) {
             lastRegisterAttempt = now;
             attemptRegistration();
+            if (registered) {
+                registerBackoffMs = REGISTER_RETRY_MS;  // reset for any future re-registration
+            } else if (registerBackoffMs < REGISTER_RETRY_MAX_MS) {
+                registerBackoffMs = min(registerBackoffMs * 2, REGISTER_RETRY_MAX_MS);
+                Serial.printf("[Cloud] Registration failed, next attempt in %lus\n",
+                              registerBackoffMs / 1000);
+            }
         }
         return; // Don't heartbeat or poll until registered
     }
@@ -157,7 +203,8 @@ static void attemptRegistration() {
     String url = String(config.mgmtServer) + "/api/device/register";
     httpBeginSmart(http, url);
     http.addHeader("Content-Type", "application/json");
-    http.setTimeout(10000);
+    http.setTimeout(HTTP_TIMEOUT_MS);
+    http.setConnectTimeout(HTTP_CONNECT_TIMEOUT_MS);
 
     // Build registration payload
     JsonDocument doc;
@@ -213,7 +260,8 @@ static void sendHeartbeat() {
     httpBeginSmart(http, url);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("X-Device-Token", deviceToken);
-    http.setTimeout(5000);
+    http.setTimeout(HTTP_TIMEOUT_MS);
+    http.setConnectTimeout(HTTP_CONNECT_TIMEOUT_MS);
 
     // Build status payload (same as /status endpoint response)
     JsonDocument doc;
@@ -260,6 +308,10 @@ static void sendHeartbeat() {
         registered = false;
         deviceToken[0] = '\0';
         saveCloudConfig();
+    } else if (code != 200) {
+        // Don't fail silently: a heartbeat that times out costs a visible
+        // stutter, and used to leave no trace at all in the log.
+        Serial.printf("[Cloud] Heartbeat failed: %d\n", code);
     }
     http.end();
 }
@@ -271,7 +323,8 @@ static void pollCommands() {
     String url = String(config.mgmtServer) + "/api/device/commands?wait=0";
     httpBeginSmart(http, url);
     http.addHeader("X-Device-Token", deviceToken);
-    http.setTimeout(5000);
+    http.setTimeout(HTTP_TIMEOUT_MS);
+    http.setConnectTimeout(HTTP_CONNECT_TIMEOUT_MS);
 
     int code = http.GET();
     if (code == 200) {
