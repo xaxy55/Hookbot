@@ -34,6 +34,10 @@ pub struct AppConfig {
     pub workos_redirect_uri: Option<String>,
     pub cookie_domain: Option<String>,
     pub frontend_url: Option<String>,
+    /// Base URL a *device* can fetch from, e.g. https://hookbot.example.
+    /// Distinct from bind_addr, which is a listen socket (0.0.0.0:3000) and is
+    /// meaningless to anything but this process. OTA needs a real one.
+    pub public_url: Option<String>,
     pub spotify_client_id: Option<String>,
     pub spotify_redirect_uri: Option<String>,
     pub cloudflared_path: String,
@@ -120,6 +124,14 @@ impl AppConfig {
         }
         let cookie_domain = env::var("COOKIE_DOMAIN").ok().filter(|s| !s.is_empty());
         let frontend_url = env::var("FRONTEND_URL").ok().filter(|s| !s.is_empty());
+        // PUBLIC_URL is what devices are told to download firmware from.
+        // Fall back to FRONTEND_URL, which is device-reachable in the common
+        // single-hostname deployment.
+        let public_url = env::var("PUBLIC_URL")
+            .ok()
+            .filter(|s| !s.is_empty())
+            .or_else(|| frontend_url.clone())
+            .map(|u| u.trim_end_matches('/').to_string());
         if workos_client_id.is_some() {
             info!("WorkOS multi-tenant mode enabled");
         }
@@ -155,6 +167,7 @@ impl AppConfig {
             workos_redirect_uri,
             cookie_domain,
             frontend_url,
+            public_url,
             spotify_client_id,
             spotify_redirect_uri,
             cloudflared_path,

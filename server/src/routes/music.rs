@@ -286,14 +286,11 @@ pub async fn get_config(
     )?;
     let configs = stmt.query_map([&device_id], |row| {
         let access_token: Option<String> = row.get(3)?;
-        let refresh_token: Option<String> = row.get(4)?;
         Ok(MusicConfig {
             id: row.get(0)?,
             device_id: row.get(1)?,
             provider: row.get(2)?,
             connected: access_token.as_deref().is_some_and(|t| !t.is_empty()),
-            access_token,
-            refresh_token,
             auto_pause_meetings: row.get(5)?,
             focus_playlist_id: row.get(6)?,
             enabled: row.get(7)?,
@@ -324,8 +321,6 @@ pub async fn create_config(
         device_id,
         provider: input.provider,
         connected: input.access_token.as_deref().is_some_and(|t| !t.is_empty()),
-        access_token: input.access_token,
-        refresh_token: input.refresh_token,
         auto_pause_meetings: true,
         focus_playlist_id: input.focus_playlist_id,
         enabled: true,
@@ -589,8 +584,6 @@ mod tests {
             device_id: "dev-1".into(),
             provider: "spotify".into(),
             connected: true,
-            access_token: Some("BQAsecret-access".into()),
-            refresh_token: Some("AQAsecret-refresh".into()),
             auto_pause_meetings: true,
             focus_playlist_id: None,
             enabled: true,

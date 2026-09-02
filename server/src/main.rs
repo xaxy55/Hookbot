@@ -124,6 +124,7 @@ async fn main() {
         // Phone pairing redemption — public by necessity: the phone has no
         // credential yet, so the short-lived single-use token is the whole proof.
         .route("/api/auth/pair/redeem", post(routes::pairing::redeem_pairing_token))
+
         .route("/auth/login", get(auth::workos_login))
         .route("/auth/callback", get(auth::workos_callback));
 
@@ -178,10 +179,16 @@ async fn main() {
         .route("/api/gamification/streaks", get(routes::gamification::get_streaks))
         .with_state(pool.clone());
 
+    // Firmware download sits outside require_auth on purpose: a device doing an
+    // OTA holds no session cookie. The URL is the credential — HMAC-signed with
+    // a short expiry by the OTA dispatcher — so it is not an open endpoint.
+    let firmware_download_routes = Router::new()
+        .route("/api/firmware/{id}/binary", get(routes::firmware::serve_firmware_binary))
+        .with_state((pool.clone(), (*config).clone()));
+
     // Firmware/OTA/Build routes use both pool and config
     let firmware_routes = Router::new()
         .route("/api/firmware", post(routes::firmware::upload_firmware).get(routes::firmware::list_firmware))
-        .route("/api/firmware/{id}/binary", get(routes::firmware::serve_firmware_binary))
         .route("/api/firmware/build", post(routes::build::build_firmware))
         .route("/api/ota/deploy", post(routes::ota::deploy))
         .route("/api/ota/jobs", get(routes::ota::list_jobs))
@@ -462,6 +469,7 @@ async fn main() {
 
     let app = Router::new()
         .merge(public_routes)
+        .merge(firmware_download_routes)
         .merge(game_command_protected)
         .merge(device_api_routes)
         .merge(device_api_token_routes)

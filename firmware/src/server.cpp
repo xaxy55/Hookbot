@@ -20,6 +20,8 @@
 #include <Preferences.h>
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
+#include <WiFiClientSecure.h>
+#include "ca_cert.h"
 
 namespace HookbotServer {
 
@@ -1795,9 +1797,20 @@ void update() {
         pendingOtaUrl = "";
         Serial.printf("[OTA] Starting HTTP update from: %s\n", url.c_str());
 
-        WiFiClient client;
+        // A plain WiFiClient cannot speak TLS, so an https:// firmware URL —
+        // which is what a hosted server hands out — failed every time. Pick the
+        // client from the scheme.
         httpUpdate.rebootOnUpdate(true);
-        t_httpUpdate_return ret = httpUpdate.update(client, url);
+        t_httpUpdate_return ret;
+        if (url.startsWith("https://")) {
+            WiFiClientSecure secure;
+            secure.setCACert(ISRG_ROOT_X1_CA);
+            secure.setTimeout(20000);
+            ret = httpUpdate.update(secure, url);
+        } else {
+            WiFiClient client;
+            ret = httpUpdate.update(client, url);
+        }
 
         switch (ret) {
             case HTTP_UPDATE_FAILED:

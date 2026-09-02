@@ -83,14 +83,23 @@ pub async fn deploy(
 
         if connection_mode == "cloud" {
             // Cloud device: enqueue OTA command with public firmware URL
-            let frontend_url = config.frontend_url.as_deref().unwrap_or("");
-            let base_url = if !frontend_url.is_empty() {
-                // Derive API URL from frontend URL (hookbot.mr-ai.no -> bot.mr-ai.no)
-                format!("https://{}", config.bind_addr)
-            } else {
-                format!("http://{}", config.bind_addr)
+            // Same rule as the LAN path: the device does the fetching, so this
+            // must be an address the device can reach. bind_addr never is.
+            let Some(base_url) = config.public_url.clone() else {
+                let conn = db.lock().unwrap();
+                let _ = conn.execute(
+                    "UPDATE ota_jobs SET status = 'failed', \
+                     error_msg = 'PUBLIC_URL (or FRONTEND_URL) is not set, so the device cannot be told where to download the firmware', \
+                     updated_at = datetime('now') WHERE id = ?1",
+                    [&job_id],
+                );
+                continue;
             };
-            let firmware_url = format!("{}/api/firmware/{}/binary", base_url, firmware_id);
+            let expires_at = chrono::Utc::now().timestamp() + 900;
+            let sig = crate::routes::firmware::sign_download(
+                &config.session_secret, &firmware_id, expires_at);
+            let firmware_url =
+                format!("{base_url}/api/firmware/{firmware_id}/binary?exp={expires_at}&sig={sig}");
             let payload = serde_json::json!({ "url": firmware_url });
             let _ = queue.enqueue(&db, &device_id, "ota", &payload);
             let queue_clone = queue.clone();
@@ -137,26 +146,76 @@ async fn execute_ota(db: DbPool, config: AppConfig, job_id: String, device_id: S
         return;
     }
 
-    // Build firmware URL - use the bind address to construct
-    let firmware_url = format!("http://{}/api/firmware/{}/binary", config.bind_addr, firmware_id);
+    // The device fetches the image itself, so this URL has to be reachable
+    // *from the device*. bind_addr is a listen socket — it was producing
+    // http://0.0.0.0:3000/..., which no device can resolve, so every download
+    // failed silently while the job still reported success.
+    let Some(base) = config.public_url.clone() else {
+        update_job_status(
+            &db,
+            &job_id,
+            "failed",
+            Some("PUBLIC_URL (or FRONTEND_URL) is not set, so the device cannot be told where to download the firmware"),
+        );
+        return;
+    };
+    let expires_at = chrono::Utc::now().timestamp() + 900; // 15 min to download
+    let sig = crate::routes::firmware::sign_download(&config.session_secret, &firmware_id, expires_at);
+    let firmware_url =
+        format!("{base}/api/firmware/{firmware_id}/binary?exp={expires_at}&sig={sig}");
+
+    // The version we expect to see afterwards. Without this there is nothing
+    // to check success against.
+    let expected_version: Option<String> = {
+        let conn = db.lock().unwrap();
+        conn.query_row(
+            "SELECT version FROM firmware WHERE id = ?1",
+            [&firmware_id],
+            |row| row.get(0),
+        )
+        .ok()
+    };
 
     let body = json!({ "url": firmware_url });
-    match proxy::forward_json(&format!("http://{}/ota", ip), &body).await {
-        Ok(_) => {
-            // Wait and check if device comes back with new firmware
-            tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
+    if let Err(e) = proxy::forward_json(&format!("http://{}/ota", ip), &body).await {
+        update_job_status(&db, &job_id, "failed", Some(&format!("Failed to send OTA command: {e}")));
+        return;
+    }
 
-            match proxy::get_json(&format!("http://{}/info", ip)).await {
-                Ok(_info) => {
+    // Poll for the device to come back on the new version. The old code slept
+    // 30s and treated *any* response as success — a device that never updated
+    // answers just fine, which is exactly how a failed OTA got reported green.
+    let deadline = tokio::time::Instant::now() + tokio::time::Duration::from_secs(180);
+    let mut last_seen: Option<String> = None;
+    loop {
+        tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+
+        if let Ok(status) = proxy::get_json(&format!("http://{}/status", ip)).await {
+            let reported = status
+                .get("firmware_version")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+
+            match (&expected_version, &reported) {
+                // Confirmed: the device is running what we sent.
+                (Some(want), Some(got)) if want == got => {
                     update_job_status(&db, &job_id, "success", None);
+                    return;
                 }
-                Err(_) => {
-                    update_job_status(&db, &job_id, "failed", Some("Device did not respond after OTA"));
-                }
+                _ => last_seen = reported,
             }
         }
-        Err(e) => {
-            update_job_status(&db, &job_id, "failed", Some(&format!("Failed to send OTA command: {e}")));
+
+        if tokio::time::Instant::now() >= deadline {
+            let detail = match (&expected_version, &last_seen) {
+                (Some(want), Some(got)) => format!(
+                    "Device is still reporting {got} after the update; expected {want}. \
+                     It usually means the device could not download {firmware_url}"
+                ),
+                _ => "Device did not come back after the update".to_string(),
+            };
+            update_job_status(&db, &job_id, "failed", Some(&detail));
+            return;
         }
     }
 }

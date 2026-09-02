@@ -111,10 +111,51 @@ pub async fn list_firmware(
     Ok(Json(firmwares))
 }
 
+
+/// A firmware download has to be fetchable by a device that holds no session
+/// cookie, so the binary route cannot sit behind user auth. Instead the OTA
+/// dispatcher hands out a URL signed with the session secret and a short
+/// expiry: possession of a valid, unexpired signature is the authorization.
+pub fn sign_download(secret: &[u8; 32], id: &str, expires_at: i64) -> String {
+    use hmac::{Hmac, Mac};
+    use sha2::Sha256;
+    let mut mac = <Hmac<Sha256>>::new_from_slice(secret).expect("HMAC accepts any key length");
+    mac.update(format!("firmware:{id}:{expires_at}").as_bytes());
+    hex::encode(mac.finalize().into_bytes())
+}
+
+fn signature_valid(secret: &[u8; 32], id: &str, expires_at: i64, sig: &str) -> bool {
+    if chrono::Utc::now().timestamp() > expires_at {
+        return false;
+    }
+    let expected = sign_download(secret, id, expires_at);
+    if expected.len() != sig.len() {
+        return false;
+    }
+    // Constant-time compare so the signature cannot be probed byte by byte.
+    expected
+        .bytes()
+        .zip(sig.bytes())
+        .fold(0u8, |acc, (a, b)| acc | (a ^ b))
+        == 0
+}
+
+#[derive(serde::Deserialize)]
+pub struct DownloadQuery {
+    pub exp: Option<i64>,
+    pub sig: Option<String>,
+}
+
 pub async fn serve_firmware_binary(
     State((_db, config)): State<(DbPool, AppConfig)>,
     Path(id): Path<String>,
+    axum::extract::Query(q): axum::extract::Query<DownloadQuery>,
 ) -> Result<Body, AppError> {
+    match (q.exp, q.sig.as_deref()) {
+        (Some(exp), Some(sig)) if signature_valid(&config.session_secret, &id, exp, sig) => {}
+        _ => return Err(AppError::NotFound("Firmware binary not found".into())),
+    }
+
     // Validate id to prevent path traversal
     if id.contains('/') || id.contains('\\') || id.contains("..") {
         return Err(AppError::BadRequest("Invalid firmware id".into()));
