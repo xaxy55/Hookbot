@@ -14,7 +14,7 @@ RED    := \033[31m
 DIM    := \033[2m
 
 .PHONY: help \
-        test \
+        test deploy require-server-url \
         firmware firmware-c6 firmware-c6-upload \
         server web up build \
         lint lint-fix lint-server lint-web lint-ios lint-fix-ios swift-check \
@@ -51,6 +51,9 @@ help: ## Show this help
 	@printf "\n$(BOLD)$(YELLOW) CLI$(RESET)\n"
 	@grep -E '^(install|cli.*):.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
+	@printf "\n$(BOLD)$(YELLOW) Deploy$(RESET)\n"
+	@grep -E '^deploy:.*?## .*$$' $(MAKEFILE_LIST) \
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@printf "\n$(BOLD)$(YELLOW) Secrets & CI$(RESET)\n"
 	@grep -E '^(gh-secrets|cloud-secrets):.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
@@ -64,6 +67,23 @@ help: ## Show this help
 PIO_C6_CORE_DIR ?= $(HOME)/.platformio-pioarduino
 
 ADMIN_PASSWORD ?= $(shell grep '^ADMIN_PASSWORD=' .env 2>/dev/null | cut -d= -f2)
+
+# No environment-specific hostname lives in this repo — it is public. These come
+# from .env (see .env.example), or pass them per invocation:
+#   make cli-status HOOKBOT_SERVER_URL=https://your.server
+env_val = $(shell grep '^$(1)=' .env 2>/dev/null | cut -d= -f2- | tr -d '"'"'"'"')
+HOOKBOT_SERVER_URL   ?= $(call env_val,HOOKBOT_SERVER_URL)
+HOOKBOT_FRONTEND_URL ?= $(call env_val,HOOKBOT_FRONTEND_URL)
+DEPLOY_HOST          ?= $(call env_val,DEPLOY_HOST)
+DEPLOY_DIR           ?= /opt/hookbot/deploy
+
+# Fail loudly rather than silently running against an empty URL.
+require-server-url:
+	@if [ -z "$(HOOKBOT_SERVER_URL)" ]; then \
+		printf "$(RED)>> HOOKBOT_SERVER_URL is not set.$(RESET)\n"; \
+		printf "   Add it to .env or run: make <target> HOOKBOT_SERVER_URL=https://your.server\n"; \
+		exit 1; \
+	fi
 
 server: ## Start backend dev server (port 3000, debug logging)
 	@printf "$(GREEN)>> Starting Rust server...$(RESET)\n"
@@ -219,20 +239,39 @@ cli-build: ## Build hookbot CLI tool
 	cd cli && cargo build --release
 	@printf "$(GREEN)>> CLI built: cli/target/release/hookbot$(RESET)\n"
 
-cli-security: cli-build ## Run OWASP security audit against live instance
-	./cli/target/release/hookbot security --target https://bot.mr-ai.no --frontend https://hookbot.mr-ai.no
+cli-security: cli-build require-server-url ## Run OWASP security audit against live instance
+	./cli/target/release/hookbot security --target $(HOOKBOT_SERVER_URL) $(if $(HOOKBOT_FRONTEND_URL),--frontend $(HOOKBOT_FRONTEND_URL),)
 
 cli-config: cli-build ## Validate local .env configuration
 	./cli/target/release/hookbot config
 
-cli-status: cli-build ## Check server health and device status
-	./cli/target/release/hookbot --url https://bot.mr-ai.no status
+cli-status: cli-build require-server-url ## Check server health and device status
+	./cli/target/release/hookbot --url $(HOOKBOT_SERVER_URL) status
 
-cli-doctor: cli-build ## Full diagnostic (config + security + connectivity)
-	./cli/target/release/hookbot --url https://bot.mr-ai.no doctor
+cli-doctor: cli-build require-server-url ## Full diagnostic (config + security + connectivity)
+	./cli/target/release/hookbot --url $(HOOKBOT_SERVER_URL) doctor
 
-cli-ping: cli-build ## Ping server to check connectivity
-	./cli/target/release/hookbot --url https://bot.mr-ai.no ping
+cli-ping: cli-build require-server-url ## Ping server to check connectivity
+	./cli/target/release/hookbot --url $(HOOKBOT_SERVER_URL) ping
+
+# ============================================================
+#  Deploy
+# ============================================================
+deploy: ## Pull the published images and restart the production stack
+	@if [ -z "$(DEPLOY_HOST)" ]; then \
+		printf "$(RED)>> DEPLOY_HOST is not set.$(RESET)\n"; \
+		printf "   Add it to .env or run: make deploy DEPLOY_HOST=root@your.server\n"; \
+		exit 1; \
+	fi
+	@printf "$(BLUE)>> Syncing deploy/ to $(DEPLOY_HOST)...$(RESET)\n"
+	rsync -az --exclude '.env' deploy $(DEPLOY_HOST):$(dir $(DEPLOY_DIR))
+	@printf "$(BLUE)>> Pulling images and recreating...$(RESET)\n"
+	@# --force-recreate every service: `up -d` alone leaves containers running on
+	@# a stale image even after a successful pull, which silently ships old code.
+	ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR) && \
+		docker compose -f docker-compose.prod.yml --env-file .env pull && \
+		docker compose -f docker-compose.prod.yml --env-file .env up -d --force-recreate'
+	@printf "$(GREEN)>> Deployed.$(RESET)\n"
 
 # ============================================================
 #  Secrets & CI

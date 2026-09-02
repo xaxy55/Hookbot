@@ -64,10 +64,14 @@ Run the server on your own machine or home server. Devices communicate directly 
 
 ### Hosted / SaaS (Cloud)
 
-Devices connect outbound to the public server at `bot.mr-ai.no`. No port forwarding, no tunnels, no self-hosting. Just power on, connect to WiFi, and claim the device with a 6-character code.
+Devices connect outbound to a public management server. No port forwarding, no tunnels, no self-hosting. Just power on, connect to WiFi, and claim the device with a 6-character code.
+
+The server and dashboard hostnames are configuration, not code: set
+`HOOKBOT_SERVER_URL` and `HOOKBOT_FRONTEND_URL` in your `.env` (see
+`.env.example`), which is what the `make cli-*` targets read.
 
 ```
-[ESP32] --outbound HTTPS--> [bot.mr-ai.no] <--> [hookbot.mr-ai.no]
+[ESP32] --outbound HTTPS--> [management server] <--> [dashboard]
 ```
 
 **How it works:**
@@ -121,7 +125,15 @@ For cloud/hosted mode, set the management server URL via build flag:
 
 ```ini
 # platformio.ini
-build_flags = -DDEFAULT_MGMT_SERVER='"https://bot.mr-ai.no"'
+build_flags = -DDEFAULT_MGMT_SERVER='"https://your-server.example"'
+```
+
+Leave it empty (`""`) for LAN-only devices — that disables cloud mode entirely.
+It can also be changed at runtime without reflashing:
+
+```bash
+curl -X POST http://<device-ip>/config -H 'Content-Type: application/json' \
+  -d '{"mgmt_server":"https://your-server.example"}'
 ```
 
 ### 4. Claude Code Hooks
