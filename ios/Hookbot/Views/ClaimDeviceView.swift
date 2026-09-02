@@ -126,7 +126,7 @@ struct ClaimDeviceView: View {
             }
         }
         .sheet(isPresented: $showCamera) {
-            QRScannerView { code in
+            QRScannerView(prompt: "Point at device QR code", validate: Self.claimCode(from:)) { code in
                 showCamera = false
                 manualCode = code.uppercased()
                 submitClaim(code: code)
@@ -345,6 +345,16 @@ struct ClaimDeviceView: View {
 
     // MARK: - Helpers
 
+    /// Accept raw 6-char codes or hookbot:// URLs carrying one; anything else
+    /// keeps the scanner running.
+    static func claimCode(from scanned: String) -> String? {
+        if scanned.count == 6 { return scanned }
+        if scanned.lowercased().hasPrefix("hookbot://claim/") {
+            return String(scanned.dropFirst("hookbot://claim/".count).prefix(6))
+        }
+        return nil
+    }
+
     private func submitClaim(code: String) {
         claimService.claimDevice(
             code: code,
@@ -391,160 +401,5 @@ struct ClaimDeviceView: View {
                 .foregroundStyle(.white)
         }
         .padding(.horizontal)
-    }
-}
-
-// MARK: - QR Scanner View
-
-struct QRScannerView: UIViewControllerRepresentable {
-    let onCodeScanned: (String) -> Void
-
-    func makeUIViewController(context: Context) -> QRScannerViewController {
-        let vc = QRScannerViewController()
-        vc.onCodeScanned = onCodeScanned
-        return vc
-    }
-
-    func updateUIViewController(_ uiViewController: QRScannerViewController, context: Context) {}
-}
-
-final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
-    var onCodeScanned: ((String) -> Void)?
-    private var captureSession: AVCaptureSession?
-    private var previewLayer: AVCaptureVideoPreviewLayer?
-    private var hasScanned = false
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .black
-        setupCamera()
-        setupOverlay()
-    }
-
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        previewLayer?.frame = view.bounds
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        if captureSession?.isRunning == false {
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                self?.captureSession?.startRunning()
-            }
-        }
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        if captureSession?.isRunning == true {
-            captureSession?.stopRunning()
-        }
-    }
-
-    private func setupCamera() {
-        let session = AVCaptureSession()
-        guard let device = AVCaptureDevice.default(for: .video),
-              let input = try? AVCaptureDeviceInput(device: device) else {
-            showNoCameraLabel()
-            return
-        }
-
-        if session.canAddInput(input) {
-            session.addInput(input)
-        }
-
-        let output = AVCaptureMetadataOutput()
-        if session.canAddOutput(output) {
-            session.addOutput(output)
-            output.setMetadataObjectsDelegate(self, queue: .main)
-            output.metadataObjectTypes = [.qr]
-        }
-
-        let layer = AVCaptureVideoPreviewLayer(session: session)
-        layer.videoGravity = .resizeAspectFill
-        layer.frame = view.bounds
-        view.layer.addSublayer(layer)
-
-        self.captureSession = session
-        self.previewLayer = layer
-
-        DispatchQueue.global(qos: .userInitiated).async {
-            session.startRunning()
-        }
-    }
-
-    private func setupOverlay() {
-        // Crosshair / guide frame
-        let guideSize: CGFloat = 220
-        let guide = UIView(frame: CGRect(
-            x: (view.bounds.width - guideSize) / 2,
-            y: (view.bounds.height - guideSize) / 2,
-            width: guideSize,
-            height: guideSize
-        ))
-        guide.layer.borderColor = UIColor.systemGreen.cgColor
-        guide.layer.borderWidth = 2
-        guide.layer.cornerRadius = 16
-        guide.autoresizingMask = [.flexibleTopMargin, .flexibleBottomMargin, .flexibleLeftMargin, .flexibleRightMargin]
-        view.addSubview(guide)
-
-        let label = UILabel()
-        label.text = "Point at device QR code"
-        label.textColor = .white
-        label.font = .monospacedSystemFont(ofSize: 13, weight: .medium)
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.topAnchor.constraint(equalTo: guide.bottomAnchor, constant: 24)
-        ])
-    }
-
-    private func showNoCameraLabel() {
-        let label = UILabel()
-        label.text = "Camera not available"
-        label.textColor = .gray
-        label.font = .monospacedSystemFont(ofSize: 14, weight: .regular)
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-        ])
-    }
-
-    // MARK: - AVCaptureMetadataOutputObjectsDelegate
-
-    func metadataOutput(
-        _ output: AVCaptureMetadataOutput,
-        didOutput metadataObjects: [AVMetadataObject],
-        from connection: AVCaptureConnection
-    ) {
-        guard !hasScanned,
-              let object = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-              object.type == .qr,
-              let code = object.stringValue else { return }
-
-        // Accept raw 6-char codes or hookbot:// URLs containing claim codes
-        let claimCode: String
-        if code.count == 6 {
-            claimCode = code
-        } else if code.lowercased().hasPrefix("hookbot://claim/") {
-            claimCode = String(code.dropFirst("hookbot://claim/".count).prefix(6))
-        } else {
-            return // Not a valid claim code
-        }
-
-        hasScanned = true
-        captureSession?.stopRunning()
-
-        // Haptic feedback
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
-
-        onCodeScanned?(claimCode)
     }
 }

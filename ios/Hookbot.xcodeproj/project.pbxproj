@@ -31,6 +31,7 @@
 		43F5A85D4BAAA193B5F58A78 /* PomodoroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 642CDF997D3C070D9821325E /* PomodoroView.swift */; };
 		45B4CC3902E9879130DBF35E /* AnimationEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 939BF287C433FD3215554B25 /* AnimationEditorView.swift */; };
 		462BD0D1F9950BEA5494838D /* IntegrationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDBFB6E9075F61A8692118F /* IntegrationsView.swift */; };
+		4A0FFD31ADE7CCEDD0882EC1 /* PairPhoneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFBEF39AC2971F12F5184D59 /* PairPhoneView.swift */; };
 		4C3ABE4379343FAFE0EA6D29 /* MoodJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5705359022323E7A2AC93CE /* MoodJournalView.swift */; };
 		4C608F5558088CC9BCA9AB34 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D27AFCF8D4E960502434BC /* HomeView.swift */; };
 		4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E78F1C2EE1F2B99B79482C5 /* SettingsView.swift */; };
@@ -56,6 +57,7 @@
 		8387681CD841BE19CE263709 /* WatchActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91DC5E515C2FA269780D10B7 /* WatchActivityView.swift */; };
 		83D3838B6D8A2585F9BBAD6E /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007B5E84C28B4F2FAD647E7F /* HapticManager.swift */; };
 		852612681EE0E86FC8482672 /* WatchSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B2A699DF05CCAFBC594551 /* WatchSettingsView.swift */; };
+		8613D5DE99AF46526DA426FE /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F89EA917DCA8247E3B657DF3 /* QRScannerView.swift */; };
 		864C93E95A86CCB9B638AF1D /* DeviceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EF5BE8F40DE77AC46DAE831 /* DeviceModels.swift */; };
 		87F3A89941D6F0F5F2995463 /* DeviceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0F5A8A19B6C9DADBF5155D1 /* DeviceDetailView.swift */; };
 		88C80F7713C38F65D00D8962 /* DeviceClaimService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCE0BF94E54C10B0648C14A /* DeviceClaimService.swift */; };
@@ -102,6 +104,7 @@
 		E824FF03AEF704F00D73E4F0 /* SiriShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8E59AECAEA40FAF83DBAEF6 /* SiriShortcutManager.swift */; };
 		E84900E3375350C53FEB89E2 /* WatchStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A951A9849BB551A328D2B3FD /* WatchStatsView.swift */; };
 		E9AA174CF1765ED3E13B17E4 /* DiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F3BE94B0B14564510B8B3E /* DiscoveryView.swift */; };
+		EA5413682B90CB028E9C185D /* PairingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E82CC804F070AF8CF404472 /* PairingService.swift */; };
 		EA7458AF13E1C3322235FCEE /* PongGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09345F2BF92D3118AA2D2C64 /* PongGameView.swift */; };
 		ED3AE4D9E0A6E6876D549FDC /* SeasonalEventsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 545F708DE222164D96EE11FC /* SeasonalEventsManager.swift */; };
 		EF78118C28652960BBA837F7 /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */; };
@@ -193,6 +196,7 @@
 		0B9AE980C2B59FAFAD453E4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0BD95AF6D12050ED18D77B05 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 		0D41E7C2A33644788D086D7A /* ProximityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProximityService.swift; sourceTree = "<group>"; };
+		0E82CC804F070AF8CF404472 /* PairingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingService.swift; sourceTree = "<group>"; };
 		124BC044D51C4996EBC170DA /* StoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreView.swift; sourceTree = "<group>"; };
 		12646482CB51601637C1E2CE /* WardrobeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeView.swift; sourceTree = "<group>"; };
 		143601AAC722B8520EC3C7CE /* FocusModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeManager.swift; sourceTree = "<group>"; };
@@ -217,7 +221,7 @@
 		4C8EB5505CCA83AD12556A98 /* VoiceLinesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceLinesManager.swift; sourceTree = "<group>"; };
 		53DE514E94C25BEC44DEF58A /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		545F708DE222164D96EE11FC /* SeasonalEventsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeasonalEventsManager.swift; sourceTree = "<group>"; };
-		54D7C47D418E782FC63F6973 /* Hookbot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hookbot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		54D7C47D418E782FC63F6973 /* Hookbot.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Hookbot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		578EA0DA84BCD88F5746AB06 /* BreakReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakReminderManager.swift; sourceTree = "<group>"; };
 		58838EDDAF79B0B8DE78682B /* TeamCampfireView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamCampfireView.swift; sourceTree = "<group>"; };
 		5BAE77E44DC07E2A2F72BF42 /* HookbotWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookbotWidget.swift; sourceTree = "<group>"; };
@@ -242,7 +246,7 @@
 		84FD98C98DD47E00CD60024F /* DeskBotWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskBotWatchApp.swift; sourceTree = "<group>"; };
 		87EF51A4E511880AA69FFCEF /* AnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsView.swift; sourceTree = "<group>"; };
 		8EF5BE8F40DE77AC46DAE831 /* DeviceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModels.swift; sourceTree = "<group>"; };
-		90F89258978F3788C22FAB43 /* HookbotUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HookbotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		90F89258978F3788C22FAB43 /* HookbotUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HookbotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		91DC5E515C2FA269780D10B7 /* WatchActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchActivityView.swift; sourceTree = "<group>"; };
 		939BF287C433FD3215554B25 /* AnimationEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationEditorView.swift; sourceTree = "<group>"; };
 		958E05B4490FBB82AF160800 /* AvatarEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEngine.swift; sourceTree = "<group>"; };
@@ -280,12 +284,14 @@
 		E0B2669F833323B3A1622EC5 /* AvatarEmotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEmotesView.swift; sourceTree = "<group>"; };
 		E286E2C24681999E6A34E669 /* StandingDeskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingDeskView.swift; sourceTree = "<group>"; };
 		EB5F1894C33647E074AD0A11 /* WatchMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMainView.swift; sourceTree = "<group>"; };
-		EDDD25953A89A0C10045C885 /* HookbotiOSWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HookbotiOSWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		EDDD25953A89A0C10045C885 /* HookbotiOSWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = HookbotiOSWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		EE74538F6FF7E078FD5A1DF9 /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
 		F367097B190E6F4E7477FCE9 /* AvatarEvolutionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarEvolutionEngine.swift; sourceTree = "<group>"; };
 		F4ECB58681B2C6ACD9ABA7FB /* DeskLightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskLightsView.swift; sourceTree = "<group>"; };
 		F7F618A96DE080E9155E458E /* SleepGuardianManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepGuardianManager.swift; sourceTree = "<group>"; };
+		F89EA917DCA8247E3B657DF3 /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
 		FD4CED6279A44A2CF493A538 /* DeviceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceListView.swift; sourceTree = "<group>"; };
+		FFBEF39AC2971F12F5184D59 /* PairPhoneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairPhoneView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -303,6 +309,7 @@
 				D16341E57A503F0A2E6D2757 /* MultipeerService.swift */,
 				64E4ED6FDD298958EA1DB744 /* NetworkService.swift */,
 				3C0ACB9CD77CB2EA84BEB216 /* NotificationManager.swift */,
+				0E82CC804F070AF8CF404472 /* PairingService.swift */,
 				0D41E7C2A33644788D086D7A /* ProximityService.swift */,
 				545F708DE222164D96EE11FC /* SeasonalEventsManager.swift */,
 				A8E59AECAEA40FAF83DBAEF6 /* SiriShortcutManager.swift */,
@@ -378,6 +385,7 @@
 				6925F42E4EC6A7C63DEE66B1 /* DailyRewardView.swift */,
 				CF64571AB7B292F2ED074EE1 /* LoginView.swift */,
 				6FEFC46D0D53977D14F910B1 /* MainView.swift */,
+				FFBEF39AC2971F12F5184D59 /* PairPhoneView.swift */,
 				1A8F31356D2249264E8AC097 /* PetCareView.swift */,
 				33B1FCF86CB687CA093F9DC4 /* PhotoModeView.swift */,
 				642CDF997D3C070D9821325E /* PomodoroView.swift */,
@@ -485,6 +493,7 @@
 		84C624B6CE8F49DD267BE20E /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				F89EA917DCA8247E3B657DF3 /* QRScannerView.swift */,
 				3D7EDDBAF786A478BDABC0CE /* SharedComponents.swift */,
 			);
 			path = Components;
@@ -712,7 +721,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					00837AA4718731B110629A8A = {
 						DevelopmentTeam = 56YDP2JJ35;
@@ -752,10 +761,10 @@
 			projectRoot = "";
 			targets = (
 				3FB113BB92292451E5D9FF81 /* Hookbot */,
-				D8A85BC31B8015DAA6324798 /* HookbotUITests */,
 				00837AA4718731B110629A8A /* HookbotWatch */,
 				E6617562021CCDEA0A23FB31 /* HookbotWidgetExtension */,
 				63B5824E34178AB4189256E5 /* HookbotiOSWidget */,
+				D8A85BC31B8015DAA6324798 /* HookbotUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -832,12 +841,15 @@
 				C935543D379DAE0399A03D44 /* NetworkService.swift in Sources */,
 				72157139BBA923C3ED6EE505 /* NotificationManager.swift in Sources */,
 				81BE351E248F7E33E87887C3 /* OtaView.swift in Sources */,
+				4A0FFD31ADE7CCEDD0882EC1 /* PairPhoneView.swift in Sources */,
+				EA5413682B90CB028E9C185D /* PairingService.swift in Sources */,
 				AD31281422FC183F06706C17 /* PairingView.swift in Sources */,
 				60FDF9184BE30C0FAC2AC82E /* PetCareView.swift in Sources */,
 				CDFDB2BD65A8CE76EFAEA909 /* PhotoModeView.swift in Sources */,
 				43F5A85D4BAAA193B5F58A78 /* PomodoroView.swift in Sources */,
 				EA7458AF13E1C3322235FCEE /* PongGameView.swift in Sources */,
 				0515C156A218A06627632BFA /* ProximityService.swift in Sources */,
+				8613D5DE99AF46526DA426FE /* QRScannerView.swift in Sources */,
 				ED3AE4D9E0A6E6876D549FDC /* SeasonalEventsManager.swift in Sources */,
 				4D96C75DFF977F8C6D79BB18 /* SettingsView.swift in Sources */,
 				C7D4A9891AE95B6F21FED557 /* SharedARView.swift in Sources */,
@@ -946,11 +958,7 @@
 				CODE_SIGN_ENTITLEMENTS = HookbotWatch/Complications/HookbotWidgetExtension.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.watchkitapp.widget";
 				SDKROOT = watchos;
@@ -973,7 +981,9 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Hookbot uses NFC to pair with a buddy's phone by tapping devices together.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup.";
-				INFOPLIST_KEY_NSBonjourServices = _http._tcp;
+				INFOPLIST_KEY_NSBonjourServices = (
+					_http._tcp,
+				);
 				INFOPLIST_KEY_NSCameraUsageDescription = "Hookbot uses the camera to scan QR codes on devices for quick claiming.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
 				INFOPLIST_KEY_NSNearbyInteractionUsageDescription = "Hookbot uses Ultra Wideband to detect when a buddy's phone is nearby so your avatars can react to each other — wave, high-five, or celebrate when you're close.";
@@ -1022,11 +1032,7 @@
 				CODE_SIGN_ENTITLEMENTS = HookbotiOSWidget/HookbotiOSWidget.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = HookbotiOSWidget/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.widget";
 				SDKROOT = iphoneos;
@@ -1129,7 +1135,6 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1152,7 +1157,9 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Hookbot uses NFC to pair with a buddy's phone by tapping devices together.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Hookbot uses Bluetooth to discover nearby unclaimed devices for setup.";
-				INFOPLIST_KEY_NSBonjourServices = _http._tcp;
+				INFOPLIST_KEY_NSBonjourServices = (
+					_http._tcp,
+				);
 				INFOPLIST_KEY_NSCameraUsageDescription = "Hookbot uses the camera to scan QR codes on devices for quick claiming.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Hookbot needs local network access to receive state changes from Claude Code and communicate with the management server.";
 				INFOPLIST_KEY_NSNearbyInteractionUsageDescription = "Hookbot uses Ultra Wideband to detect when a buddy's phone is nearby so your avatars can react to each other — wave, high-five, or celebrate when you're close.";
@@ -1183,11 +1190,7 @@
 				CODE_SIGN_ENTITLEMENTS = HookbotiOSWidget/HookbotiOSWidget.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = HookbotiOSWidget/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.widget";
 				SDKROOT = iphoneos;
@@ -1265,7 +1268,6 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -1280,11 +1282,7 @@
 				CODE_SIGN_ENTITLEMENTS = HookbotWatch/Complications/HookbotWidgetExtension.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = HookbotWatch/Complications/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mr-ai.hookbot.watchkitapp.widget";
 				SDKROOT = watchos;

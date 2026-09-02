@@ -8,6 +8,7 @@ struct LoginView: View {
     @State private var serverURL: String = ""
     @State private var showManualEntry = false
     @State private var manualAPIKey: String = ""
+    @State private var showPairing = false
 
     private var defaultServerURL: String {
         Bundle.main.object(forInfoDictionaryKey: "HookbotServerURL") as? String
@@ -35,6 +36,27 @@ struct LoginView: View {
                 }
 
                 Spacer()
+
+                // Pair by QR — no server URL or password to type
+                Button {
+                    showPairing = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "qrcode.viewfinder")
+                        Text("Scan pairing code")
+                            .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(14)
+                    .background(Color.green)
+                    .foregroundColor(.black)
+                    .cornerRadius(10)
+                }
+                .padding(.horizontal, 32)
+
+                Text("Open the dashboard → Account → Pair Phone")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(Color(white: 0.4))
 
                 // Server URL field
                 VStack(alignment: .leading, spacing: 8) {
@@ -144,6 +166,11 @@ struct LoginView: View {
 
                 Spacer()
             }
+        }
+        .sheet(isPresented: $showPairing) {
+            PairPhoneView(auth: auth)
+                .environmentObject(engine)
+                .environmentObject(network)
         }
         .onAppear {
             if serverURL.isEmpty {
