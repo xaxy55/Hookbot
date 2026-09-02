@@ -737,12 +737,14 @@ static void drawFace(DisplayCanvas* d) {
         }
     }
 
-    // ─── Now playing (left side, above the branch line) ────────────
+    // ─── Now playing (left side, above the tool line) ──────────────
+    bool musicLineShown = false;
     {
         const MusicInfo& music = HookbotServer::getMusic();
         if (music.playing && (millis() - music.lastUpdatedAt) < 120000
             && strlen(music.track) > 0) {
-            int16_t y = SAFE_BOTTOM - 28;
+            musicLineShown = true;
+            int16_t y = SAFE_BOTTOM - 24;
             int16_t x = SAFE_LEFT + 2;
 
             // Small note glyph: stem plus filled head.
@@ -784,7 +786,10 @@ static void drawFace(DisplayCanvas* d) {
     }
 
     // ─── Git branch name (bottom-left during non-idle states) ──────
-    if (currentState != AvatarState::IDLE) {
+    // Below the mouth there is only room for two text rows before the bottom
+    // of the safe area. When a track is showing it takes the upper one, and
+    // the branch yields so the tool line underneath is not cramped against it.
+    if (currentState != AvatarState::IDLE && !musicLineShown) {
         const BranchInfo& branch = HookbotServer::getBranch();
         if (strlen(branch.name) > 0 && (millis() - branch.lastUpdatedAt) < 600000) {
             d->setTextSize(1);

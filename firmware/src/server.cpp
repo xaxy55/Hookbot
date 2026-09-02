@@ -1220,7 +1220,10 @@ void init(std::function<void(AvatarState)> onStateChange) {
             req->send(200, "application/json", json);
         }
     );
-    server.addHandler(servoHandler);
+    // NOTE: registration order matters. AsyncCallbackJsonWebHandler matches a
+    // URI *prefix* (`url.startsWith(_uri + "/")`), so the "/servos" handler
+    // would otherwise swallow "/servos/config" and silently answer {"ok":true}
+    // without applying anything. Register the more specific route first.
 
     // POST /servos/config - configure servo channels
     AsyncCallbackJsonWebHandler* servoConfigHandler = new AsyncCallbackJsonWebHandler(
@@ -1228,16 +1231,20 @@ void init(std::function<void(AvatarState)> onStateChange) {
         [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
             JsonObject body = jsonBody.as<JsonObject>();
 
+            bool touchedChannels = false;
             if (!body["channels"].isNull()) {
-                JsonArray chArr = body["channels"];
+                JsonArray chArr = body["channels"].as<JsonArray>();
+                Serial.printf("[Servo] Config: %u channel(s)\n", (unsigned)chArr.size());
                 for (size_t i = 0; i < chArr.size() && i < MAX_SERVOS; i++) {
-                    JsonObject ch = chArr[i];
-                    int8_t pin = ch["pin"] | -1;
+                    JsonObject ch = chArr[i].as<JsonObject>();
+                    int pin = ch["pin"] | -1;
                     uint8_t minA = ch["min"] | 0;
                     uint8_t maxA = ch["max"] | 180;
                     uint8_t rest = ch["rest"] | 90;
                     const char* label = ch["label"] | "servo";
-                    Servos::configureChannel(i, pin, minA, maxA, rest, label);
+                    Serial.printf("[Servo]   ch%u -> pin %d (%s)\n", (unsigned)i, pin, label);
+                    Servos::configureChannel(i, (int8_t)pin, minA, maxA, rest, label);
+                    touchedChannels = true;
                 }
             }
 
@@ -1254,6 +1261,11 @@ void init(std::function<void(AvatarState)> onStateChange) {
                         }
                     }
                 }
+            }
+
+            // Previously only inside the state_maps branch, so a channels-only
+            // request configured the servo but never persisted it.
+            if (touchedChannels || !body["state_maps"].isNull()) {
                 Servos::saveToNVS();
             }
 
@@ -1265,6 +1277,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
         }
     );
     server.addHandler(servoConfigHandler);
+    server.addHandler(servoHandler);
 
     // GET /sensors - read current sensor channels and values
     server.on("/sensors", HTTP_GET, [](AsyncWebServerRequest* req) {

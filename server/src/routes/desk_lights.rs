@@ -206,15 +206,23 @@ pub async fn trigger_action(
     }
     let payload = serde_json::Value::Object(body);
 
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(5))
-        .build()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
+    let client = bridge_client()?;
 
     let mut applied = 0usize;
     for lid in &light_ids {
-        let url = format!("http://{bridge_ip}/api/{token}/lights/{lid}/state");
-        match client.put(&url).json(&payload).send().await {
+        let mut r = client
+            .put(format!("https://{bridge_ip}/api/{token}/lights/{lid}/state"))
+            .json(&payload)
+            .send()
+            .await;
+        if r.is_err() {
+            r = client
+                .put(format!("http://{bridge_ip}/api/{token}/lights/{lid}/state"))
+                .json(&payload)
+                .send()
+                .await;
+        }
+        match r {
             Ok(r) if r.status().is_success() => applied += 1,
             Ok(r) => tracing::warn!("Hue light {lid} returned {}", r.status()),
             Err(e) => tracing::warn!("Hue light {lid} unreachable: {e}"),
@@ -227,6 +235,20 @@ pub async fn trigger_action(
         "lights_applied": applied,
         "lights_total": light_ids.len(),
     })))
+}
+
+
+/// Hue bridges serve their local API over HTTPS with a self-signed
+/// certificate, and newer firmware 301s plain HTTP to it. Verification is
+/// therefore disabled *for bridge requests only* — this client is never used
+/// for anything else, and the bridge is a device on the user's own network
+/// reached by address, not a public endpoint.
+fn bridge_client() -> Result<reqwest::Client, AppError> {
+    reqwest::Client::builder()
+        .danger_accept_invalid_certs(true)
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .map_err(|e| AppError::Internal(e.to_string()))
 }
 
 /// Hue wants hue/saturation, the UI stores hex.
@@ -287,17 +309,22 @@ pub async fn hue_pair(
         ));
     }
 
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(5))
-        .build()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    let url = format!("http://{host}/api");
+    let client = bridge_client()?;
     let body = serde_json::json!({ "devicetype": "hookbot#server" });
 
     // ~30s of polling, matching the bridge's own link-button window.
     let mut last_error = "no response from bridge".to_string();
     for _ in 0..30 {
-        match client.post(&url).json(&body).send().await {
+        // Try HTTPS first; older bridges only speak plain HTTP.
+        let mut res = client
+            .post(format!("https://{host}/api"))
+            .json(&body)
+            .send()
+            .await;
+        if res.is_err() {
+            res = client.post(format!("http://{host}/api")).json(&body).send().await;
+        }
+        match res {
             Ok(res) => {
                 let parsed: serde_json::Value = res.json().await.unwrap_or(serde_json::Value::Null);
                 if let Some(username) = parsed[0]["success"]["username"].as_str() {
