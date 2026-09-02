@@ -563,6 +563,12 @@ pub async fn push_config(
                 let screensaver_mins = custom_data.as_ref()
                     .and_then(|d| d.get("screensaver_mins"))
                     .and_then(|v| v.as_i64());
+                // Per-element avatar colours ride in custom_data (a free-form
+                // blob) but the firmware expects them at the top level — the
+                // same lift screensaver_mins gets.
+                let avatar_colors = custom_data.as_ref()
+                    .and_then(|d| d.get("avatar_colors"))
+                    .cloned();
 
                 let mut config = json!({
                     "led_brightness": row.get::<_, i32>(0)?,
@@ -574,6 +580,9 @@ pub async fn push_config(
                 });
                 if let Some(mins) = screensaver_mins {
                     config["screensaver_mins"] = json!(mins);
+                }
+                if let Some(colors) = avatar_colors {
+                    config["avatar_colors"] = colors;
                 }
 
                 Ok((config, sound_pack))

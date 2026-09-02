@@ -69,6 +69,42 @@ static AvatarState stringToState(const String& s) {
     return AvatarState::IDLE;
 }
 
+// Avatar colours live in their own NVS keys, so a device that has never seen
+// them simply keeps the white defaults.
+static void saveColorsToNVS(const AvatarPalette& p) {
+    prefs.begin("hookbot", false);
+    prefs.putUShort("colFace", p.face);
+    prefs.putUShort("colEyes", p.eyes);
+    prefs.putUShort("colMouth", p.mouth);
+    prefs.putUShort("colPhone", p.headphones);
+    prefs.putUShort("colCrown", p.crown);
+    prefs.putUShort("colHat", p.hat);
+    prefs.putUShort("colGlass", p.glasses);
+    prefs.putUShort("colAcc", p.accessory);
+    prefs.putUShort("colMusic", p.music);
+    prefs.putUShort("colText", p.text);
+    prefs.putUShort("colAccent", p.accent);
+    prefs.end();
+}
+
+static void loadColorsFromNVS() {
+    prefs.begin("hookbot", true);
+    AvatarPalette p = Avatar::palette();   // white defaults
+    p.face       = prefs.getUShort("colFace", p.face);
+    p.eyes       = prefs.getUShort("colEyes", p.eyes);
+    p.mouth      = prefs.getUShort("colMouth", p.mouth);
+    p.headphones = prefs.getUShort("colPhone", p.headphones);
+    p.crown      = prefs.getUShort("colCrown", p.crown);
+    p.hat        = prefs.getUShort("colHat", p.hat);
+    p.glasses    = prefs.getUShort("colGlass", p.glasses);
+    p.accessory  = prefs.getUShort("colAcc", p.accessory);
+    p.music      = prefs.getUShort("colMusic", p.music);
+    p.text       = prefs.getUShort("colText", p.text);
+    p.accent     = prefs.getUShort("colAccent", p.accent);
+    prefs.end();
+    Avatar::setPalette(p);
+}
+
 void loadConfigFromNVS() {
     prefs.begin("hookbot", true); // read-only
     runtimeConfig.ledBrightness = prefs.getInt("ledBright", 60);
@@ -469,6 +505,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
 
     // Load config from NVS
     loadConfigFromNVS();
+    loadColorsFromNVS();
     loadPetFromNVS();
 
     // Connect WiFi (multi-network support)
@@ -543,6 +580,33 @@ void init(std::function<void(AvatarState)> onStateChange) {
         doc["screensaver_mins"] = runtimeConfig.screensaverMins;
         doc["auto_brightness"] = runtimeConfig.autoBrightness;
         doc["dnd"] = runtimeConfig.doNotDisturb;
+        // Report colours back as "#RRGGBB" so the dashboard can show what the
+        // device is actually using rather than guessing at defaults.
+        {
+            const AvatarPalette& p = Avatar::palette();
+            JsonObject c = doc["avatar_colors"].to<JsonObject>();
+            auto hex = [](uint16_t v) {
+                // RGB565 back to RGB888, replicating the high bits so full
+                // channels stay full (0x1F -> 0xFF, not 0xF8).
+                uint8_t r = (uint8_t)((v >> 11) & 0x1F); r = (uint8_t)((r << 3) | (r >> 2));
+                uint8_t g = (uint8_t)((v >> 5) & 0x3F);  g = (uint8_t)((g << 2) | (g >> 4));
+                uint8_t b = (uint8_t)(v & 0x1F);         b = (uint8_t)((b << 3) | (b >> 2));
+                char buf[8];
+                snprintf(buf, sizeof(buf), "#%02X%02X%02X", r, g, b);
+                return String(buf);
+            };
+            c["face"] = hex(p.face);
+            c["eyes"] = hex(p.eyes);
+            c["mouth"] = hex(p.mouth);
+            c["headphones"] = hex(p.headphones);
+            c["crown"] = hex(p.crown);
+            c["hat"] = hex(p.hat);
+            c["glasses"] = hex(p.glasses);
+            c["accessory"] = hex(p.accessory);
+            c["music"] = hex(p.music);
+            c["text"] = hex(p.text);
+            c["accent"] = hex(p.accent);
+        }
         String json;
         serializeJson(doc, json);
         req->send(200, "application/json", json);
@@ -726,6 +790,28 @@ void init(std::function<void(AvatarState)> onStateChange) {
                     Serial.printf("[Server] Accessories updated: hat=%d cigar=%d glasses=%d\n",
                         runtimeConfig.topHat, runtimeConfig.cigar, runtimeConfig.glasses);
                 }
+            }
+
+            // Per-element avatar colours ("#RRGGBB" each). Absent keys keep
+            // their current value, so a partial update is safe.
+            if (!body["avatar_colors"].isNull() && body["avatar_colors"].is<JsonObject>()) {
+                JsonObject c = body["avatar_colors"];
+                AvatarPalette p = Avatar::palette();
+                struct { const char* key; uint16_t* dst; } fields[] = {
+                    {"face", &p.face}, {"eyes", &p.eyes}, {"mouth", &p.mouth},
+                    {"headphones", &p.headphones}, {"crown", &p.crown},
+                    {"hat", &p.hat}, {"glasses", &p.glasses},
+                    {"accessory", &p.accessory}, {"music", &p.music},
+                    {"text", &p.text}, {"accent", &p.accent},
+                };
+                for (auto& f : fields) {
+                    if (!c[f.key].isNull()) {
+                        *f.dst = Avatar::colorFromHex(c[f.key], *f.dst);
+                    }
+                }
+                Avatar::setPalette(p);
+                saveColorsToNVS(p);
+                Serial.println("[Server] Avatar colours updated");
             }
 
             // Custom LED colors per state

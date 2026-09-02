@@ -15,6 +15,8 @@ export interface BoardInfo {
   badgeClass: string;
   /** Badge classes for the device detail header */
   headerBadgeClass: string;
+  /** Colour panel. False for the monochrome OLED, which has one ink colour. */
+  color: boolean;
 }
 
 export const BOARDS: Record<string, BoardInfo> = {
@@ -24,6 +26,7 @@ export const BOARDS: Record<string, BoardInfo> = {
     badge: 'OLED',
     badgeClass: 'border-amber-800 text-amber-400 bg-amber-900/20',
     headerBadgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    color: false,
   },
   esp32_4848s040c_lcd: {
     env: 'esp32-4848s040c',
@@ -31,6 +34,7 @@ export const BOARDS: Record<string, BoardInfo> = {
     badge: 'LCD Touch',
     badgeClass: 'border-cyan-800 text-cyan-400 bg-cyan-900/20',
     headerBadgeClass: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    color: true,
   },
   xiao_c6_gc9a01_round: {
     env: 'xiao-c6-gc9a01',
@@ -38,6 +42,7 @@ export const BOARDS: Record<string, BoardInfo> = {
     badge: 'Round',
     badgeClass: 'border-violet-800 text-violet-400 bg-violet-900/20',
     headerBadgeClass: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+    color: true,
   },
 };
 
@@ -60,4 +65,10 @@ export function boardBadgeClass(deviceType: string): string {
 
 export function boardHeaderBadgeClass(deviceType: string): string {
   return BOARDS[deviceType]?.headerBadgeClass ?? UNKNOWN_BADGE_CLASS;
+}
+
+/** Whether this board has a colour panel (so avatar colours are meaningful). */
+export function boardHasColor(deviceType?: string | null): boolean {
+  if (!deviceType) return false;
+  return BOARDS[deviceType]?.color ?? false;
 }

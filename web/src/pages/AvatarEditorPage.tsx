@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BOARDS } from '../types/boards';
+import { BOARDS, boardHasColor } from '../types/boards';
 import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig, getOwnedItems, getPetState, selectPet } from '../api/client';
 import type { AvatarState } from '../types';
 
@@ -27,6 +27,43 @@ interface Accessories {
   horns: boolean;
   halo: boolean;
 }
+
+/** Per-element avatar colours, mirroring AvatarPalette in the firmware. */
+interface AvatarColors {
+  face: string;
+  eyes: string;
+  mouth: string;
+  headphones: string;
+  crown: string;
+  hat: string;
+  glasses: string;
+  accessory: string;
+  music: string;
+  text: string;
+  accent: string;
+}
+
+/** White everywhere: an unconfigured device looks exactly as it always has. */
+const DEFAULT_COLORS: AvatarColors = {
+  face: '#FFFFFF', eyes: '#FFFFFF', mouth: '#FFFFFF',
+  headphones: '#FFFFFF', crown: '#FFFFFF', hat: '#FFFFFF',
+  glasses: '#FFFFFF', accessory: '#FFFFFF', music: '#FFFFFF',
+  text: '#FFFFFF', accent: '#FFFFFF',
+};
+
+const COLOR_FIELDS: { key: keyof AvatarColors; label: string; hint: string }[] = [
+  { key: 'face', label: 'Face', hint: 'Outline, eyebrows, thought bubbles' },
+  { key: 'eyes', label: 'Eyes', hint: '' },
+  { key: 'mouth', label: 'Mouth', hint: '' },
+  { key: 'headphones', label: 'Headphones', hint: 'Shown while music plays' },
+  { key: 'crown', label: 'Crown', hint: '' },
+  { key: 'hat', label: 'Top hat', hint: '' },
+  { key: 'glasses', label: 'Glasses', hint: 'Glasses and monocle' },
+  { key: 'accessory', label: 'Other accessories', hint: 'Horns, halo, cigar, bow tie' },
+  { key: 'music', label: 'Track text', hint: 'Now-playing title and artist' },
+  { key: 'text', label: 'Status text', hint: 'Project, branch, tool, tasks' },
+  { key: 'accent', label: 'Accent', hint: 'XP bar, wifi, state markers' },
+];
 
 const DEFAULT_PARAMS: AvatarParams = {
   eyeX: 0, eyeY: 0, eyeOpen: 0.9,
@@ -57,6 +94,7 @@ export default function AvatarEditorPage() {
   const [searchParams] = useSearchParams();
   const [params, setParams] = useState<AvatarParams>(DEFAULT_PARAMS);
   const [accessories, setAccessories] = useState<Accessories>(DEFAULT_ACCESSORIES);
+  const [colors, setColors] = useState<AvatarColors>(DEFAULT_COLORS);
   const [activeState, setActiveState] = useState<AvatarState>('idle');
   const [animating, setAnimating] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(searchParams.get('device') || '');
@@ -137,11 +175,16 @@ export default function AvatarEditorPage() {
       if (p.params) setParams(p.params as AvatarParams);
       if (p.accessories) setAccessories(prev => ({ ...prev, ...(p.accessories as Partial<Accessories>) }));
     }
+    const custom = deviceConfig?.custom_data as Record<string, unknown> | undefined;
+    if (custom?.avatar_colors) {
+      setColors(prev => ({ ...prev, ...(custom.avatar_colors as Partial<AvatarColors>) }));
+    }
   }, [deviceConfig]);
 
   const saveMut = useMutation({
     mutationFn: () => updateDeviceConfig(selectedDevice, {
       avatar_preset: { params, accessories, state: activeState },
+      custom_data: { ...(deviceConfig?.custom_data ?? {}), avatar_colors: colors },
     }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['config', selectedDevice] }),
   });
@@ -150,6 +193,7 @@ export default function AvatarEditorPage() {
     mutationFn: async () => {
       await updateDeviceConfig(selectedDevice, {
         avatar_preset: { params, accessories, state: activeState },
+        custom_data: { ...(deviceConfig?.custom_data ?? {}), avatar_colors: colors },
       });
       await pushConfig(selectedDevice);
     },
@@ -475,13 +519,59 @@ export default function AvatarEditorPage() {
             </div>
           </div>
 
+          {/* Colours — only meaningful on a colour panel */}
+          {boardHasColor(deviceType) ? (
+            <div className="rounded-lg border border-edge bg-surface p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-subtle font-medium uppercase tracking-wider">Colours</p>
+                <button
+                  onClick={() => setColors(DEFAULT_COLORS)}
+                  className="text-[11px] text-dim hover:text-fg-2"
+                >
+                  Reset to white
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {COLOR_FIELDS.map(f => (
+                  <label
+                    key={f.key}
+                    className="flex items-center gap-2 rounded-lg border border-edge px-2 py-1.5 cursor-pointer hover:border-brand/40"
+                  >
+                    <input
+                      type="color"
+                      value={colors[f.key]}
+                      onChange={e => setColors(c => ({ ...c, [f.key]: e.target.value.toUpperCase() }))}
+                      className="h-6 w-8 shrink-0 rounded border border-edge bg-transparent"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-xs text-fg-2">{f.label}</span>
+                      {f.hint && <span className="block text-[10px] text-dim truncate">{f.hint}</span>}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="mt-3 text-[11px] text-dim">
+                The panel is 16-bit, so colours snap to the nearest it can show.
+                Save &amp; Push to apply — the device keeps them across reboots.
+              </p>
+            </div>
+          ) : deviceType ? (
+            <div className="rounded-lg border border-edge bg-surface p-4">
+              <p className="text-xs text-subtle font-medium uppercase tracking-wider mb-2">Colours</p>
+              <p className="text-xs text-dim">
+                {BOARDS[deviceType]?.label ?? deviceType} has a monochrome display,
+                so there is only one ink colour to set.
+              </p>
+            </div>
+          ) : null}
+
           {/* Export JSON */}
           <details className="rounded-lg border border-edge bg-surface">
             <summary className="px-4 py-3 text-xs text-subtle cursor-pointer hover:text-fg-2 font-medium uppercase tracking-wider">
               Export JSON
             </summary>
             <pre className="px-4 pb-4 text-[11px] text-muted font-mono overflow-x-auto">
-{JSON.stringify({ params, accessories, state: activeState }, null, 2)}
+{JSON.stringify({ params, accessories, state: activeState, colors }, null, 2)}
             </pre>
           </details>
         </div>

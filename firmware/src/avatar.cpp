@@ -339,6 +339,39 @@ static void updateAnimations(uint32_t deltaMs) {
 
 // ─── Drawing ────────────────────────────────────────────────────
 
+// Every element defaults to white: an unconfigured device looks exactly as it
+// always has. `PAL` keeps the drawing code readable at the call sites.
+static AvatarPalette pal = {
+    COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE,
+    COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE,
+};
+#define PAL pal
+
+const AvatarPalette& palette() { return pal; }
+
+void setPalette(const AvatarPalette& p) {
+#ifdef DISPLAY_LGFX
+    pal = p;
+#else
+    // Monochrome panel: one ink colour, so colours are meaningless here.
+    (void)p;
+#endif
+}
+
+uint16_t colorFromHex(const char* hex, uint16_t fallback) {
+    if (!hex) return fallback;
+    if (*hex == '#') hex++;
+    if (strlen(hex) != 6) return fallback;
+    char* end = nullptr;
+    long v = strtol(hex, &end, 16);
+    if (!end || *end != '\0' || v < 0 || v > 0xFFFFFF) return fallback;
+    // 24-bit RGB888 down to RGB565.
+    uint16_t r = ((v >> 16) & 0xFF) >> 3;
+    uint16_t g = ((v >> 8) & 0xFF) >> 2;
+    uint16_t b = (v & 0xFF) >> 3;
+    return (uint16_t)((r << 11) | (g << 5) | b);
+}
+
 static void drawTaskList(DisplayCanvas* d) {
     const TaskList& tasks = HookbotServer::getTasks();
     if (tasks.count == 0) return;
@@ -368,32 +401,32 @@ static void drawTaskList(DisplayCanvas* d) {
         // Checkbox
         if (item.status == 2) {
             // Done: filled box with checkmark
-            d->fillRect(startX, y + 1, 7, 7, COLOR_WHITE);
+            d->fillRect(startX, y + 1, 7, 7, PAL.text);
             d->drawPixel(startX + 2, y + 5, COLOR_BLACK);
             d->drawPixel(startX + 3, y + 6, COLOR_BLACK);
             d->drawPixel(startX + 4, y + 5, COLOR_BLACK);
             d->drawPixel(startX + 5, y + 4, COLOR_BLACK);
         } else if (item.status == 3) {
             // Failed: X box
-            d->drawRect(startX, y + 1, 7, 7, COLOR_WHITE);
-            d->drawLine(startX + 1, y + 2, startX + 5, y + 6, COLOR_WHITE);
-            d->drawLine(startX + 5, y + 2, startX + 1, y + 6, COLOR_WHITE);
+            d->drawRect(startX, y + 1, 7, 7, PAL.text);
+            d->drawLine(startX + 1, y + 2, startX + 5, y + 6, PAL.text);
+            d->drawLine(startX + 5, y + 2, startX + 1, y + 6, PAL.text);
         } else if (item.status == 1 || idx == tasks.activeIndex) {
             // Active: animated dot
             uint32_t t = millis();
             bool blink = (t % 600) < 400;
             if (blink) {
-                d->fillCircle(startX + 3, y + 4, 3, COLOR_WHITE);
+                d->fillCircle(startX + 3, y + 4, 3, PAL.text);
             } else {
-                d->drawCircle(startX + 3, y + 4, 3, COLOR_WHITE);
+                d->drawCircle(startX + 3, y + 4, 3, PAL.text);
             }
         } else {
             // Pending: empty box
-            d->drawRect(startX, y + 1, 7, 7, COLOR_WHITE);
+            d->drawRect(startX, y + 1, 7, 7, PAL.text);
         }
 
         // Label (truncated to fit)
-        d->setTextColor(COLOR_WHITE);
+        d->setTextColor(PAL.text);
         d->setCursor(startX + 10, y + 1);
 
         // Calculate max chars that fit (screen width - label start) / 6px per char
@@ -406,7 +439,7 @@ static void drawTaskList(DisplayCanvas* d) {
         // Strikethrough for done items
         if (item.status == 2) {
             int16_t textW = min((int16_t)(strlen(truncated) * 6), (int16_t)(SAFE_RIGHT - startX - 10));
-            d->drawFastHLine(startX + 10, y + 4, textW, COLOR_WHITE);
+            d->drawFastHLine(startX + 10, y + 4, textW, PAL.text);
         }
     }
 
@@ -416,8 +449,8 @@ static void drawTaskList(DisplayCanvas* d) {
         int16_t totalH = maxVisible * lineH;
         int16_t thumbH = max((int16_t)4, (int16_t)(totalH * maxVisible / tasks.count));
         int16_t thumbY = startY + (int16_t)((float)scrollOffset / (tasks.count - maxVisible) * (totalH - thumbH));
-        d->drawFastVLine(SAFE_RIGHT - 2, startY, totalH, COLOR_WHITE);
-        d->fillRect(SAFE_RIGHT - 3, thumbY, 3, thumbH, COLOR_WHITE);
+        d->drawFastVLine(SAFE_RIGHT - 2, startY, totalH, PAL.text);
+        d->fillRect(SAFE_RIGHT - 3, thumbY, 3, thumbH, PAL.text);
     }
 }
 
@@ -450,13 +483,13 @@ static void drawFace(DisplayCanvas* d) {
             const int16_t bandY    = cy - 27;
 
             // Headband: three short segments approximate an arc cheaply.
-            d->drawLine(cx - cupInner - 2, cupY, cx - 14, bandY, COLOR_WHITE);
-            d->drawFastHLine(cx - 14, bandY, 29, COLOR_WHITE);
-            d->drawLine(cx + 14, bandY, cx + cupInner + 2, cupY, COLOR_WHITE);
+            d->drawLine(cx - cupInner - 2, cupY, cx - 14, bandY, PAL.headphones);
+            d->drawFastHLine(cx - 14, bandY, 29, PAL.headphones);
+            d->drawLine(cx + 14, bandY, cx + cupInner + 2, cupY, PAL.headphones);
 
             // Ear cups, just clear of the eyes on each side.
-            d->fillRect(cx - cupInner - cupW, cupY, cupW, cupH, COLOR_WHITE);
-            d->fillRect(cx + cupInner, cupY, cupW, cupH, COLOR_WHITE);
+            d->fillRect(cx - cupInner - cupW, cupY, cupW, cupH, PAL.headphones);
+            d->fillRect(cx + cupInner, cupY, cupW, cupH, PAL.headphones);
         }
     }
 
@@ -468,39 +501,39 @@ static void drawFace(DisplayCanvas* d) {
         int16_t brimW    = 20;   // Half-width of brim
 
         // Brim
-        d->drawFastHLine(cx - brimW, hatBrimY, brimW * 2 + 1, COLOR_WHITE);
-        d->drawFastHLine(cx - brimW, hatBrimY + 1, brimW * 2 + 1, COLOR_WHITE);
+        d->drawFastHLine(cx - brimW, hatBrimY, brimW * 2 + 1, PAL.hat);
+        d->drawFastHLine(cx - brimW, hatBrimY + 1, brimW * 2 + 1, PAL.hat);
 
         // Hat body (tall rectangle)
-        d->drawFastVLine(cx - hatW, hatTopY, hatBrimY - hatTopY, COLOR_WHITE);
-        d->drawFastVLine(cx + hatW, hatTopY, hatBrimY - hatTopY, COLOR_WHITE);
+        d->drawFastVLine(cx - hatW, hatTopY, hatBrimY - hatTopY, PAL.hat);
+        d->drawFastVLine(cx + hatW, hatTopY, hatBrimY - hatTopY, PAL.hat);
 
         // Top
-        d->drawFastHLine(cx - hatW, hatTopY, hatW * 2 + 1, COLOR_WHITE);
+        d->drawFastHLine(cx - hatW, hatTopY, hatW * 2 + 1, PAL.hat);
 
         // Hat band (decorative stripe near bottom of hat body)
-        d->drawFastHLine(cx - hatW + 1, hatBrimY - 4, hatW * 2 - 1, COLOR_WHITE);
-        d->drawFastHLine(cx - hatW + 1, hatBrimY - 3, hatW * 2 - 1, COLOR_WHITE);
+        d->drawFastHLine(cx - hatW + 1, hatBrimY - 4, hatW * 2 - 1, PAL.hat);
+        d->drawFastHLine(cx - hatW + 1, hatBrimY - 3, hatW * 2 - 1, PAL.hat);
     }
 
     // ─── Crown ─────────────────────────────────
     if (cfg.crown) {
         int16_t crownY = cy - 24;
         // Crown base
-        d->drawFastHLine(cx - 16, crownY, 33, COLOR_WHITE);
+        d->drawFastHLine(cx - 16, crownY, 33, PAL.crown);
         // Spikes
-        d->drawLine(cx - 16, crownY, cx - 16, crownY - 10, COLOR_WHITE);
-        d->drawLine(cx - 16, crownY - 10, cx - 10, crownY - 5, COLOR_WHITE);
-        d->drawLine(cx - 10, crownY - 5, cx - 4, crownY - 14, COLOR_WHITE);
-        d->drawLine(cx - 4, crownY - 14, cx, crownY - 8, COLOR_WHITE);
-        d->drawLine(cx, crownY - 8, cx + 4, crownY - 14, COLOR_WHITE);
-        d->drawLine(cx + 4, crownY - 14, cx + 10, crownY - 5, COLOR_WHITE);
-        d->drawLine(cx + 10, crownY - 5, cx + 16, crownY - 10, COLOR_WHITE);
-        d->drawLine(cx + 16, crownY - 10, cx + 16, crownY, COLOR_WHITE);
+        d->drawLine(cx - 16, crownY, cx - 16, crownY - 10, PAL.crown);
+        d->drawLine(cx - 16, crownY - 10, cx - 10, crownY - 5, PAL.crown);
+        d->drawLine(cx - 10, crownY - 5, cx - 4, crownY - 14, PAL.crown);
+        d->drawLine(cx - 4, crownY - 14, cx, crownY - 8, PAL.crown);
+        d->drawLine(cx, crownY - 8, cx + 4, crownY - 14, PAL.crown);
+        d->drawLine(cx + 4, crownY - 14, cx + 10, crownY - 5, PAL.crown);
+        d->drawLine(cx + 10, crownY - 5, cx + 16, crownY - 10, PAL.crown);
+        d->drawLine(cx + 16, crownY - 10, cx + 16, crownY, PAL.crown);
         // Jewel dots on spike tips
-        d->fillCircle(cx, crownY - 8, 1, COLOR_WHITE);
-        d->fillCircle(cx - 4, crownY - 14, 1, COLOR_WHITE);
-        d->fillCircle(cx + 4, crownY - 14, 1, COLOR_WHITE);
+        d->fillCircle(cx, crownY - 8, 1, PAL.crown);
+        d->fillCircle(cx - 4, crownY - 14, 1, PAL.crown);
+        d->fillCircle(cx + 4, crownY - 14, 1, PAL.crown);
     }
 
     // ─── Devil Horns ───────────────────────────
@@ -509,10 +542,10 @@ static void drawFace(DisplayCanvas* d) {
         for (int side = -1; side <= 1; side += 2) {
             int16_t hx = cx + side * 12;
             // Curved horn pointing up and out
-            d->drawLine(hx, hornY, hx + side * 4, hornY - 8, COLOR_WHITE);
-            d->drawLine(hx + 1, hornY, hx + side * 4 + 1, hornY - 8, COLOR_WHITE);
-            d->drawLine(hx + side * 4, hornY - 8, hx + side * 2, hornY - 14, COLOR_WHITE);
-            d->drawLine(hx + side * 4 + 1, hornY - 8, hx + side * 2 + 1, hornY - 14, COLOR_WHITE);
+            d->drawLine(hx, hornY, hx + side * 4, hornY - 8, PAL.accessory);
+            d->drawLine(hx + 1, hornY, hx + side * 4 + 1, hornY - 8, PAL.accessory);
+            d->drawLine(hx + side * 4, hornY - 8, hx + side * 2, hornY - 14, PAL.accessory);
+            d->drawLine(hx + side * 4 + 1, hornY - 8, hx + side * 2 + 1, hornY - 14, PAL.accessory);
         }
     }
 
@@ -520,7 +553,7 @@ static void drawFace(DisplayCanvas* d) {
     if (cfg.halo) {
         int16_t haloY = cy - 28;
         // Ellipse approximation - draw two arcs
-        d->drawCircle(cx, haloY, 12, COLOR_WHITE);
+        d->drawCircle(cx, haloY, 12, PAL.accessory);
         // Make it look like an ellipse by clearing top/bottom
         d->drawFastHLine(cx - 10, haloY - 4, 21, COLOR_BLACK);
         d->drawFastHLine(cx - 10, haloY + 4, 21, COLOR_BLACK);
@@ -528,8 +561,8 @@ static void drawFace(DisplayCanvas* d) {
         for (int16_t i = -12; i <= 12; i++) {
             float t = (float)i / 12.0f;
             int16_t dy = (int16_t)(3.0f * sqrtf(1.0f - t * t));
-            d->drawPixel(cx + i, haloY - dy, COLOR_WHITE);
-            d->drawPixel(cx + i, haloY + dy, COLOR_WHITE);
+            d->drawPixel(cx + i, haloY - dy, PAL.accessory);
+            d->drawPixel(cx + i, haloY + dy, PAL.accessory);
         }
     }
 
@@ -550,8 +583,8 @@ static void drawFace(DisplayCanvas* d) {
         int16_t outerX = bx + side * 8;  // Away from center
 
         // Draw thick brow (2 lines for boldness - CEO brows are THICC)
-        d->drawLine(innerX, innerY, outerX, outerY, COLOR_WHITE);
-        d->drawLine(innerX, innerY + 1, outerX, outerY + 1, COLOR_WHITE);
+        d->drawLine(innerX, innerY, outerX, outerY, PAL.face);
+        d->drawLine(innerX, innerY + 1, outerX, outerY + 1, PAL.face);
     }
 
     // ─── Eyes ─────────────────────────────────
@@ -572,11 +605,11 @@ static void drawFace(DisplayCanvas* d) {
 
         if (eyeH <= 2) {
             // Closed eye - horizontal line
-            d->drawFastHLine(ex - eyeW / 2, ey, eyeW, COLOR_WHITE);
+            d->drawFastHLine(ex - eyeW / 2, ey, eyeW, PAL.eyes);
         } else {
             // Open eye - filled rounded rect
             int16_t r = min((int16_t)(eyeW / 2), (int16_t)(eyeH / 2));
-            d->fillRoundRect(ex - eyeW / 2, ey - eyeH / 2, eyeW, eyeH, r, COLOR_WHITE);
+            d->fillRoundRect(ex - eyeW / 2, ey - eyeH / 2, eyeW, eyeH, r, PAL.eyes);
 
             // Pupil (dark dot inside white eye)
             if (eyeH > 5) {
@@ -593,20 +626,20 @@ static void drawFace(DisplayCanvas* d) {
         for (int side = -1; side <= 1; side += 2) {
             int16_t ex = cx + side * eyeSpacing;
             // Lens frame
-            d->drawRoundRect(ex - eyeW / 2 - 2, eyeBaseY - 7, eyeW + 4, 14, 3, COLOR_WHITE);
+            d->drawRoundRect(ex - eyeW / 2 - 2, eyeBaseY - 7, eyeW + 4, 14, 3, PAL.glasses);
         }
         // Bridge
-        d->drawLine(cx - eyeSpacing + eyeW / 2 + 2, eyeBaseY, cx + eyeSpacing - eyeW / 2 - 2, eyeBaseY, COLOR_WHITE);
+        d->drawLine(cx - eyeSpacing + eyeW / 2 + 2, eyeBaseY, cx + eyeSpacing - eyeW / 2 - 2, eyeBaseY, PAL.glasses);
         // Arms
-        d->drawFastHLine(cx - eyeSpacing - eyeW / 2 - 2, eyeBaseY - 3, -6, COLOR_WHITE);
-        d->drawFastHLine(cx + eyeSpacing + eyeW / 2 + 2, eyeBaseY - 3, 6, COLOR_WHITE);
+        d->drawFastHLine(cx - eyeSpacing - eyeW / 2 - 2, eyeBaseY - 3, -6, PAL.glasses);
+        d->drawFastHLine(cx + eyeSpacing + eyeW / 2 + 2, eyeBaseY - 3, 6, PAL.glasses);
     }
 
     // ─── Monocle ───────────────────────────────
     if (cfg.monocle) {
         int16_t ex = cx + eyeSpacing;  // Right eye
-        d->drawCircle(ex, eyeBaseY, eyeW / 2 + 3, COLOR_WHITE);
-        d->drawCircle(ex, eyeBaseY, eyeW / 2 + 4, COLOR_WHITE);
+        d->drawCircle(ex, eyeBaseY, eyeW / 2 + 3, PAL.glasses);
+        d->drawCircle(ex, eyeBaseY, eyeW / 2 + 4, PAL.glasses);
         // Chain hanging down
         int16_t chainX = ex + eyeW / 2 + 2;
         int16_t chainY = eyeBaseY + eyeW / 2 + 2;
@@ -614,7 +647,7 @@ static void drawFace(DisplayCanvas* d) {
             int16_t py = chainY + i * 2;
             int16_t px = chainX + (int16_t)(sinf((float)i * 0.8f) * 2.0f);
             if (py < SCREEN_HEIGHT) {
-                d->drawPixel(px, py, COLOR_WHITE);
+                d->drawPixel(px, py, PAL.glasses);
             }
         }
     }
@@ -630,13 +663,13 @@ static void drawFace(DisplayCanvas* d) {
 
         if (openH > 1) {
             // Open mouth - maniacal laugh
-            d->fillRoundRect(cx - mouthW / 2, mouthY, mouthW, openH + 2, 2, COLOR_WHITE);
+            d->fillRoundRect(cx - mouthW / 2, mouthY, mouthW, openH + 2, 2, PAL.mouth);
         }
         // Grin curve
         for (int i = -mouthW / 2; i <= mouthW / 2; i++) {
             float t = (float)i / (float)(mouthW / 2);
             int16_t dy = (int16_t)(curveH * (1.0f - t * t));
-            d->drawPixel(cx + i, mouthY + dy, COLOR_WHITE);
+            d->drawPixel(cx + i, mouthY + dy, PAL.mouth);
         }
     } else if (current.mouthCurve < -0.1f) {
         // Frown of displeasure
@@ -645,16 +678,16 @@ static void drawFace(DisplayCanvas* d) {
 
         if (openH > 1) {
             // Open frown - yelling at subordinates
-            d->fillRoundRect(cx - mouthW / 2, mouthY - 2, mouthW, openH + 2, 2, COLOR_WHITE);
+            d->fillRoundRect(cx - mouthW / 2, mouthY - 2, mouthW, openH + 2, 2, PAL.mouth);
         }
         for (int i = -mouthW / 2; i <= mouthW / 2; i++) {
             float t = (float)i / (float)(mouthW / 2);
             int16_t dy = (int16_t)(curveH * (1.0f - t * t));
-            d->drawPixel(cx + i, mouthY - dy, COLOR_WHITE);
+            d->drawPixel(cx + i, mouthY - dy, PAL.mouth);
         }
     } else {
         // Neutral: straight line (unimpressed)
-        d->drawFastHLine(cx - mouthW / 3, mouthY, mouthW * 2 / 3, COLOR_WHITE);
+        d->drawFastHLine(cx - mouthW / 3, mouthY, mouthW * 2 / 3, PAL.mouth);
     }
 
     // ─── Cigar (CEO power move) ───────────────
@@ -663,19 +696,19 @@ static void drawFace(DisplayCanvas* d) {
         int16_t cigarY = mouthY + 1;
 
         // Cigar body - angled slightly upward
-        d->drawLine(cigarX, cigarY, cigarX + 10, cigarY - 3, COLOR_WHITE);
-        d->drawLine(cigarX, cigarY + 1, cigarX + 10, cigarY - 2, COLOR_WHITE);
-        d->drawLine(cigarX, cigarY + 2, cigarX + 10, cigarY - 1, COLOR_WHITE);
+        d->drawLine(cigarX, cigarY, cigarX + 10, cigarY - 3, PAL.accessory);
+        d->drawLine(cigarX, cigarY + 1, cigarX + 10, cigarY - 2, PAL.accessory);
+        d->drawLine(cigarX, cigarY + 2, cigarX + 10, cigarY - 1, PAL.accessory);
 
         // Ember tip - flickering glow
         float flicker = sinf((float)totalTime / 150.0f);
         if (flicker > -0.3f) {
-            d->drawPixel(cigarX + 10, cigarY - 3, COLOR_WHITE);
-            d->drawPixel(cigarX + 10, cigarY - 2, COLOR_WHITE);
-            d->drawPixel(cigarX + 11, cigarY - 3, COLOR_WHITE);
+            d->drawPixel(cigarX + 10, cigarY - 3, PAL.accessory);
+            d->drawPixel(cigarX + 10, cigarY - 2, PAL.accessory);
+            d->drawPixel(cigarX + 11, cigarY - 3, PAL.accessory);
         }
         if (flicker > 0.3f) {
-            d->drawPixel(cigarX + 11, cigarY - 2, COLOR_WHITE);
+            d->drawPixel(cigarX + 11, cigarY - 2, PAL.accessory);
         }
 
         // Smoke particles - rising and drifting
@@ -696,13 +729,13 @@ static void drawFace(DisplayCanvas* d) {
 
             // Smoke gets wispier as it rises
             if (sy >= 0 && sy < SCREEN_HEIGHT && sx >= 0 && sx < SCREEN_WIDTH) {
-                d->drawPixel(sx, sy, COLOR_WHITE);
+                d->drawPixel(sx, sy, PAL.accessory);
                 if (pLife < 1.5f) {
                     // Thicker smoke near the cigar
-                    d->drawPixel(sx + 1, sy, COLOR_WHITE);
+                    d->drawPixel(sx + 1, sy, PAL.accessory);
                 }
                 if (pLife < 0.8f) {
-                    d->drawPixel(sx, sy - 1, COLOR_WHITE);
+                    d->drawPixel(sx, sy - 1, PAL.accessory);
                 }
             }
         }
@@ -712,15 +745,15 @@ static void drawFace(DisplayCanvas* d) {
     if (cfg.bowtie) {
         int16_t tieY = cy + 20;
         // Left triangle
-        d->drawLine(cx, tieY, cx - 8, tieY - 4, COLOR_WHITE);
-        d->drawLine(cx, tieY, cx - 8, tieY + 4, COLOR_WHITE);
-        d->drawLine(cx - 8, tieY - 4, cx - 8, tieY + 4, COLOR_WHITE);
+        d->drawLine(cx, tieY, cx - 8, tieY - 4, PAL.accessory);
+        d->drawLine(cx, tieY, cx - 8, tieY + 4, PAL.accessory);
+        d->drawLine(cx - 8, tieY - 4, cx - 8, tieY + 4, PAL.accessory);
         // Right triangle
-        d->drawLine(cx, tieY, cx + 8, tieY - 4, COLOR_WHITE);
-        d->drawLine(cx, tieY, cx + 8, tieY + 4, COLOR_WHITE);
-        d->drawLine(cx + 8, tieY - 4, cx + 8, tieY + 4, COLOR_WHITE);
+        d->drawLine(cx, tieY, cx + 8, tieY - 4, PAL.accessory);
+        d->drawLine(cx, tieY, cx + 8, tieY + 4, PAL.accessory);
+        d->drawLine(cx + 8, tieY - 4, cx + 8, tieY + 4, PAL.accessory);
         // Center knot
-        d->fillCircle(cx, tieY, 2, COLOR_WHITE);
+        d->fillCircle(cx, tieY, 2, PAL.accessory);
     }
 
     // ─── Project name (top-left during non-idle states) ──────
@@ -728,7 +761,7 @@ static void drawFace(DisplayCanvas* d) {
         const ProjectInfo& proj = HookbotServer::getProject();
         if (strlen(proj.name) > 0 && (millis() - proj.lastUpdatedAt) < 600000) {
             d->setTextSize(1);
-            d->setTextColor(COLOR_WHITE);
+            d->setTextColor(PAL.text);
             d->setCursor(2, 2);
             char truncName[14];
             strncpy(truncName, proj.name, 13);
@@ -748,9 +781,9 @@ static void drawFace(DisplayCanvas* d) {
             int16_t x = SAFE_LEFT + 2;
 
             // Small note glyph: stem plus filled head.
-            d->drawFastVLine(x + 3, y, 6, COLOR_WHITE);
-            d->fillRect(x + 1, y + 5, 3, 2, COLOR_WHITE);
-            d->drawFastHLine(x + 3, y, 3, COLOR_WHITE);
+            d->drawFastVLine(x + 3, y, 6, PAL.music);
+            d->fillRect(x + 1, y + 5, 3, 2, PAL.music);
+            d->drawFastHLine(x + 3, y, 3, PAL.music);
 
             // "Track - Artist", scrolled when it does not fit the safe width.
             char line[MAX_TRACK_LEN * 2 + 4];
@@ -766,7 +799,7 @@ static void drawFace(DisplayCanvas* d) {
             int16_t len = (int16_t)strlen(line);
 
             d->setTextSize(1);
-            d->setTextColor(COLOR_WHITE);
+            d->setTextColor(PAL.music);
             if (len <= maxChars) {
                 d->setCursor(textX, y);
                 d->print(line);
@@ -793,7 +826,7 @@ static void drawFace(DisplayCanvas* d) {
         const BranchInfo& branch = HookbotServer::getBranch();
         if (strlen(branch.name) > 0 && (millis() - branch.lastUpdatedAt) < 600000) {
             d->setTextSize(1);
-            d->setTextColor(COLOR_WHITE);
+            d->setTextColor(PAL.text);
             d->setCursor(SAFE_LEFT + 2, SAFE_BOTTOM - 18);
             char truncBranch[18];
             strncpy(truncBranch, branch.name, 17);
@@ -814,42 +847,42 @@ static void drawFace(DisplayCanvas* d) {
         // Draw tool-specific icon (8x8 area)
         if (strcmp(tool.name, "Read") == 0) {
             // Eye icon - reading
-            d->drawCircle(iconX + 4, toolY + 3, 3, COLOR_WHITE);
-            d->fillCircle(iconX + 4, toolY + 3, 1, COLOR_WHITE);
-            d->drawLine(iconX, toolY + 3, iconX + 1, toolY + 3, COLOR_WHITE);
-            d->drawLine(iconX + 7, toolY + 3, iconX + 8, toolY + 3, COLOR_WHITE);
+            d->drawCircle(iconX + 4, toolY + 3, 3, PAL.text);
+            d->fillCircle(iconX + 4, toolY + 3, 1, PAL.text);
+            d->drawLine(iconX, toolY + 3, iconX + 1, toolY + 3, PAL.text);
+            d->drawLine(iconX + 7, toolY + 3, iconX + 8, toolY + 3, PAL.text);
         } else if (strcmp(tool.name, "Write") == 0 || strcmp(tool.name, "Edit") == 0) {
             // Pencil icon
-            d->drawLine(iconX + 1, toolY + 6, iconX + 7, toolY, COLOR_WHITE);
-            d->drawLine(iconX + 2, toolY + 6, iconX + 8, toolY, COLOR_WHITE);
-            d->drawPixel(iconX, toolY + 7, COLOR_WHITE);
+            d->drawLine(iconX + 1, toolY + 6, iconX + 7, toolY, PAL.text);
+            d->drawLine(iconX + 2, toolY + 6, iconX + 8, toolY, PAL.text);
+            d->drawPixel(iconX, toolY + 7, PAL.text);
         } else if (strcmp(tool.name, "Bash") == 0) {
             // Terminal icon: >_
-            d->drawLine(iconX, toolY + 1, iconX + 3, toolY + 3, COLOR_WHITE);
-            d->drawLine(iconX, toolY + 5, iconX + 3, toolY + 3, COLOR_WHITE);
-            d->drawFastHLine(iconX + 4, toolY + 6, 4, COLOR_WHITE);
+            d->drawLine(iconX, toolY + 1, iconX + 3, toolY + 3, PAL.text);
+            d->drawLine(iconX, toolY + 5, iconX + 3, toolY + 3, PAL.text);
+            d->drawFastHLine(iconX + 4, toolY + 6, 4, PAL.text);
         } else if (strcmp(tool.name, "Grep") == 0 || strcmp(tool.name, "Glob") == 0) {
             // Magnifying glass
-            d->drawCircle(iconX + 3, toolY + 3, 3, COLOR_WHITE);
-            d->drawLine(iconX + 5, toolY + 5, iconX + 8, toolY + 7, COLOR_WHITE);
+            d->drawCircle(iconX + 3, toolY + 3, 3, PAL.text);
+            d->drawLine(iconX + 5, toolY + 5, iconX + 8, toolY + 7, PAL.text);
         } else if (strcmp(tool.name, "Agent") == 0) {
             // Robot head
-            d->drawRect(iconX + 1, toolY + 2, 7, 5, COLOR_WHITE);
-            d->drawPixel(iconX + 3, toolY + 4, COLOR_WHITE);
-            d->drawPixel(iconX + 5, toolY + 4, COLOR_WHITE);
-            d->drawFastHLine(iconX + 2, toolY, 5, COLOR_WHITE);
+            d->drawRect(iconX + 1, toolY + 2, 7, 5, PAL.text);
+            d->drawPixel(iconX + 3, toolY + 4, PAL.text);
+            d->drawPixel(iconX + 5, toolY + 4, PAL.text);
+            d->drawFastHLine(iconX + 2, toolY, 5, PAL.text);
         } else {
             // Generic gear icon
-            d->drawCircle(iconX + 4, toolY + 3, 2, COLOR_WHITE);
-            d->drawPixel(iconX + 4, toolY, COLOR_WHITE);
-            d->drawPixel(iconX + 4, toolY + 6, COLOR_WHITE);
-            d->drawPixel(iconX + 1, toolY + 3, COLOR_WHITE);
-            d->drawPixel(iconX + 7, toolY + 3, COLOR_WHITE);
+            d->drawCircle(iconX + 4, toolY + 3, 2, PAL.text);
+            d->drawPixel(iconX + 4, toolY, PAL.text);
+            d->drawPixel(iconX + 4, toolY + 6, PAL.text);
+            d->drawPixel(iconX + 1, toolY + 3, PAL.text);
+            d->drawPixel(iconX + 7, toolY + 3, PAL.text);
         }
 
         // Tool name text
         d->setTextSize(1);
-        d->setTextColor(COLOR_WHITE);
+        d->setTextColor(PAL.text);
         d->setCursor(textX, toolY);
         d->print(tool.name);
 
@@ -868,9 +901,9 @@ static void drawFace(DisplayCanvas* d) {
             int16_t barW = SAFE_WIDTH - 4;
             // Scanning line effect
             int16_t scanPos = barX + (int16_t)(fmodf(phase, 1.0f) * barW);
-            d->drawPixel(scanPos, barY, COLOR_WHITE);
-            if (scanPos > barX) d->drawPixel(scanPos - 1, barY, COLOR_WHITE);
-            if (scanPos > barX + 1) d->drawPixel(scanPos - 2, barY, COLOR_WHITE);
+            d->drawPixel(scanPos, barY, PAL.text);
+            if (scanPos > barX) d->drawPixel(scanPos - 1, barY, PAL.text);
+            if (scanPos > barX + 1) d->drawPixel(scanPos - 2, barY, PAL.text);
         }
     } else if (currentState == AvatarState::THINKING) {
         // Fallback: plotting dots when no tool info
@@ -880,7 +913,7 @@ static void drawFace(DisplayCanvas* d) {
             int16_t dotY = cy + 24;
             float anim = sinf(phase * PI + i * 1.0f);
             if (anim > 0.3f) {
-                d->fillCircle(dotX, dotY - (int16_t)(anim * 2), 1, COLOR_WHITE);
+                d->fillCircle(dotX, dotY - (int16_t)(anim * 2), 1, PAL.text);
             }
         }
     }
@@ -895,13 +928,13 @@ static void drawFace(DisplayCanvas* d) {
             float t = progress / 0.4f;
             int16_t endX = checkX + (int16_t)(4 * t);
             int16_t endY = checkY + (int16_t)(4 * t);
-            d->drawLine(checkX, checkY, endX, endY, COLOR_WHITE);
+            d->drawLine(checkX, checkY, endX, endY, PAL.accent);
         } else {
             float t = (progress - 0.4f) / 0.6f;
-            d->drawLine(checkX, checkY, checkX + 4, checkY + 4, COLOR_WHITE);
+            d->drawLine(checkX, checkY, checkX + 4, checkY + 4, PAL.accent);
             int16_t endX = checkX + 4 + (int16_t)(8 * t);
             int16_t endY = checkY + 4 - (int16_t)(8 * t);
-            d->drawLine(checkX + 4, checkY + 4, endX, endY, COLOR_WHITE);
+            d->drawLine(checkX + 4, checkY + 4, endX, endY, PAL.accent);
         }
     }
 
@@ -911,8 +944,8 @@ static void drawFace(DisplayCanvas* d) {
         for (int s = -1; s <= 1; s += 2) {
             int16_t xc = cx + s * 8;
             int16_t yc = cy + 24;
-            d->drawLine(xc - 3, yc - 3, xc + 3, yc + 3, COLOR_WHITE);
-            d->drawLine(xc + 3, yc - 3, xc - 3, yc + 3, COLOR_WHITE);
+            d->drawLine(xc - 3, yc - 3, xc + 3, yc + 3, PAL.accent);
+            d->drawLine(xc + 3, yc - 3, xc - 3, yc + 3, PAL.accent);
         }
     }
 
@@ -927,7 +960,7 @@ static void drawFace(DisplayCanvas* d) {
         for (int i = 0; i < 3; i++) {
             float dotPhase = sinf(boredPhase * 2.0f + i * 1.0f);
             int16_t dotY = bubbleY + (dotPhase > 0.5f ? -1 : 0);
-            d->fillCircle(bubbleX + i * 4, dotY, 1, COLOR_WHITE);
+            d->fillCircle(bubbleX + i * 4, dotY, 1, PAL.face);
         }
     }
 
@@ -945,9 +978,9 @@ static void drawFace(DisplayCanvas* d) {
             int16_t zSize = 2 + i;  // Gets bigger
             if (zy >= SAFE_TOP && zx < SAFE_RIGHT - zSize) {
                 // Draw a Z
-                d->drawFastHLine(zx, zy, zSize, COLOR_WHITE);
-                d->drawLine(zx + zSize - 1, zy, zx, zy + zSize - 1, COLOR_WHITE);
-                d->drawFastHLine(zx, zy + zSize - 1, zSize, COLOR_WHITE);
+                d->drawFastHLine(zx, zy, zSize, PAL.face);
+                d->drawLine(zx + zSize - 1, zy, zx, zy + zSize - 1, PAL.face);
+                d->drawFastHLine(zx, zy + zSize - 1, zSize, PAL.face);
             }
         }
     }
@@ -966,8 +999,8 @@ static void drawFace(DisplayCanvas* d) {
                 int16_t my = cy - 8 + mBounce;
                 if (mx > SAFE_LEFT + 2 && mx < SAFE_RIGHT - 2) {
                     // ! mark: line + dot
-                    d->drawFastVLine(mx, my - 4, 6, COLOR_WHITE);
-                    d->drawPixel(mx, my + 4, COLOR_WHITE);
+                    d->drawFastVLine(mx, my - 4, 6, PAL.accent);
+                    d->drawPixel(mx, my + 4, PAL.accent);
                 }
             }
         }
@@ -1036,25 +1069,25 @@ static void drawNotifications(DisplayCanvas* d) {
 
         if (strcmp(notifs[i].source, "teams") == 0) {
             // Teams icon: "T" in a box
-            d->drawRect(iconX, badgeY, 8, 8, COLOR_WHITE);
+            d->drawRect(iconX, badgeY, 8, 8, PAL.text);
             d->setCursor(iconX + 2, badgeY + 1);
             d->setTextSize(1);
-            d->setTextColor(COLOR_WHITE);
+            d->setTextColor(PAL.text);
             d->print("T");
         } else if (strcmp(notifs[i].source, "slack") == 0) {
             // Slack icon: #
             d->setCursor(iconX, badgeY);
             d->setTextSize(1);
-            d->setTextColor(COLOR_WHITE);
+            d->setTextColor(PAL.text);
             d->print("#");
         } else {
             // Generic bell
-            d->drawCircle(iconX + 3, badgeY + 3, 3, COLOR_WHITE);
-            d->drawPixel(iconX + 3, badgeY + 7, COLOR_WHITE);
+            d->drawCircle(iconX + 3, badgeY + 3, 3, PAL.text);
+            d->drawPixel(iconX + 3, badgeY + 7, PAL.text);
         }
 
         // Notification badge pill (filled rounded rect)
-        d->fillRoundRect(pillX, badgeY, pillW, pillH, 4, COLOR_WHITE);
+        d->fillRoundRect(pillX, badgeY, pillW, pillH, 4, PAL.text);
 
         // Unread count (black text on white pill)
         d->setTextSize(1);
@@ -1066,14 +1099,14 @@ static void drawNotifications(DisplayCanvas* d) {
         uint32_t t = millis();
         if ((t % 2000) < 200) {
             // Quick pulse: invert the badge
-            d->drawRoundRect(pillX - 1, badgeY - 1, pillW + 2, pillH + 2, 5, COLOR_WHITE);
+            d->drawRoundRect(pillX - 1, badgeY - 1, pillW + 2, pillH + 2, 5, PAL.text);
         }
 
         badgeY += pillH + 3;  // Stack multiple notifications
     }
 
     // Reset text color
-    d->setTextColor(COLOR_WHITE);
+    d->setTextColor(PAL.text);
 }
 
 static void drawIdleInfo(DisplayCanvas* d) {
@@ -1081,7 +1114,7 @@ static void drawIdleInfo(DisplayCanvas* d) {
     if (currentState != AvatarState::IDLE) return;
 
     d->setTextSize(1);
-    d->setTextColor(COLOR_WHITE);
+    d->setTextColor(PAL.text);
 
     int16_t x = 2;
     int16_t y = 2;
@@ -1094,15 +1127,15 @@ static void drawIdleInfo(DisplayCanvas* d) {
     if (hasProject) {
         d->setCursor(x, y + line * 10);
         // Folder icon: small open bracket shape
-        d->drawPixel(x, y + line * 10 + 1, COLOR_WHITE);
-        d->drawPixel(x, y + line * 10 + 2, COLOR_WHITE);
-        d->drawPixel(x, y + line * 10 + 3, COLOR_WHITE);
-        d->drawPixel(x, y + line * 10 + 4, COLOR_WHITE);
-        d->drawPixel(x, y + line * 10 + 5, COLOR_WHITE);
-        d->drawPixel(x + 1, y + line * 10, COLOR_WHITE);
-        d->drawPixel(x + 2, y + line * 10, COLOR_WHITE);
-        d->drawPixel(x + 1, y + line * 10 + 6, COLOR_WHITE);
-        d->drawPixel(x + 2, y + line * 10 + 6, COLOR_WHITE);
+        d->drawPixel(x, y + line * 10 + 1, PAL.text);
+        d->drawPixel(x, y + line * 10 + 2, PAL.text);
+        d->drawPixel(x, y + line * 10 + 3, PAL.text);
+        d->drawPixel(x, y + line * 10 + 4, PAL.text);
+        d->drawPixel(x, y + line * 10 + 5, PAL.text);
+        d->drawPixel(x + 1, y + line * 10, PAL.text);
+        d->drawPixel(x + 2, y + line * 10, PAL.text);
+        d->drawPixel(x + 1, y + line * 10 + 6, PAL.text);
+        d->drawPixel(x + 2, y + line * 10 + 6, PAL.text);
         // Project name (truncated to fit left side of screen)
         d->setCursor(x + 5, y + line * 10);
         // Truncate to ~10 chars on 128px OLED (leave room for face)
@@ -1120,11 +1153,11 @@ static void drawIdleInfo(DisplayCanvas* d) {
     if (hasBranch) {
         d->setCursor(x, y + line * 10);
         // Branch icon: small ">" arrow
-        d->drawPixel(x, y + line * 10 + 1, COLOR_WHITE);
-        d->drawPixel(x + 1, y + line * 10 + 2, COLOR_WHITE);
-        d->drawPixel(x + 2, y + line * 10 + 3, COLOR_WHITE);
-        d->drawPixel(x + 1, y + line * 10 + 4, COLOR_WHITE);
-        d->drawPixel(x, y + line * 10 + 5, COLOR_WHITE);
+        d->drawPixel(x, y + line * 10 + 1, PAL.text);
+        d->drawPixel(x + 1, y + line * 10 + 2, PAL.text);
+        d->drawPixel(x + 2, y + line * 10 + 3, PAL.text);
+        d->drawPixel(x + 1, y + line * 10 + 4, PAL.text);
+        d->drawPixel(x, y + line * 10 + 5, PAL.text);
         // Branch name (truncated)
         d->setCursor(x + 5, y + line * 10);
         char truncBranch[12];
@@ -1190,53 +1223,53 @@ static void drawWifiStatus(DisplayCanvas* d) {
     int16_t y = 2;
 
     // WiFi icon: three arcs
-    d->drawPixel(x + 4, y + 8, COLOR_WHITE);  // Center dot
+    d->drawPixel(x + 4, y + 8, PAL.accent);  // Center dot
 
     // Inner arc
-    d->drawPixel(x + 3, y + 6, COLOR_WHITE);
-    d->drawPixel(x + 4, y + 5, COLOR_WHITE);
-    d->drawPixel(x + 5, y + 6, COLOR_WHITE);
+    d->drawPixel(x + 3, y + 6, PAL.accent);
+    d->drawPixel(x + 4, y + 5, PAL.accent);
+    d->drawPixel(x + 5, y + 6, PAL.accent);
 
     // Middle arc
-    d->drawPixel(x + 2, y + 4, COLOR_WHITE);
-    d->drawPixel(x + 3, y + 3, COLOR_WHITE);
-    d->drawPixel(x + 4, y + 2, COLOR_WHITE);
-    d->drawPixel(x + 5, y + 3, COLOR_WHITE);
-    d->drawPixel(x + 6, y + 4, COLOR_WHITE);
+    d->drawPixel(x + 2, y + 4, PAL.accent);
+    d->drawPixel(x + 3, y + 3, PAL.accent);
+    d->drawPixel(x + 4, y + 2, PAL.accent);
+    d->drawPixel(x + 5, y + 3, PAL.accent);
+    d->drawPixel(x + 6, y + 4, PAL.accent);
 
     // Outer arc
-    d->drawPixel(x + 1, y + 2, COLOR_WHITE);
-    d->drawPixel(x + 2, y + 1, COLOR_WHITE);
-    d->drawPixel(x + 3, y + 0, COLOR_WHITE);
-    d->drawPixel(x + 4, y + 0, COLOR_WHITE);
-    d->drawPixel(x + 5, y + 0, COLOR_WHITE);
-    d->drawPixel(x + 6, y + 1, COLOR_WHITE);
-    d->drawPixel(x + 7, y + 2, COLOR_WHITE);
+    d->drawPixel(x + 1, y + 2, PAL.accent);
+    d->drawPixel(x + 2, y + 1, PAL.accent);
+    d->drawPixel(x + 3, y + 0, PAL.accent);
+    d->drawPixel(x + 4, y + 0, PAL.accent);
+    d->drawPixel(x + 5, y + 0, PAL.accent);
+    d->drawPixel(x + 6, y + 1, PAL.accent);
+    d->drawPixel(x + 7, y + 2, PAL.accent);
 
     // Strike-through X (no wifi)
-    d->drawLine(x + 1, y + 1, x + 7, y + 7, COLOR_WHITE);
-    d->drawLine(x + 7, y + 1, x + 1, y + 7, COLOR_WHITE);
+    d->drawLine(x + 1, y + 1, x + 7, y + 7, PAL.accent);
+    d->drawLine(x + 7, y + 1, x + 1, y + 7, PAL.accent);
 
     // BLE icon next to WiFi icon when advertising
     if (_bleProv_isAdvertising()) {
         int16_t bx = x + 12;
         int16_t by = y;
         // Bluetooth "B" rune shape
-        d->drawFastVLine(bx + 2, by, 9, COLOR_WHITE);
-        d->drawPixel(bx + 3, by + 1, COLOR_WHITE);
-        d->drawPixel(bx + 4, by + 2, COLOR_WHITE);
-        d->drawPixel(bx + 3, by + 3, COLOR_WHITE);
-        d->drawPixel(bx + 3, by + 5, COLOR_WHITE);
-        d->drawPixel(bx + 4, by + 6, COLOR_WHITE);
-        d->drawPixel(bx + 3, by + 7, COLOR_WHITE);
+        d->drawFastVLine(bx + 2, by, 9, PAL.accent);
+        d->drawPixel(bx + 3, by + 1, PAL.accent);
+        d->drawPixel(bx + 4, by + 2, PAL.accent);
+        d->drawPixel(bx + 3, by + 3, PAL.accent);
+        d->drawPixel(bx + 3, by + 5, PAL.accent);
+        d->drawPixel(bx + 4, by + 6, PAL.accent);
+        d->drawPixel(bx + 3, by + 7, PAL.accent);
         // Arrow tips
-        d->drawPixel(bx, by + 2, COLOR_WHITE);
-        d->drawPixel(bx + 1, by + 3, COLOR_WHITE);
-        d->drawPixel(bx, by + 6, COLOR_WHITE);
-        d->drawPixel(bx + 1, by + 5, COLOR_WHITE);
+        d->drawPixel(bx, by + 2, PAL.accent);
+        d->drawPixel(bx + 1, by + 3, PAL.accent);
+        d->drawPixel(bx, by + 6, PAL.accent);
+        d->drawPixel(bx + 1, by + 5, PAL.accent);
         // Blink the icon
         if ((millis() % 1000) < 500) {
-            d->drawPixel(bx + 5, by + 4, COLOR_WHITE);
+            d->drawPixel(bx + 5, by + 4, PAL.accent);
         }
     }
 }
@@ -1256,7 +1289,7 @@ static void drawXpBar(DisplayCanvas* d) {
 
     // Level text: "Lv5" on the left
     d->setTextSize(1);
-    d->setTextColor(COLOR_WHITE);
+    d->setTextColor(PAL.accent);
     char lvlStr[12];
     snprintf(lvlStr, sizeof(lvlStr), "Lv%d", xp.level);
     d->setCursor(barX, barY - 1);
@@ -1268,12 +1301,12 @@ static void drawXpBar(DisplayCanvas* d) {
     int16_t xpBarW = barW - textW;
 
     // Bar outline
-    d->drawRect(xpBarX, barY, xpBarW, barH, COLOR_WHITE);
+    d->drawRect(xpBarX, barY, xpBarW, barH, PAL.accent);
 
     // Filled progress
     int16_t fillW = (int16_t)((float)xp.progress / 100.0f * (xpBarW - 2));
     if (fillW > 0) {
-        d->fillRect(xpBarX + 1, barY + 1, fillW, barH - 2, COLOR_WHITE);
+        d->fillRect(xpBarX + 1, barY + 1, fillW, barH - 2, PAL.accent);
     }
 }
 

@@ -95,8 +95,11 @@ void init() {
     // Virtual canvas at 120x120, scaled 2x to fill 240x240
     canvas = new lgfx::LGFX_Sprite(lcd);
     canvas->setColorDepth(16);
-    canvas->createSprite(SCREEN_WIDTH, SCREEN_HEIGHT);
+    void* buf = canvas->createSprite(SCREEN_WIDTH, SCREEN_HEIGHT);
     canvas->fillSprite(0);
+
+    Serial.printf("[Display] sprite buf=%p depth=%d heap=%u\n",
+                  buf, (int)canvas->getColorDepth(), (unsigned)ESP.getFreeHeap());
 
 #ifdef DISPLAY_COLOR_TEST
     // Build with -DDISPLAY_COLOR_TEST to prove the colour path end to end:
@@ -114,8 +117,26 @@ void init() {
             lcd->setCursor(70, h * i + h / 2 - 8);
             lcd->print(names[i]);
         }
-        Serial.println("[Display] COLOUR TEST: bars are R/G/B/W top to bottom");
-        delay(8000);
+        Serial.println("[Display] COLOUR TEST phase A: direct-to-panel R/G/B/W");
+        delay(12000);
+
+        // Phase B: the identical bars, but drawn into the sprite and pushed
+        // through pushRotateZoom — the exact path the avatar uses. Direct
+        // drawing and the sprite contents are both known good, so if these
+        // bars differ from phase A, the push is where colour is being lost.
+        canvas->fillSprite(0);
+        const int sh = SCREEN_HEIGHT / 4;
+        for (int i = 0; i < 4; i++) {
+            canvas->fillRect(0, sh * i, SCREEN_WIDTH, sh, bars[i]);
+            canvas->setTextColor(0x0000);
+            canvas->setTextSize(1);
+            canvas->setCursor(34, sh * i + sh / 2 - 4);
+            canvas->print(names[i]);
+        }
+        canvas->pushRotateZoom(LCD_PHYS_WIDTH / 2, LCD_PHYS_HEIGHT / 2,
+                               0, (float)LCD_SCALE, (float)LCD_SCALE);
+        Serial.println("[Display] COLOUR TEST phase B: same bars via the sprite");
+        delay(18000);
         lcd->fillScreen(0);
     }
 #endif

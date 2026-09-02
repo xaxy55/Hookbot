@@ -25,8 +25,33 @@ struct AvatarParams {
     float browY      = 0.0f;  // Eyebrow vertical offset
 };
 
+// Per-element colours, RGB565. Every element defaults to white, which is what
+// the avatar has always been, so an unconfigured device looks unchanged.
+//
+// On the monochrome OLED there is only one ink colour, so setPalette() is a
+// no-op there and every field stays COLOR_WHITE — the drawing code does not
+// need to care which panel it is on.
+struct AvatarPalette {
+    uint16_t face;        // outline, eyebrows, thought bubbles, Zzz
+    uint16_t eyes;
+    uint16_t mouth;
+    uint16_t headphones;  // shown while music plays
+    uint16_t crown;
+    uint16_t hat;
+    uint16_t glasses;     // glasses and monocle
+    uint16_t accessory;   // horns, halo, cigar, bow tie
+    uint16_t music;       // now-playing track text
+    uint16_t text;        // project, branch, tool and task text
+    uint16_t accent;      // XP bar, wifi, state markers
+};
+
 // Avatar drawing and animation subsystem
 namespace Avatar {
+    const AvatarPalette& palette();
+    void setPalette(const AvatarPalette& p);
+    /// Parse a "#RRGGBB" string into RGB565. Returns `fallback` if malformed.
+    uint16_t colorFromHex(const char* hex, uint16_t fallback);
+
     void init();
     void setState(AvatarState state);
     AvatarState getState();
