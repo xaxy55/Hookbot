@@ -732,6 +732,25 @@ async fn check_common_paths(client: &reqwest::Client, url: &str, findings: &Find
         ("/docker-compose.yml", "Docker compose", Severity::High),
     ];
 
+    // A single-page app answers *every* unknown path with 200 and its
+    // index.html. Without a baseline, that reads as "/.env, /backup.sql and
+    // /wp-admin are all exposed" — twelve criticals that are really one SPA
+    // rewrite. Fingerprint the fallback first and discount anything identical
+    // to it.
+    let baseline = {
+        let probe = format!(
+            "{url}/hookbot-scanner-probe-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        );
+        match client.get(&probe).send().await {
+            Ok(r) if r.status().as_u16() == 200 => r.text().await.ok(),
+            _ => None,
+        }
+    };
+
     // Fetch in parallel
     let mut handles = Vec::new();
     for (path, desc, sev) in &sensitive {
@@ -741,6 +760,7 @@ async fn check_common_paths(client: &reqwest::Client, url: &str, findings: &Find
         let desc = desc.to_string();
         let sev = *sev;
         let f = findings.clone();
+        let baseline = baseline.clone();
 
         handles.push(tokio::spawn(async move {
             let resp = match c.get(&full).send().await {
@@ -748,16 +768,44 @@ async fn check_common_paths(client: &reqwest::Client, url: &str, findings: &Find
                 Err(_) => return,
             };
 
-            if resp.status().as_u16() == 200 {
-                let len = resp.content_length().unwrap_or(0);
-                if len > 0 && sev != Severity::Info {
-                    add(&f, sev, "A01:Broken Access Control",
-                        &format!("Sensitive path exposed: {path}"),
-                        &format!("{desc} accessible — HTTP 200, {len} bytes"),
-                        &format!("Block access to {path} via reverse proxy.")
-                    ).await;
-                }
+            if resp.status().as_u16() != 200 || sev == Severity::Info {
+                return;
             }
+
+            let content_type = resp
+                .headers()
+                .get("content-type")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("")
+                .to_string();
+            let body = match resp.text().await {
+                Ok(b) => b,
+                Err(_) => return,
+            };
+            if body.is_empty() {
+                return;
+            }
+
+            // Byte-identical to what an unknown path returns: a rewrite, not a file.
+            if baseline.as_deref() == Some(body.as_str()) {
+                return;
+            }
+
+            // None of these are HTML. Being served HTML means a catch-all
+            // handled it, even if the body varies (a per-path title, say).
+            let expects_html = path == "/wp-admin" || path == "/actuator" || path == "/server-status";
+            if !expects_html
+                && (content_type.starts_with("text/html")
+                    || body.trim_start().to_ascii_lowercase().starts_with("<!doctype html"))
+            {
+                return;
+            }
+
+            add(&f, sev, "A01:Broken Access Control",
+                &format!("Sensitive path exposed: {path}"),
+                &format!("{desc} accessible — HTTP 200, {} bytes", body.len()),
+                &format!("Block access to {path} via reverse proxy.")
+            ).await;
         }));
     }
 

@@ -416,10 +416,13 @@ async fn login_cmd(
             let password = match password {
                 Some(p) => p,
                 None => {
-                    eprint!("  Password:  ");
-                    let mut p = String::new();
-                    std::io::stdin().read_line(&mut p).map_err(|e| e.to_string())?;
-                    p.trim().to_string()
+                    // Never echo. Typing a password into a visible prompt puts
+                    // it in scrollback and, for anyone who pastes the line,
+                    // shell history.
+                    rpassword::prompt_password("  Password:  ")
+                        .map_err(|e| format!("Could not read password: {e}"))?
+                        .trim()
+                        .to_string()
                 }
             };
 
@@ -438,6 +441,20 @@ async fn login_cmd(
                     .get("error")
                     .and_then(|v: &serde_json::Value| v.as_str())
                     .unwrap_or("Login failed");
+                if status.as_u16() == 429 {
+                    // "Try again later" with no number is not actionable.
+                    let secs = body
+                        .get("retry_after_secs")
+                        .and_then(|v: &serde_json::Value| v.as_u64());
+                    return Err(match secs {
+                        Some(s) => format!(
+                            "{msg} Wait {s}s and retry — the limit is per client IP, \
+                             and a wrong password counts. Use --password to avoid \
+                             burning attempts on typos."
+                        ),
+                        None => format!("{msg} (HTTP {status})"),
+                    });
+                }
                 return Err(format!("{msg} (HTTP {status})"));
             }
 

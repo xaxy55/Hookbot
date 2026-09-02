@@ -26,6 +26,13 @@
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# style-src allows inline because the SPA sets style attributes (colour
+		# swatches, progress widths). img-src allows https: for remote album art
+		# from Spotify's CDN. Everything executable is same-origin only.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
+		# Do not advertise the upstream's exact version.
+		-Server
 	}
 
 	# API to the Rust server; everything else is the static SPA.
