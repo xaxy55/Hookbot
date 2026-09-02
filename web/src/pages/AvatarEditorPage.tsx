@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { BOARDS } from '../types/boards';
 import { getDevices, updateDeviceConfig, getDeviceConfig, pushConfig, getOwnedItems, getPetState, selectPet } from '../api/client';
 import type { AvatarState } from '../types';
 
@@ -66,6 +67,26 @@ export default function AvatarEditorPage() {
   const timeRef = useRef(0);
 
   const { data: devices } = useQuery({ queryKey: ['devices'], queryFn: getDevices });
+
+  // Preview the panel the selected device actually has. The round board clips
+  // its canvas corners behind the bezel, so a square preview would show art
+  // that never reaches the glass.
+  const deviceType = devices?.find(d => d.id === selectedDevice)?.device_type ?? '';
+  const preview = (() => {
+    switch (deviceType) {
+      case 'xiao_c6_gc9a01_round':
+        return { w: 360, h: 360, round: true, label: '240 x 240 Round LCD (3x)' };
+      case 'esp32_4848s040c_lcd':
+        return { w: 360, h: 360, round: false, label: '480 x 480 LCD (3x)' };
+      default:
+        return {
+          w: 384,
+          h: 192,
+          round: false,
+          label: `${BOARDS.esp32_oled.badge} 128 x 64 (2x)`,
+        };
+    }
+  })();
 
   const { data: deviceConfig } = useQuery({
     queryKey: ['config', selectedDevice],
@@ -373,7 +394,7 @@ export default function AvatarEditorPage() {
           {/* Canvas */}
           <div className="rounded-xl border border-edge bg-black p-6 flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-3">
-              <span className="text-[10px] text-dim font-mono uppercase tracking-wider">128 x 64 OLED Preview (2x)</span>
+              <span className="text-[10px] text-dim font-mono uppercase tracking-wider">{preview.label} Preview</span>
               <button
                 onClick={() => { setAnimating(!animating); timeRef.current = 0; }}
                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
@@ -387,10 +408,17 @@ export default function AvatarEditorPage() {
             </div>
             <canvas
               ref={canvasRef}
-              width={384}
-              height={192}
-              className="rounded-lg border border-edge cursor-crosshair"
-              style={{ imageRendering: 'pixelated', width: '100%', maxWidth: 512 }}
+              width={preview.w}
+              height={preview.h}
+              className={`border border-edge cursor-crosshair ${preview.round ? 'rounded-full' : 'rounded-lg'}`}
+              style={{
+                imageRendering: 'pixelated',
+                width: '100%',
+                maxWidth: preview.round ? 360 : 512,
+                // A round panel only shows the inscribed circle; clipping the
+                // preview the same way is the point of this view.
+                aspectRatio: `${preview.w} / ${preview.h}`,
+              }}
               onMouseDown={e => { setDragging(true); handleCanvasInteraction(e); }}
               onMouseMove={handleCanvasInteraction}
               onMouseUp={() => setDragging(false)}
