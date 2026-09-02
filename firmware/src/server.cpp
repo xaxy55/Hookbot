@@ -37,6 +37,7 @@ static int notificationCount = 0;
 static XpData xpData = {0, 0, 0, "Newbie"};
 static ProjectInfo projectInfo = {"", 0};
 static BranchInfo branchInfo = {"", 0};
+static MusicInfo musicInfo = {};
 static PetData petData = {50, 50, 0, 0, 0, 0, 0, PetType::DOG, {true, false, false, false}};
 static PomodoroData pomodoroData = {
     PomodoroSession::FOCUS, PomodoroStatus::IDLE,
@@ -941,6 +942,22 @@ void init(std::function<void(AvatarState)> onStateChange) {
     );
     server.addHandler(branchHandler);
 
+    // POST /music - now-playing pushed by the management server
+    AsyncCallbackJsonWebHandler* musicHandler = new AsyncCallbackJsonWebHandler(
+        "/music",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+            musicInfo.playing = body["playing"] | false;
+            strncpy(musicInfo.track, body["track"] | "", MAX_TRACK_LEN - 1);
+            musicInfo.track[MAX_TRACK_LEN - 1] = '\0';
+            strncpy(musicInfo.artist, body["artist"] | "", MAX_TRACK_LEN - 1);
+            musicInfo.artist[MAX_TRACK_LEN - 1] = '\0';
+            musicInfo.lastUpdatedAt = millis();
+            req->send(200, "application/json", "{\"ok\":true}");
+        }
+    );
+    server.addHandler(musicHandler);
+
 #ifndef NO_SOUND
     // POST /sounds - set custom sound pack melodies
     AsyncCallbackJsonWebHandler* soundsHandler = new AsyncCallbackJsonWebHandler(
@@ -1817,6 +1834,10 @@ ProjectInfo& getProject() {
 
 BranchInfo& getBranch() {
     return branchInfo;
+}
+
+MusicInfo& getMusic() {
+    return musicInfo;
 }
 
 PetData& getPetData() {

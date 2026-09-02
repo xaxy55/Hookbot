@@ -95,6 +95,15 @@ struct BranchInfo {
     uint32_t lastUpdatedAt;  // millis() when last set
 };
 
+// Now-playing, pushed from the management server (POST /music)
+#define MAX_TRACK_LEN 28
+struct MusicInfo {
+    char track[MAX_TRACK_LEN];
+    char artist[MAX_TRACK_LEN];
+    bool playing;
+    uint32_t lastUpdatedAt;  // millis() when last set
+};
+
 // XP / Level data from management server
 struct XpData {
     int level;
@@ -151,6 +160,9 @@ namespace HookbotServer {
     XpData& getXpData();
     ProjectInfo& getProject();
     BranchInfo& getBranch();
+
+    /// Now-playing track, or an empty/!playing struct when nothing is set.
+    MusicInfo& getMusic();
     void sendVoiceToServer(const uint8_t* data, size_t size);
     PetData& getPetData();
     PomodoroData& getPomodoro();

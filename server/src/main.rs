@@ -30,6 +30,8 @@ async fn main() {
     // Start background services
     services::device_poller::start(pool.clone(), config.poll_interval_secs, config.log_retention_hours);
 
+    // Mirror Spotify playback onto device displays (no-op unless configured).
+    services::music_pusher::start(pool.clone(), Arc::new(config.clone()), 10);
     // Initialize command queue for cloud-connected devices
     let command_queue = services::command_queue::CommandQueue::new();
     command_queue.start_expiry_task(pool.clone());

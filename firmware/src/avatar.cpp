@@ -432,6 +432,31 @@ static void drawFace(DisplayCanvas* d) {
 
     const RuntimeConfig& cfg = HookbotServer::getConfig();
 
+    // ─── Headphones (worn while music is playing) ─────────
+    // Not a config accessory: they appear on their own so the avatar visibly
+    // reacts to playback, and disappear when the music stops.
+    {
+        const MusicInfo& music = HookbotServer::getMusic();
+        // Ignore stale pushes so the headphones do not stay on if the server
+        // stops updating (e.g. it went away mid-track).
+        if (music.playing && (millis() - music.lastUpdatedAt) < 120000) {
+            int16_t bandY = cy - 26;   // arc clears the top of the head
+            int16_t cupY  = cy - 12;
+            int16_t cupW  = 4;
+            int16_t cupH  = 11;
+            int16_t side  = 19;        // just outside the face
+
+            // Headband: three short segments approximate an arc cheaply.
+            d->drawLine(cx - side, cy - 14, cx - 11, bandY, COLOR_WHITE);
+            d->drawFastHLine(cx - 11, bandY, 22, COLOR_WHITE);
+            d->drawLine(cx + 11, bandY, cx + side, cy - 14, COLOR_WHITE);
+
+            // Ear cups
+            d->fillRect(cx - side - 1, cupY, cupW, cupH, COLOR_WHITE);
+            d->fillRect(cx + side - 2, cupY, cupW, cupH, COLOR_WHITE);
+        }
+    }
+
     // ─── Top Hat (CEO standard issue) ─────────
     if (cfg.topHat) {
         int16_t hatBrimY = cy - 22;
@@ -706,6 +731,52 @@ static void drawFace(DisplayCanvas* d) {
             strncpy(truncName, proj.name, 13);
             truncName[13] = '\0';
             d->print(truncName);
+        }
+    }
+
+    // ─── Now playing (left side, above the branch line) ────────────
+    {
+        const MusicInfo& music = HookbotServer::getMusic();
+        if (music.playing && (millis() - music.lastUpdatedAt) < 120000
+            && strlen(music.track) > 0) {
+            int16_t y = SAFE_BOTTOM - 28;
+            int16_t x = SAFE_LEFT + 2;
+
+            // Small note glyph: stem plus filled head.
+            d->drawFastVLine(x + 3, y, 6, COLOR_WHITE);
+            d->fillRect(x + 1, y + 5, 3, 2, COLOR_WHITE);
+            d->drawFastHLine(x + 3, y, 3, COLOR_WHITE);
+
+            // "Track - Artist", scrolled when it does not fit the safe width.
+            char line[MAX_TRACK_LEN * 2 + 4];
+            if (strlen(music.artist) > 0) {
+                snprintf(line, sizeof(line), "%s - %s", music.track, music.artist);
+            } else {
+                snprintf(line, sizeof(line), "%s", music.track);
+            }
+
+            int16_t textX = x + 8;
+            int16_t availW = SAFE_RIGHT - 2 - textX;
+            int16_t maxChars = availW / 6;          // 6px per char at size 1
+            int16_t len = (int16_t)strlen(line);
+
+            d->setTextSize(1);
+            d->setTextColor(COLOR_WHITE);
+            if (len <= maxChars) {
+                d->setCursor(textX, y);
+                d->print(line);
+            } else {
+                // Scroll one character at a time, pausing at each end so the
+                // title is actually readable rather than sliding past.
+                int16_t steps = len - maxChars;
+                uint32_t phase = (millis() / 400) % (uint32_t)(steps + 6);
+                int16_t offset = (int16_t)(phase > (uint32_t)steps ? steps : phase);
+                char window[64];
+                strncpy(window, line + offset, maxChars);
+                window[maxChars] = '\0';
+                d->setCursor(textX, y);
+                d->print(window);
+            }
         }
     }
 

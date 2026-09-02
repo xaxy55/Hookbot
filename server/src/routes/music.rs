@@ -376,11 +376,32 @@ pub async fn now_playing(
         let conn = db.lock().unwrap();
         resolve_device_id(&conn, q.device_id.as_deref())?
     };
+    Ok(Json(current_track(&db, &config, &device_id).await?))
+}
 
+fn nothing_playing() -> NowPlaying {
+    NowPlaying {
+        is_playing: false,
+        track_name: None,
+        artist_name: None,
+        album_name: None,
+        album_art_url: None,
+        progress_ms: None,
+        duration_ms: None,
+    }
+}
+
+/// Shared by the HTTP route and the background pusher that mirrors playback
+/// onto the device display.
+pub(crate) async fn current_track(
+    db: &DbPool,
+    config: &AppConfig,
+    device_id: &str,
+) -> Result<NowPlaying, AppError> {
     // Nothing connected yet is a normal state, not an error — the UI renders
     // an empty player and a Connect button.
-    let Some(token) = access_token(&db, &config, &device_id).await? else {
-        return Ok(Json(NowPlaying {
+    let Some(token) = access_token(db, config, device_id).await? else {
+        return Ok(NowPlaying {
             is_playing: false,
             track_name: None,
             artist_name: None,
@@ -388,7 +409,7 @@ pub async fn now_playing(
             album_art_url: None,
             progress_ms: None,
             duration_ms: None,
-        }));
+        });
     };
 
     let res = reqwest::Client::new()
@@ -400,15 +421,7 @@ pub async fn now_playing(
 
     // 204 means "nothing is playing right now", which is not a failure.
     if res.status() == StatusCode::NO_CONTENT {
-        return Ok(Json(NowPlaying {
-            is_playing: false,
-            track_name: None,
-            artist_name: None,
-            album_name: None,
-            album_art_url: None,
-            progress_ms: None,
-            duration_ms: None,
-        }));
+        return Ok(nothing_playing());
     }
     if !res.status().is_success() {
         return Err(AppError::Internal(format!("Spotify returned {}", res.status())));
@@ -420,7 +433,7 @@ pub async fn now_playing(
         .map_err(|e| AppError::Internal(format!("Spotify sent invalid JSON: {e}")))?;
     let item = &body["item"];
 
-    Ok(Json(NowPlaying {
+    Ok(NowPlaying {
         is_playing: body["is_playing"].as_bool().unwrap_or(false),
         track_name: item["name"].as_str().map(str::to_string),
         artist_name: item["artists"][0]["name"].as_str().map(str::to_string),
@@ -428,7 +441,7 @@ pub async fn now_playing(
         album_art_url: item["album"]["images"][0]["url"].as_str().map(str::to_string),
         progress_ms: body["progress_ms"].as_i64(),
         duration_ms: item["duration_ms"].as_i64(),
-    }))
+    })
 }
 
 /// Return a usable Spotify access token for the device, refreshing it first if
