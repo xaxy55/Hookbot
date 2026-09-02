@@ -5,6 +5,7 @@ import {
   getDeskLights,
   createDeskLight,
   pairHueBridge,
+  getBridgeLights,
   updateDeskLight,
   deleteDeskLight,
   triggerDeskLightAction,
@@ -202,6 +203,8 @@ export default function DeskLightsPage() {
               </div>
             </div>
 
+            {light.provider === 'hue' && light.has_api_key && <LightSetup light={light} />}
+
             <div>
               <p className="text-xs font-medium text-muted mb-2">State Colors (click to preview)</p>
               <div className="flex gap-2 flex-wrap">
@@ -227,6 +230,120 @@ export default function DeskLightsPage() {
             <p className="text-sm">Add a Philips Hue bridge or WLED controller to sync your desk lighting with hookbot states.</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+
+/** Pick which bulbs this bridge drives, and which colour each scenario uses.
+ *  The server applies these automatically when the device's state changes. */
+function LightSetup({ light }: { light: DeskLightConfig }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+
+  const { data: bridge, isLoading, error } = useQuery({
+    queryKey: ['bridgeLights', light.id],
+    queryFn: () => getBridgeLights(light.id),
+    enabled: open,
+    retry: false,
+  });
+
+  const [selected, setSelected] = useState<string[]>(light.light_ids || []);
+  const [colors, setColors] = useState<Record<string, string>>({
+    ...DEFAULT_STATE_COLORS,
+    ...(light.state_colors || {}),
+  });
+
+  const save = useMutation({
+    mutationFn: () =>
+      updateDeskLight(light.id, { light_ids: selected, state_colors: colors }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deskLights'] });
+      toast('Saved — the lights will follow your device from now on', 'success');
+    },
+    onError: (e: Error) => toast(e.message, 'error'),
+  });
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="mb-3 rounded-lg border border-border px-3 py-1.5 text-xs hover:border-brand/50"
+      >
+        Choose bulbs & scenarios
+      </button>
+    );
+  }
+
+  return (
+    <div className="mb-3 rounded-lg border border-border bg-canvas p-3 space-y-4">
+      <div>
+        <p className="text-xs font-medium text-muted mb-2">Bulbs on this bridge</p>
+        {isLoading && <p className="text-xs text-dim">Asking the bridge…</p>}
+        {error && (
+          <p className="text-xs text-red-400">
+            Could not read the bridge: {(error as Error).message}
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {bridge?.lights.map(b => (
+            <label
+              key={b.id}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs cursor-pointer ${
+                selected.includes(b.id) ? 'border-brand/60 bg-brand/10' : 'border-border'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={selected.includes(b.id)}
+                onChange={e =>
+                  setSelected(prev =>
+                    e.target.checked ? [...prev, b.id] : prev.filter(x => x !== b.id),
+                  )
+                }
+              />
+              {b.name}
+              {!b.reachable && <span className="text-dim">(unreachable)</span>}
+            </label>
+          ))}
+          {bridge && bridge.lights.length === 0 && (
+            <p className="text-xs text-dim">The bridge reported no bulbs.</p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-xs font-medium text-muted mb-2">
+          Colour per scenario — applied when the device enters that state
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {Object.keys(DEFAULT_STATE_COLORS).map(state => (
+            <label key={state} className="flex items-center gap-2 text-xs">
+              <input
+                type="color"
+                value={colors[state] || '#ffffff'}
+                onChange={e => setColors(c => ({ ...c, [state]: e.target.value }))}
+                className="h-6 w-8 rounded border border-border bg-transparent"
+              />
+              {state}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => save.mutate()}
+          disabled={save.isPending}
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand/90 disabled:opacity-50"
+        >
+          {save.isPending ? 'Saving…' : 'Save'}
+        </button>
+        <button onClick={() => setOpen(false)} className="text-xs text-subtle hover:text-fg-2">
+          Close
+        </button>
       </div>
     </div>
   );

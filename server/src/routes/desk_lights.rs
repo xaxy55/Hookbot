@@ -363,3 +363,117 @@ pub async fn hue_pair(
         "Pairing timed out: {last_error}. Press the round button on the bridge, then try again."
     )))
 }
+
+/// GET /api/desk-lights/:id/bridge-lights — enumerate the bulbs the bridge
+/// knows about, so the UI can offer a picker rather than asking for raw ids.
+pub async fn bridge_lights(
+    State(db): State<DbPool>,
+    Extension(config): Extension<Arc<AppConfig>>,
+    Path(id): Path<String>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let (bridge_ip, enc_key) = {
+        let conn = db.lock().unwrap();
+        conn.query_row(
+            "SELECT COALESCE(bridge_ip, ''), COALESCE(api_key_enc, '') FROM desk_lights WHERE id = ?1",
+            [&id],
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
+        )
+        .map_err(|_| AppError::NotFound("Light config not found".into()))?
+    };
+    if enc_key.is_empty() {
+        return Err(AppError::BadRequest("This bridge is not paired yet.".into()));
+    }
+    let token = crypto::decrypt(&config.session_secret, &enc_key)
+        .map_err(|e| AppError::Internal(format!("Stored credential unreadable: {e}")))?;
+
+    let client = bridge_client()?;
+    let path = format!("/api/{token}/lights");
+    let mut res = client.get(format!("https://{bridge_ip}{path}")).send().await;
+    if res.is_err() {
+        res = client.get(format!("http://{bridge_ip}{path}")).send().await;
+    }
+    let res = res.map_err(|e| AppError::Internal(format!("Bridge unreachable: {e}")))?;
+    let body: serde_json::Value = res
+        .json()
+        .await
+        .map_err(|e| AppError::Internal(format!("Bridge sent invalid JSON: {e}")))?;
+
+    // The bridge returns an object keyed by light id; flatten to a list.
+    let mut lights = Vec::new();
+    if let Some(obj) = body.as_object() {
+        for (lid, v) in obj {
+            lights.push(serde_json::json!({
+                "id": lid,
+                "name": v["name"].as_str().unwrap_or("(unnamed)"),
+                "on": v["state"]["on"].as_bool().unwrap_or(false),
+                "reachable": v["state"]["reachable"].as_bool().unwrap_or(true),
+            }));
+        }
+    }
+    lights.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
+    Ok(Json(serde_json::json!({ "lights": lights })))
+}
+
+/// Apply the colour mapped to `state` for every enabled light of a device.
+/// Called when a device's state actually changes; a device with no lights, no
+/// mapping for that state, or an unreachable bridge is a no-op, not an error.
+pub async fn apply_state_to_lights(db: &DbPool, config: &AppConfig, device_id: &str, state: &str) {
+    let rows: Vec<(String, String, String, String, String)> = {
+        let Ok(conn) = db.lock() else { return };
+        let Ok(mut stmt) = conn.prepare(
+            "SELECT id, COALESCE(bridge_ip,''), COALESCE(api_key_enc,''), light_ids, state_colors \
+             FROM desk_lights WHERE device_id = ?1 AND provider = 'hue' AND enabled = 1",
+        ) else {
+            return;
+        };
+        let Ok(mapped) = stmt.query_map([device_id], |r| {
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
+        }) else {
+            return;
+        };
+        mapped.filter_map(Result::ok).collect()
+    };
+
+    for (_id, bridge_ip, enc_key, light_ids_json, colors_json) in rows {
+        if bridge_ip.is_empty() || enc_key.is_empty() {
+            continue;
+        }
+        let colors: serde_json::Value =
+            serde_json::from_str(&colors_json).unwrap_or(serde_json::Value::Null);
+        let Some(hex) = colors[state].as_str() else {
+            continue; // no colour chosen for this scenario
+        };
+        let light_ids: Vec<String> = serde_json::from_str(&light_ids_json).unwrap_or_default();
+        if light_ids.is_empty() {
+            continue;
+        }
+        let Ok(token) = crypto::decrypt(&config.session_secret, &enc_key) else {
+            continue;
+        };
+
+        let mut body = serde_json::Map::new();
+        body.insert("on".into(), serde_json::json!(true));
+        if let Some((h, sat)) = hex_to_hue_sat(hex) {
+            body.insert("hue".into(), serde_json::json!(h));
+            body.insert("sat".into(), serde_json::json!(sat));
+        }
+        let payload = serde_json::Value::Object(body);
+        let Ok(client) = bridge_client() else { continue };
+
+        for lid in light_ids {
+            let path = format!("/api/{token}/lights/{lid}/state");
+            let mut r = client
+                .put(format!("https://{bridge_ip}{path}"))
+                .json(&payload)
+                .send()
+                .await;
+            if r.is_err() {
+                r = client.put(format!("http://{bridge_ip}{path}")).json(&payload).send().await;
+            }
+            if let Err(e) = r {
+                tracing::debug!("Hue light {lid} not updated: {e}");
+            }
+        }
+        tracing::info!("Desk lights set to '{state}' colour {hex} for device {device_id}");
+    }
+}

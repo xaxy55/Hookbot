@@ -21,6 +21,18 @@ pub fn init(path: &Path) -> DbPool {
     Arc::new(Mutex::new(conn))
 }
 
+/// Open an in-memory database carrying the real schema and migrations.
+/// Used by unit tests so they exercise the same tables as production.
+#[cfg(test)]
+pub fn open_memory() -> Connection {
+    let conn = Connection::open_in_memory().expect("Failed to open in-memory database");
+    conn.execute_batch("PRAGMA foreign_keys=ON;")
+        .expect("Failed to set pragmas");
+    conn.execute_batch(SCHEMA).expect("Failed to create schema");
+    run_migrations(&conn);
+    conn
+}
+
 fn run_migrations(conn: &Connection) {
     let migrations: &[&str] = &[
         "ALTER TABLE devices ADD COLUMN device_type TEXT",
@@ -425,14 +437,18 @@ fn run_migrations(conn: &Connection) {
         )",
         "CREATE INDEX IF NOT EXISTS idx_user_api_tokens_token ON user_api_tokens(token)",
         "CREATE INDEX IF NOT EXISTS idx_user_api_tokens_user ON user_api_tokens(user_id, revoked_at)",
-        // QR login codes (temporary, for mobile app login)
-        "CREATE TABLE IF NOT EXISTS qr_login_codes (
-            code TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            used INTEGER NOT NULL DEFAULT 0,
+        // Phone pairing tokens: the QR code shown in the dashboard carries one of
+        // these. Short-lived and single-use, and only the SHA-256 of the token is
+        // stored so a database leak cannot be replayed against /api/auth/pair/redeem.
+        // user_id is NULL in single-user (admin password) mode.
+        "CREATE TABLE IF NOT EXISTS pairing_tokens (
+            token_hash TEXT PRIMARY KEY,
+            user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
             expires_at TEXT NOT NULL,
+            used_at TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )",
+        "CREATE INDEX IF NOT EXISTS idx_pairing_tokens_expires ON pairing_tokens(expires_at)",
     ];
 
     for sql in migrations {

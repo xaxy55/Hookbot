@@ -20,6 +20,7 @@ pub mod mood_learning;
 pub mod music;
 pub mod notifications;
 pub mod ota;
+pub mod pairing;
 pub mod pet;
 pub mod project_routes;
 pub mod sandbox;

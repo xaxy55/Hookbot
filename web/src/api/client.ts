@@ -17,6 +17,13 @@ const BASE = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}/api`
   : '/api';
 
+/**
+ * Origin the API is reachable at — what a phone has to be pointed at.
+ * Falls back to this page's origin when the dashboard is served by the server itself.
+ */
+export const apiOrigin = (): string =>
+  (import.meta.env.VITE_API_BASE_URL || window.location.origin).replace(/\/+$/, '');
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -69,8 +76,11 @@ export const createApiToken = (data: { name: string }) =>
 export const revokeApiToken = (id: string) =>
   request<{ ok: boolean }>(`/account/tokens/${id}`, { method: 'DELETE' });
 
-export const generateQrLogin = () =>
-  request<{ code: string; expires_at: string }>('/account/qr-login', { method: 'POST' });
+/** Mint a short-lived, single-use token for pairing a phone by QR code. */
+export const createPairingToken = () =>
+  request<{ token: string; expires_at: string; expires_in_secs: number }>('/auth/pair', {
+    method: 'POST',
+  });
 
 // Devices
 export const getDevices = () => request<DeviceWithStatus[]>('/devices');
@@ -1342,6 +1352,17 @@ export const updateDeskLight = (id: string, data: {
   state_colors?: Record<string, string>;
   enabled?: boolean;
 }) => request<{ ok: boolean }>(`/desk-lights/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export interface BridgeLight {
+  id: string;
+  name: string;
+  on: boolean;
+  reachable: boolean;
+}
+
+/** Enumerate the bulbs the paired bridge knows about. */
+export const getBridgeLights = (id: string) =>
+  request<{ lights: BridgeLight[] }>(`/desk-lights/${id}/bridge-lights`);
 
 /** Polls the bridge for up to ~30s while the link button is pressed. The
  *  credential is stored encrypted server-side and never returned. */

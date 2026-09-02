@@ -14,7 +14,7 @@ struct FailureState {
 
 type FailureMap = Arc<Mutex<HashMap<String, FailureState>>>;
 
-pub fn start(db: DbPool, interval_secs: u64, default_retention_hours: u64) {
+pub fn start(db: DbPool, config: std::sync::Arc<crate::config::AppConfig>, interval_secs: u64, default_retention_hours: u64) {
     let failures: FailureMap = Arc::new(Mutex::new(HashMap::new()));
 
     tokio::spawn(async move {
@@ -23,7 +23,7 @@ pub fn start(db: DbPool, interval_secs: u64, default_retention_hours: u64) {
 
         loop {
             interval.tick().await;
-            poll_all_devices(&db, default_retention_hours, &failures).await;
+            poll_all_devices(&db, &config, default_retention_hours, &failures).await;
         }
     });
 }
@@ -40,7 +40,7 @@ fn get_retention_hours(db: &DbPool, default: u64) -> u64 {
     .unwrap_or(default)
 }
 
-async fn poll_all_devices(db: &DbPool, default_retention_hours: u64, failures: &FailureMap) {
+async fn poll_all_devices(db: &DbPool, config: &std::sync::Arc<crate::config::AppConfig>, default_retention_hours: u64, failures: &FailureMap) {
     let retention_hours = get_retention_hours(db, default_retention_hours);
 
     let devices: Vec<(String, String)> = {
@@ -58,6 +58,7 @@ async fn poll_all_devices(db: &DbPool, default_retention_hours: u64, failures: &
     for (device_id, ip) in devices {
         let db = db.clone();
         let failures = failures.clone();
+        let config = config.clone();
         tokio::spawn(async move {
             // Check if device is in backoff
             {
@@ -70,7 +71,7 @@ async fn poll_all_devices(db: &DbPool, default_retention_hours: u64, failures: &
                 }
             }
 
-            let result = poll_device(&db, &device_id, &ip, retention_hours).await;
+            let result = poll_device(&db, &config, &device_id, &ip, retention_hours).await;
 
             match result {
                 true => {
@@ -101,7 +102,7 @@ async fn poll_all_devices(db: &DbPool, default_retention_hours: u64, failures: &
     }
 }
 
-async fn poll_device(db: &DbPool, device_id: &str, ip: &str, retention_hours: u64) -> bool {
+async fn poll_device(db: &DbPool, config: &crate::config::AppConfig, device_id: &str, ip: &str, retention_hours: u64) -> bool {
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(3))
         .build()
@@ -117,7 +118,22 @@ async fn poll_device(db: &DbPool, device_id: &str, ip: &str, retention_hours: u6
                 // Update device_type if reported
                 let device_type = json["device_type"].as_str();
 
+                // Scoped: the guard is not Send and must not survive into the
+                // bridge call below.
+                let state_changed = {
                 let conn = db.lock().unwrap();
+
+                // Only react when the state actually changes, so the lights are
+                // not re-set on every poll.
+                let previous: Option<String> = conn
+                    .query_row(
+                        "SELECT state FROM status_log WHERE device_id = ?1 ORDER BY id DESC LIMIT 1",
+                        [device_id],
+                        |r| r.get(0),
+                    )
+                    .ok();
+                let changed = previous.as_deref() != Some(state);
+
                 let _ = conn.execute(
                     "INSERT INTO status_log (device_id, state, uptime_ms, free_heap) VALUES (?1, ?2, ?3, ?4)",
                     rusqlite::params![device_id, state, uptime, free_heap],
@@ -166,6 +182,17 @@ async fn poll_device(db: &DbPool, device_id: &str, ip: &str, retention_hours: u6
                     "DELETE FROM sensor_readings WHERE device_id = ?1 AND recorded_at < datetime('now', ?2)",
                     rusqlite::params![device_id, format!("-{} hours", retention_hours)],
                 );
+
+                changed
+                };
+
+                // Outside the guard: this makes network calls to the bridge.
+                if state_changed {
+                    crate::routes::desk_lights::apply_state_to_lights(
+                        db, config, device_id, state,
+                    )
+                    .await;
+                }
 
                 true
             } else {

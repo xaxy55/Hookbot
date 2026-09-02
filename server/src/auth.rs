@@ -46,7 +46,7 @@ impl LoginRateLimiter {
     }
 
     /// Returns Ok(()) if the request is allowed, Err(secs_until_reset) if rate limited.
-    async fn check_and_increment(&self, ip: &str) -> Result<(), u64> {
+    pub(crate) async fn check_and_increment(&self, ip: &str) -> Result<(), u64> {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -350,22 +350,31 @@ fn build_session_cookie(token: &str, max_age: u64, tls_enabled: bool, cookie_dom
     )
 }
 
-/// Extract client IP from ConnectInfo or X-Forwarded-For header.
-fn extract_client_ip(req: &Request<Body>) -> String {
+/// Extract client IP from the proxy headers, if any are present.
+pub(crate) fn client_ip_from_headers(headers: &header::HeaderMap) -> Option<String> {
     // Check X-Forwarded-For first (for reverse proxy / Cloudflare)
-    if let Some(forwarded) = req.headers().get("x-forwarded-for") {
+    if let Some(forwarded) = headers.get("x-forwarded-for") {
         if let Ok(val) = forwarded.to_str() {
             if let Some(first_ip) = val.split(',').next() {
-                return first_ip.trim().to_string();
+                return Some(first_ip.trim().to_string());
             }
         }
     }
 
     // Fall back to CF-Connecting-IP (Cloudflare)
-    if let Some(cf_ip) = req.headers().get("cf-connecting-ip") {
+    if let Some(cf_ip) = headers.get("cf-connecting-ip") {
         if let Ok(val) = cf_ip.to_str() {
-            return val.trim().to_string();
+            return Some(val.trim().to_string());
         }
+    }
+
+    None
+}
+
+/// Extract client IP from ConnectInfo or X-Forwarded-For header.
+fn extract_client_ip(req: &Request<Body>) -> String {
+    if let Some(ip) = client_ip_from_headers(req.headers()) {
+        return ip;
     }
 
     // Fall back to peer address from extensions

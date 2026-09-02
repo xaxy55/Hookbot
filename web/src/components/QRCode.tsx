@@ -45,8 +45,12 @@ const ALIGNMENT_POSITIONS: number[][] = [
   [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50],
 ];
 
+// Per block, not per symbol — versions 6+ split their data across several blocks.
 const EC_CODEWORDS_L = [0, 7, 10, 15, 20, 26, 18, 20, 24, 30, 18];
 const DATA_CODEWORDS_L = [0, 19, 34, 55, 80, 108, 136, 156, 194, 232, 274];
+const EC_BLOCKS_L = [0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 4];
+// Versions 7+ carry an 18-bit BCH-coded version number in two corners.
+const VERSION_INFO = [0, 0, 0, 0, 0, 0, 0, 0x07c94, 0x085bc, 0x09a99, 0x0a4d3];
 const FORMAT_BITS_L = [0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976,
   0x5412, 0x5125, 0x5e7c, 0x5b4b, 0x45f9, 0x40ce, 0x4f97, 0x4aa0];
 
@@ -95,16 +99,51 @@ function encodeBytes(data: string): number[] {
   return codewords;
 }
 
+/**
+ * Split the data codewords into the version's error-correction blocks, append
+ * each block's EC codewords, and interleave the lot the way the spec requires.
+ * Versions 1-5 (level L) are a single block, where this is a no-op.
+ */
+function interleaveBlocks(codewords: number[], version: number): number[] {
+  const blockCount = EC_BLOCKS_L[version];
+  const ecCount = EC_CODEWORDS_L[version];
+
+  // Short blocks come first, long blocks (one extra codeword) last.
+  const shortLen = Math.floor(codewords.length / blockCount);
+  const longBlocks = codewords.length % blockCount;
+
+  const dataBlocks: number[][] = [];
+  const ecBlocks: number[][] = [];
+  let offset = 0;
+  for (let b = 0; b < blockCount; b++) {
+    const len = shortLen + (b >= blockCount - longBlocks ? 1 : 0);
+    const block = codewords.slice(offset, offset + len);
+    offset += len;
+    dataBlocks.push(block);
+    ecBlocks.push(rsEncode(block, ecCount));
+  }
+
+  const out: number[] = [];
+  const maxDataLen = shortLen + (longBlocks > 0 ? 1 : 0);
+  for (let i = 0; i < maxDataLen; i++) {
+    for (const block of dataBlocks) {
+      if (i < block.length) out.push(block[i]);
+    }
+  }
+  for (let i = 0; i < ecCount; i++) {
+    for (const block of ecBlocks) out.push(block[i]);
+  }
+  return out;
+}
+
 function buildMatrix(data: string): boolean[][] {
   const codewords = encodeBytes(data);
   const byteLen = new TextEncoder().encode(data).length + 3;
   const version = getVersion(byteLen);
   const size = version * 4 + 17;
-  const ecCount = EC_CODEWORDS_L[version];
 
-  // Generate error correction
-  const ecBytes = rsEncode(codewords, ecCount);
-  const allBytes = [...codewords, ...ecBytes];
+  // Generate error correction, interleaved across the version's blocks
+  const allBytes = interleaveBlocks(codewords, version);
 
   // Create matrix (-1 = unset)
   const matrix: number[][] = Array.from({ length: size }, () => new Array(size).fill(-1));
@@ -139,7 +178,9 @@ function buildMatrix(data: string): boolean[][] {
     const positions = ALIGNMENT_POSITIONS[version];
     for (const r of positions) {
       for (const c of positions) {
-        if (matrix[r][c] !== -1) continue;
+        // The three finder corners have no alignment pattern. Everywhere else one
+        // is drawn even where it overlaps a timing pattern (the modules agree).
+        if (isFinderCorner(r, c, size)) continue;
         for (let dr = -2; dr <= 2; dr++) {
           for (let dc = -2; dc <= 2; dc++) {
             matrix[r + dr][c + dc] = (Math.abs(dr) === 2 || Math.abs(dc) === 2 || (dr === 0 && dc === 0)) ? 1 : 0;
@@ -160,6 +201,18 @@ function buildMatrix(data: string): boolean[][] {
     if (matrix[size - 1 - i][8] === -1) matrix[size - 1 - i][8] = 0;
   }
   if (matrix[8][8] === -1) matrix[8][8] = 0;
+
+  // Version information (versions 7+), mirrored into two corners
+  if (version >= 7) {
+    const info = VERSION_INFO[version];
+    for (let i = 0; i < 18; i++) {
+      const bit = (info >> i) & 1;
+      const a = size - 11 + (i % 3);
+      const b = Math.floor(i / 3);
+      matrix[a][b] = bit;
+      matrix[b][a] = bit;
+    }
+  }
 
   // Place data bits
   const dataBits: number[] = [];
@@ -208,6 +261,15 @@ function buildMatrix(data: string): boolean[][] {
   return matrix.map(row => row.map(cell => cell === 1));
 }
 
+/** True for the three corners that hold a finder pattern instead of an alignment one. */
+function isFinderCorner(row: number, col: number, size: number): boolean {
+  return (
+    (row <= 8 && col <= 8) ||
+    (row <= 8 && col >= size - 8) ||
+    (row >= size - 8 && col <= 8)
+  );
+}
+
 function isDataModule(row: number, col: number, size: number, version: number): boolean {
   // Finder patterns + separators
   if (row <= 8 && col <= 8) return false;
@@ -217,13 +279,18 @@ function isDataModule(row: number, col: number, size: number, version: number): 
   if (row === 6 || col === 6) return false;
   // Dark module
   if (row === size - 8 && col === 8) return false;
+  // Version information blocks (versions 7+)
+  if (version >= 7) {
+    if (row < 6 && col >= size - 11 && col < size - 8) return false;
+    if (col < 6 && row >= size - 11 && row < size - 8) return false;
+  }
   // Alignment patterns
   if (version >= 2) {
     const positions = ALIGNMENT_POSITIONS[version];
     for (const ar of positions) {
       for (const ac of positions) {
         // Skip alignment patterns that overlap with finder patterns
-        if ((ar <= 8 && ac <= 8) || (ar <= 8 && ac >= size - 8) || (ar >= size - 8 && ac <= 8)) continue;
+        if (isFinderCorner(ar, ac, size)) continue;
         if (Math.abs(row - ar) <= 2 && Math.abs(col - ac) <= 2) return false;
       }
     }

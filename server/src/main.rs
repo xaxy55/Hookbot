@@ -29,7 +29,7 @@ async fn main() {
     info!("Database initialized at {:?}", config.database_url);
 
     // Start background services
-    services::device_poller::start(pool.clone(), config.poll_interval_secs, config.log_retention_hours);
+    services::device_poller::start(pool.clone(), Arc::new(config.clone()), config.poll_interval_secs, config.log_retention_hours);
 
     // Mirror Spotify playback onto device displays (no-op unless configured).
     services::music_pusher::start(pool.clone(), Arc::new(config.clone()), 10);
@@ -62,6 +62,12 @@ async fn main() {
         "Login rate limit: {} attempts per {} seconds",
         config.login_rate_limit_max, config.login_rate_limit_window_secs
     );
+
+    // Pairing redemption is unauthenticated, so it gets its own IP limiter —
+    // kept separate from login so a fumbled pairing cannot lock anyone out of
+    // the dashboard (and vice versa).
+    let pairing_rate_limiter = routes::pairing::PairingRateLimiter::new(10, 60);
+    info!("Pairing redeem rate limit: 10 attempts per 60 seconds");
 
     // Create rate limiter for device API (60 requests per 60 seconds per IP)
     let device_rate_limiter = routes::device_api::DeviceApiRateLimiter::new(60, 60);
@@ -115,13 +121,11 @@ async fn main() {
         .route("/api/auth/login", post(auth::login))
         .route("/api/auth/logout", post(auth::logout))
         .route("/api/auth/status", get(auth::auth_status))
+        // Phone pairing redemption — public by necessity: the phone has no
+        // credential yet, so the short-lived single-use token is the whole proof.
+        .route("/api/auth/pair/redeem", post(routes::pairing::redeem_pairing_token))
         .route("/auth/login", get(auth::workos_login))
         .route("/auth/callback", get(auth::workos_callback));
-
-    // QR login exchange — public (no auth), needs DB pool
-    let qr_exchange_routes = Router::new()
-        .route("/api/auth/qr-exchange", post(routes::account::exchange_qr_login))
-        .with_state(pool.clone());
 
     // Device API routes — authenticated by device token, not user auth
     let device_api_routes = Router::new()
@@ -299,6 +303,7 @@ async fn main() {
         .route("/api/desk-lights/{id}", put(routes::desk_lights::update_light).delete(routes::desk_lights::delete_light))
         .route("/api/desk-lights/{id}/action", post(routes::desk_lights::trigger_action))
         .route("/api/desk-lights/hue/pair", post(routes::desk_lights::hue_pair))
+        .route("/api/desk-lights/{id}/bridge-lights", get(routes::desk_lights::bridge_lights))
         .with_state(pool.clone());
 
     let music_routes = Router::new()
@@ -402,7 +407,8 @@ async fn main() {
     // Auth management routes (protected — require current API key)
     let auth_mgmt_routes = Router::new()
         .route("/api/auth/rotate-key", post(auth::rotate_api_key))
-        .route("/api/auth/me", get(auth::get_me));
+        .route("/api/auth/me", get(auth::get_me))
+        .route("/api/auth/pair", post(routes::pairing::create_pairing_token));
 
     // Device claiming (user-authenticated)
     let claim_routes = Router::new()
@@ -414,7 +420,6 @@ async fn main() {
         .route("/api/account", put(routes::account::update_account))
         .route("/api/account/tokens", get(routes::account::list_tokens).post(routes::account::create_token))
         .route("/api/account/tokens/{id}", delete(routes::account::revoke_token))
-        .route("/api/account/qr-login", post(routes::account::generate_qr_login))
         .with_state(pool.clone());
 
     // Protected routes — require API key or session cookie
@@ -457,7 +462,6 @@ async fn main() {
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(qr_exchange_routes)
         .merge(game_command_protected)
         .merge(device_api_routes)
         .merge(device_api_token_routes)
@@ -465,6 +469,7 @@ async fn main() {
         .merge(protected_routes)
         .layer(Extension(pool.clone()))
         .layer(Extension(login_rate_limiter))
+        .layer(Extension(pairing_rate_limiter))
         .layer(Extension(device_rate_limiter))
         .layer(Extension(config.clone()))
         .layer(Extension(tunnel_manager))
