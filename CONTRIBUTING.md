@@ -56,13 +56,18 @@ GitHub Actions are scoped by path so a change only triggers what it affects:
 | Deploy Server to GCE | manual only (GCE billing is disabled) |
 | App Store Screenshots | manual only |
 
-**The iOS app is built by Xcode Cloud, not by GitHub Actions.** The repo only
-holds its hook scripts (`ios/ci_scripts/`); the triggers live in App Store
-Connect, so no path filter here can gate them. To stop the app rebuilding on
-commits that touch no Apple files, set it in **App Store Connect → Xcode Cloud →
-(workflow) → Edit → Start Conditions → Branch Changes → Files and Folders** and
-restrict it to `ios/`. Xcode Cloud also honours `[ci skip]` in a commit message,
-which is a per-commit escape hatch rather than a fix.
+**The iOS app is built by Xcode Cloud, not by GitHub Actions.** The repo holds
+only its hook scripts (`ios/ci_scripts/`); the triggers live in App Store
+Connect, so no path filter here can gate them.
+
+That workflow belongs to the **`mr-ai`** app record (not `HookbotWatch`, which
+has no Xcode Cloud workflow), builds `ios/Hookbot.xcodeproj` from the `main`
+branch, and its start condition is set to **"Start if any file from the `ios`
+folder changes"** — so commits touching only firmware, server, or web no longer
+rebuild the app. To change that: **App Store Connect → (app) → Xcode Cloud →
+Manage Workflows → Default → Start Conditions → Branch Changes → Files and
+Folders**. Xcode Cloud also honours `[ci skip]` in a commit message as a
+per-commit escape hatch.
 
 ## Reporting Issues
 
