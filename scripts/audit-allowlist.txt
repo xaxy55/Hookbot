@@ -1,0 +1,10 @@
+# Reviewed and accepted findings for scripts/audit-secrets.sh.
+#
+# One `substring # justification` per line. A finding is suppressed when its
+# text contains the substring. Keep these few and keep the justification
+# honest — an entry here is a decision to accept a risk, not a way to quiet
+# the audit. Anything not listed fails the build.
+
+struct User serializes `api_key`  # The account API key, returned only on the caller's own /api/account and /api/auth/me. It is the user's own credential, shown to them deliberately so they can copy it into the CLI. Not another party's secret.
+
+AUTO-GENERATED ADMIN PASSWORD  # Printed once at first boot when no ADMIN_PASSWORD is set. There is no other channel to hand the operator a generated password, and the alternative (refusing to start) is worse. Setting ADMIN_PASSWORD or ADMIN_PASSWORD_HASH avoids it entirely.

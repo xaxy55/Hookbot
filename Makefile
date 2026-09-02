@@ -22,7 +22,8 @@ DIM    := \033[2m
         build-testflight screenshots \
         gh-secrets cloud-secrets \
         install \
-        cli-build cli-security cli-config cli-status cli-doctor cli-ping
+        cli-build cli-security cli-config cli-status cli-doctor cli-ping \
+        security-audit audit-secrets audit-deps
 
 # ============================================================
 #  Default target
@@ -253,6 +254,30 @@ cli-doctor: cli-build require-server-url ## Full diagnostic (config + security +
 
 cli-ping: cli-build require-server-url ## Ping server to check connectivity
 	./cli/target/release/hookbot --url $(HOOKBOT_SERVER_URL) ping
+
+# ============================================================
+#  Security
+# ============================================================
+# `cli-security` probes a *running* instance. These audit the source and the
+# dependency tree, so they need no server and are safe to run in CI.
+security-audit: audit-deps audit-secrets ## Audit dependencies and scan for credential leaks
+	@printf "$(GREEN)>> Security audit complete.$(RESET)\n"
+
+audit-secrets: ## Scan the tree for committed secrets and credentials leaked via the API
+	@printf "$(YELLOW)>> Secret / credential-leak scan...$(RESET)\n"
+	@./scripts/audit-secrets.sh
+
+audit-deps: ## Check Rust and npm dependencies for known vulnerabilities
+	@printf "$(YELLOW)>> cargo audit (server)...$(RESET)\n"
+	@command -v cargo-audit >/dev/null 2>&1 || { \
+		printf "$(DIM)   cargo-audit not installed; run: cargo install cargo-audit$(RESET)\n"; exit 1; }
+	cd server && cargo audit
+	@printf "$(YELLOW)>> cargo audit (cli)...$(RESET)\n"
+	cd cli && cargo audit
+	@printf "$(YELLOW)>> npm audit (web)...$(RESET)\n"
+	@# --omit=dev: a vulnerability in a build-time tool is not shipped to a
+	@# browser, and dev-only advisories drown out the ones that matter.
+	cd web && npm audit --omit=dev --audit-level=high
 
 # ============================================================
 #  Deploy
