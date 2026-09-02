@@ -144,6 +144,13 @@ export const restServos = (id: string) =>
     body: JSON.stringify({ rest: true }),
   });
 
+/** Drive one channel min -> max -> rest, to check wiring and power. */
+export const sweepServo = (id: string, channel: number) =>
+  request<{ ok: boolean; seconds?: number }>(`/devices/${id}/servos/sweep`, {
+    method: 'POST',
+    body: JSON.stringify({ channel }),
+  });
+
 export const configureServos = (id: string, config: { channels?: Partial<ServoChannel>[]; state_maps?: Record<string, number[]> }) =>
   request<{ ok: boolean }>(`/devices/${id}/servos/config`, {
     method: 'POST',
@@ -158,6 +165,9 @@ export interface ServoChannel {
   current: number;
   label: string;
   enabled: boolean;
+  /** Whether the firmware's LEDC attach actually succeeded. An enabled channel
+   *  that failed to attach will never move. Absent on older firmware. */
+  attached?: boolean;
 }
 
 export const getDeviceHistory = (id: string) =>

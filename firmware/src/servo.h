@@ -31,6 +31,13 @@ namespace Servos {
     void update(uint32_t deltaMs);
     void setAngle(uint8_t channel, uint8_t angle);
     void setAllToRest();
+    /// True only when the channel's LEDC attach actually succeeded.
+    bool isAttached(uint8_t ch);
+    /// Queue a min -> max -> rest sweep to verify wiring and power. Returns
+    /// false if the channel is not attached. Runs from update(), never in the
+    /// HTTP handler — a blocking sweep there stalls the async web server.
+    bool requestSweep(uint8_t ch);
+    bool isSweeping();
     ServoChannel* getChannels();
     void configureChannel(uint8_t channel, int8_t pin, uint8_t minA, uint8_t maxA, uint8_t rest, const char* label);
     void onStateChange(AvatarState state);

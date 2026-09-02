@@ -1,7 +1,7 @@
 #pragma once
 
 // ─── Firmware Version ─────────────────────────────────────────────
-#define FIRMWARE_VERSION "0.8.5"
+#define FIRMWARE_VERSION "0.8.6"
 
 // ─── WiFi Configuration ───────────────────────────────────────────
 // WiFi is provisioned via BLE at first boot. The device advertises as
@@ -22,7 +22,7 @@
 #define MDNS_HOSTNAME "hookbot"
 
 // Management server URL (empty = disabled, set for hosted/cloud mode)
-// For production devices: "https://bot.mr-ai.no"
+// For production devices: set HOOKBOT_MGMT_SERVER when building.
 // For self-hosted: "" (disabled) — set via BLE provisioning or POST /config
 #ifndef DEFAULT_MGMT_SERVER
 #define DEFAULT_MGMT_SERVER ""

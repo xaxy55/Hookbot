@@ -1,3 +1,4 @@
+#include "config.h"
 #include "servo.h"
 #include <ESP32Servo.h>
 #include <Preferences.h>
@@ -35,25 +36,118 @@ static ServoStateMap stateMaps[6] = {
     { { 90, 110, 60, 120 } },
 };
 
+/// ESP32Servo hands out LEDC timers from a pool that starts empty; without
+/// this, attach() finds no timer and fails, and the servo simply never moves.
+/// Timer 0 is deliberately left alone: on the round board the display
+/// backlight drives LEDC channel 0, and taking its timer kills the backlight.
+static void allocateTimersOnce() {
+    static bool done = false;
+    if (done) return;
+    done = true;
+#ifdef DISPLAY_LGFX
+    // Timer 0 drives the panel backlight on the LCD boards; taking it would
+    // black out the screen. Timer 3 has no LEDC channels mapped to it on the
+    // 6-channel C6, so 1 and 2 are what is actually usable.
+    ESP32PWM::allocateTimer(1);
+    ESP32PWM::allocateTimer(2);
+#else
+    ESP32PWM::allocateTimer(0);
+    ESP32PWM::allocateTimer(1);
+    ESP32PWM::allocateTimer(2);
+    ESP32PWM::allocateTimer(3);
+#endif
+}
+
+/// Attach one channel, reporting whether it actually worked. attach() returns
+/// 0 on failure; the old code ignored that and marked the channel attached
+/// regardless, so a servo that was never driven looked perfectly healthy in
+/// GET /servos.
+static bool attachChannel(int i) {
+    allocateTimersOnce();
+    servoObjects[i].setPeriodHertz(50);
+    // attach() returns the LEDC channel, and channel 0 is a perfectly valid
+    // one; failure is -1. Testing for 0 reports a working servo as broken.
+    int ch = servoObjects[i].attach(channels[i].pin, 500, 2400);
+    if (ch < 0) {
+        attached[i] = false;
+        Serial.printf("[Servo] Ch%d FAILED to attach on pin %d (no LEDC timer free)\n",
+                      i, channels[i].pin);
+        return false;
+    }
+    servoObjects[i].write(channels[i].restAngle);
+    attached[i] = true;
+    currentSmooth[i] = channels[i].restAngle;
+    targetAngle[i] = channels[i].restAngle;
+    Serial.printf("[Servo] Ch%d on pin %d (%s) -> %d deg\n",
+                  i, channels[i].pin, channels[i].label, channels[i].restAngle);
+    return true;
+}
+
 void init() {
     loadFromNVS();
 
     for (int i = 0; i < MAX_SERVOS; i++) {
         if (channels[i].pin >= 0 && channels[i].enabled) {
-            servoObjects[i].setPeriodHertz(50);
-            servoObjects[i].attach(channels[i].pin, 500, 2400);
-            servoObjects[i].write(channels[i].restAngle);
-            attached[i] = true;
-            currentSmooth[i] = channels[i].restAngle;
-            targetAngle[i] = channels[i].restAngle;
-            Serial.printf("[Servo] Ch%d on pin %d (%s) -> %d°\n",
-                i, channels[i].pin, channels[i].label, channels[i].restAngle);
+            attachChannel(i);
         }
     }
     Serial.println("[Servo] Initialized");
 }
 
+bool isAttached(uint8_t ch) {
+    return ch < MAX_SERVOS && attached[ch];
+}
+
+// Sweep state. The HTTP handler runs on the async server task, where a
+// blocking delay() stalls the whole web server and drops the caller's
+// connection — so the request only records what to do and update() steps
+// through it.
+static int8_t sweepCh = -1;
+static uint8_t sweepStep = 0;
+static uint32_t sweepNextMs = 0;
+static const uint32_t SWEEP_STEP_MS = 700;
+
+bool requestSweep(uint8_t ch) {
+    if (ch >= MAX_SERVOS || !attached[ch]) return false;
+    sweepCh = (int8_t)ch;
+    sweepStep = 0;
+    sweepNextMs = 0;  // start on the next update()
+    return true;
+}
+
+bool isSweeping() { return sweepCh >= 0; }
+
+/// Drive the extremes directly, bypassing the smoothing in update(), so the
+/// result is unambiguous: if the horn does not move for this, the problem is
+/// wiring or power rather than the animation.
+static void stepSweep() {
+    if (sweepCh < 0 || millis() < sweepNextMs) return;
+
+    const ServoChannel& c = channels[sweepCh];
+    const uint8_t points[3] = { c.minAngle, c.maxAngle, c.restAngle };
+    if (sweepStep >= 3) {
+        currentSmooth[sweepCh] = c.restAngle;
+        targetAngle[sweepCh] = c.restAngle;
+        channels[sweepCh].currentAngle = c.restAngle;
+        Serial.printf("[Servo] Ch%d sweep done\n", sweepCh);
+        sweepCh = -1;
+        return;
+    }
+
+    servoObjects[sweepCh].write(points[sweepStep]);
+    channels[sweepCh].currentAngle = points[sweepStep];
+    sweepNextMs = millis() + SWEEP_STEP_MS;
+    sweepStep++;
+}
+
 void update(uint32_t deltaMs) {
+    // A sweep is a manual test; let it own the servo until it finishes rather
+    // than fighting the state animation for the same channel.
+    if (sweepCh >= 0) {
+        stepSweep();
+        return;
+    }
+
     float dt = (float)deltaMs / 1000.0f;
 
     for (int i = 0; i < MAX_SERVOS; i++) {
@@ -110,12 +204,19 @@ void configureChannel(uint8_t ch, int8_t pin, uint8_t minA, uint8_t maxA, uint8_
 
     // Attach new
     if (pin >= 0 && channels[ch].enabled) {
+        allocateTimersOnce();
         servoObjects[ch].setPeriodHertz(50);
-        servoObjects[ch].attach(pin, 500, 2400);
-        servoObjects[ch].write(rest);
-        attached[ch] = true;
-        currentSmooth[ch] = rest;
-        targetAngle[ch] = rest;
+        if (servoObjects[ch].attach(pin, 500, 2400) < 0) {
+            // Still persist below: the operator can fix the wiring or free a
+            // timer and reboot, and the configuration should survive that.
+            attached[ch] = false;
+            Serial.printf("[Servo] Ch%d FAILED to attach on pin %d\n", ch, pin);
+        } else {
+            servoObjects[ch].write(rest);
+            attached[ch] = true;
+            currentSmooth[ch] = rest;
+            targetAngle[ch] = rest;
+        }
     }
 
     saveToNVS();

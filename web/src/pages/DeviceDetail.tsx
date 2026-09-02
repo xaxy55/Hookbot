@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDevice, getDeviceConfig, getDeviceHistory, sendState, sendTasks, updateDevice, updateDeviceConfig, pushConfig, getOtaJobs, getFirmware, getServos, setServoAngle, restServos, configureServos, getSensors, updateSensors, getSensorReadings, getRules, createRule, updateRule, deleteRule, exportDeviceConfig, importDeviceConfig } from '../api/client';
+import { getDevice, getDeviceConfig, getDeviceHistory, sendState, sendTasks, updateDevice, updateDeviceConfig, pushConfig, getOtaJobs, getFirmware, getServos, setServoAngle, restServos, sweepServo, configureServos, getSensors, updateSensors, getSensorReadings, getRules, createRule, updateRule, deleteRule, exportDeviceConfig, importDeviceConfig } from '../api/client';
 import type { ConfigExportData } from '../api/client';
 import type { ServoChannel, SensorChannelConfig, SensorReading } from '../api/client';
 import StateIndicator from '../components/StateIndicator';
@@ -776,6 +776,20 @@ function ServosTab({ deviceId, online }: { deviceId: string; online: boolean }) 
     onSuccess: () => qc.invalidateQueries({ queryKey: ['servos', deviceId] }),
   });
 
+  const [sweeping, setSweeping] = useState<number | null>(null);
+  const sweepMut = useMutation({
+    mutationFn: (ch: number) => sweepServo(deviceId, ch),
+    onMutate: (ch: number) => setSweeping(ch),
+    onSettled: () => {
+      // The sweep runs on the device for ~3s; clear the label once it is done
+      // and pick up the resting angle.
+      setTimeout(() => {
+        setSweeping(null);
+        qc.invalidateQueries({ queryKey: ['servos', deviceId] });
+      }, 3000);
+    },
+  });
+
   const configMut = useMutation({
     mutationFn: (config: { channels?: Partial<ServoChannel>[]; state_maps?: Record<string, number[]> }) =>
       configureServos(deviceId, config),
@@ -825,8 +839,26 @@ function ServosTab({ deviceId, online }: { deviceId: string; online: boolean }) 
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-xs text-subtle">
                       Ch {i}: {ch.label || `Servo ${i}`}
+                      {ch.attached === false && (
+                        <span
+                          className="ml-2 text-[10px] text-red-400"
+                          title="The firmware could not attach this channel, so it will never move. Check the pin and that a PWM timer was free."
+                        >
+                          not attached
+                        </span>
+                      )}
                     </label>
-                    <span className="text-xs font-mono text-subtle">{ch.current}°</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-subtle">{ch.current}°</span>
+                      <button
+                        onClick={() => sweepMut.mutate(i)}
+                        disabled={sweeping !== null || ch.attached === false}
+                        title="Drive this servo min → max → rest. If it does not move, the problem is wiring or power."
+                        className="px-2 py-0.5 text-[10px] bg-raised hover:bg-inset rounded text-fg-2 disabled:opacity-40 transition-colors"
+                      >
+                        {sweeping === i ? 'Sweeping…' : 'Sweep test'}
+                      </button>
+                    </div>
                   </div>
                   <input
                     type="range"

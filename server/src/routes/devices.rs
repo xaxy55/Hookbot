@@ -362,6 +362,16 @@ pub async fn forward_servos(
     forward_or_queue(&db, &queue, &id, "servos", "servo", &body).await
 }
 
+/// POST /api/devices/:id/servos/sweep — ask the device to sweep one channel.
+pub async fn forward_servo_sweep(
+    State(db): State<DbPool>,
+    Extension(queue): Extension<CommandQueue>,
+    Path(id): Path<String>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    forward_or_queue(&db, &queue, &id, "servos/sweep", "servo_sweep", &body).await
+}
+
 pub async fn forward_servo_config(
     State(db): State<DbPool>,
     Extension(queue): Extension<CommandQueue>,

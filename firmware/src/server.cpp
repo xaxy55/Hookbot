@@ -1260,6 +1260,10 @@ void init(std::function<void(AvatarState)> onStateChange) {
             o["current"] = ch[i].currentAngle;
             o["label"] = ch[i].label;
             o["enabled"] = ch[i].enabled;
+            // Whether the LEDC attach actually succeeded — an enabled channel
+            // that failed to attach will never move, and the UI should say so
+            // rather than showing it as healthy.
+            o["attached"] = Servos::isAttached(i);
         }
         // Include state maps
         JsonObject sm = doc["state_maps"].to<JsonObject>();
@@ -1308,6 +1312,36 @@ void init(std::function<void(AvatarState)> onStateChange) {
             req->send(200, "application/json", json);
         }
     );
+    // POST /servos/sweep {"channel":N} - drive one channel min -> max -> rest
+    // to prove it is wired and powered. JSON like the other servo endpoints so
+    // the server can proxy it unchanged. Registered before the "/servos"
+    // handler, which prefix-matches and would otherwise swallow it.
+    AsyncCallbackJsonWebHandler* servoSweepHandler = new AsyncCallbackJsonWebHandler(
+        "/servos/sweep",
+        [](AsyncWebServerRequest* req, JsonVariant& jsonBody) {
+            JsonObject body = jsonBody.as<JsonObject>();
+            int ch = body["channel"] | 0;
+            JsonDocument resp;
+            int code = 200;
+            if (ch < 0 || ch >= MAX_SERVOS) {
+                resp["ok"] = false;
+                resp["error"] = "channel out of range";
+                code = 400;
+            } else if (!Servos::isAttached((uint8_t)ch)) {
+                resp["ok"] = false;
+                resp["error"] = "channel is not attached - set a pin and check a LEDC timer was free";
+                code = 400;
+            } else {
+                Servos::requestSweep((uint8_t)ch);
+                resp["ok"] = true;
+                resp["seconds"] = 3;
+            }
+            String json;
+            serializeJson(resp, json);
+            req->send(code, "application/json", json);
+        }
+    );
+
     // NOTE: registration order matters. AsyncCallbackJsonWebHandler matches a
     // URI *prefix* (`url.startsWith(_uri + "/")`), so the "/servos" handler
     // would otherwise swallow "/servos/config" and silently answer {"ok":true}
@@ -1364,6 +1398,7 @@ void init(std::function<void(AvatarState)> onStateChange) {
             req->send(200, "application/json", json);
         }
     );
+    server.addHandler(servoSweepHandler);
     server.addHandler(servoConfigHandler);
     server.addHandler(servoHandler);
 

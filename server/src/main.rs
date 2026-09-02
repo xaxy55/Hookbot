@@ -150,6 +150,7 @@ async fn main() {
         .route("/api/devices/{id}/tasks", post(routes::devices::forward_tasks))
         .route("/api/devices/{id}/servos", get(routes::devices::get_servos).post(routes::devices::forward_servos))
         .route("/api/devices/{id}/servos/config", post(routes::devices::forward_servo_config))
+        .route("/api/devices/{id}/servos/sweep", post(routes::devices::forward_servo_sweep))
         .route("/api/devices/{id}/status", get(routes::devices::get_device_status))
         .route("/api/devices/{id}/history", get(routes::devices::get_device_history))
         .route("/api/devices/{id}/config", get(routes::devices::get_config).put(routes::devices::update_config))
