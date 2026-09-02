@@ -3,10 +3,11 @@
 ## What's Built (v0.2.0)
 
 - ESP32 firmware: animated OLED avatar (6 states, 8 accessories, face params), LED, buzzer, servo support, task list overlay, notification badges, WiFi/mDNS, NVS config, HTTP OTA
+- Three board targets: ESP32 + SSD1306 OLED, ESP32-4848S040C 480x480 touch LCD, and Seeed XIAO ESP32-C6 + GC9A01 240x240 round LCD (see `docs/firmware.md`)
 - Rust management server: 25+ API routes, SQLite, device poller, mDNS discovery, OTA deploy, diagnostics
 - React frontend: 11 pages (dashboard, device detail with 5 tabs, avatar editor, animation editor, OTA, discovery, integrations, settings, logs, diagnostics)
 - Hook system: Claude Code integration with server/direct routing modes
-- Docker Compose deployment
+- Docker Compose deployment, plus a single-host production stack with Caddy terminating TLS via the Cloudflare DNS-01 challenge (`deploy/`)
 
 ---
 

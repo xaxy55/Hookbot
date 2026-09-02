@@ -56,12 +56,16 @@ async fn fetch_status(
     let online_count = devices.iter().filter(|d| d.online).count();
     let total_count = devices.len();
 
+    // Capture before the struct literal: `xp.ok()` moves `xp`, so reading it
+    // again in a later field does not compile.
+    let xp_ok = xp.is_ok();
+
     Ok(StatusPayload {
         devices,
         online_count,
         total_count,
         xp: xp.ok(),
-        server_online: total_count > 0 || xp.is_ok(),
+        server_online: total_count > 0 || xp_ok,
     })
 }
 

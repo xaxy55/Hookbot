@@ -1,11 +1,11 @@
 name: Deploy Web to Cloudflare Pages
 
+# Manual only. The dashboard is served by the self-hosted Caddy stack now
+# (deploy/docker-compose.prod.yml), so pushing every web change to Cloudflare
+# Pages as well just published a second, diverging copy. Restore the push
+# trigger below if Pages becomes the primary host again.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "web/**"
 
 permissions:
   contents: read
