@@ -4,6 +4,7 @@ import {
   getDevices,
   getDeskLights,
   createDeskLight,
+  pairHueBridge,
   updateDeskLight,
   deleteDeskLight,
   triggerDeskLightAction,
@@ -33,6 +34,22 @@ export default function DeskLightsPage() {
     queryKey: ['deskLights', deviceId],
     queryFn: () => getDeskLights(deviceId),
     enabled: !!deviceId,
+  });
+
+  const pairMutation = useMutation({
+    mutationFn: () =>
+      pairHueBridge({
+        bridge_ip: formData.bridge_ip,
+        name: formData.name || undefined,
+        device_id: deviceId || undefined,
+      }),
+    onSuccess: (r) => {
+      queryClient.invalidateQueries({ queryKey: ['deskLights'] });
+      setShowForm(false);
+      setFormData({ provider: 'hue', name: '', bridge_ip: '', api_key: '' });
+      toast(r.message, 'success');
+    },
+    onError: (e: Error) => toast(e.message, 'error'),
   });
 
   const createMutation = useMutation({
@@ -125,22 +142,33 @@ export default function DeskLightsPage() {
                 placeholder="192.168.1.100"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-muted mb-1">API Key</label>
-              <input
-                className="w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm"
-                value={formData.api_key}
-                onChange={e => setFormData(f => ({ ...f, api_key: e.target.value }))}
-                placeholder="hue-api-key"
-              />
-            </div>
           </div>
-          <button
-            onClick={() => createMutation.mutate()}
-            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand/90"
-          >
-            Create
-          </button>
+
+          {formData.provider === 'hue' ? (
+            <div className="rounded-lg border border-border bg-canvas p-3 space-y-2">
+              <p className="text-xs text-muted">
+                Press the round link button on your Hue bridge, then start pairing.
+                Hookbot will pick the credential up automatically — it is stored
+                encrypted and is never shown again, here or anywhere else.
+              </p>
+              <button
+                onClick={() => pairMutation.mutate()}
+                disabled={pairMutation.isPending || !formData.bridge_ip}
+                className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand/90 disabled:opacity-50"
+              >
+                {pairMutation.isPending
+                  ? 'Waiting for the link button…'
+                  : 'Pair with bridge'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => createMutation.mutate()}
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand/90"
+            >
+              Create
+            </button>
+          )}
         </div>
       )}
 
@@ -152,7 +180,10 @@ export default function DeskLightsPage() {
                 <span className="text-2xl">{light.provider === 'hue' ? '💡' : '🌈'}</span>
                 <div>
                   <h3 className="font-semibold text-heading">{light.name}</h3>
-                  <p className="text-xs text-muted">{light.provider.toUpperCase()} &middot; {light.bridge_ip || 'No bridge'}</p>
+                  <p className="text-xs text-muted">
+                    {light.provider.toUpperCase()} &middot; {light.bridge_ip || 'No bridge'} &middot;{' '}
+                    {light.has_api_key ? 'paired' : 'not paired'}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2">

@@ -817,11 +817,21 @@ pub struct DeskLightConfig {
     pub provider: String, // "hue", "wled"
     pub name: String,
     pub bridge_ip: Option<String>,
-    pub api_key: Option<String>,
+    /// Whether a bridge credential is stored. The credential itself is never
+    /// serialized — it is encrypted at rest and write-only over the API.
+    pub has_api_key: bool,
     pub light_ids: Vec<String>,
     pub state_colors: serde_json::Value,
     pub enabled: bool,
     pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct HuePairRequest {
+    pub device_id: Option<String>,
+    /// Bridge IP or hostname, e.g. "192.168.1.42" or "hue.local".
+    pub bridge_ip: String,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

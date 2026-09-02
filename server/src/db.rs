@@ -30,6 +30,9 @@ fn run_migrations(conn: &Connection) {
         // Spotify OAuth: access tokens expire hourly, so remember when to refresh
         "ALTER TABLE music_configs ADD COLUMN token_expires_at TEXT",
         "ALTER TABLE music_configs ADD COLUMN scopes TEXT",
+        // Hue/WLED credentials are encrypted at rest; the plaintext api_key
+        // column is left in place for older rows and migrated on read.
+        "ALTER TABLE desk_lights ADD COLUMN api_key_enc TEXT",
         // Pet state
         "CREATE TABLE IF NOT EXISTS pet_state (
             device_id TEXT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,

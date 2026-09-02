@@ -1,5 +1,6 @@
 mod auth;
 mod config;
+mod crypto;
 mod db;
 mod error;
 mod models;
@@ -297,6 +298,7 @@ async fn main() {
         .route("/api/desk-lights", get(routes::desk_lights::list_lights).post(routes::desk_lights::create_light))
         .route("/api/desk-lights/{id}", put(routes::desk_lights::update_light).delete(routes::desk_lights::delete_light))
         .route("/api/desk-lights/{id}/action", post(routes::desk_lights::trigger_action))
+        .route("/api/desk-lights/hue/pair", post(routes::desk_lights::hue_pair))
         .with_state(pool.clone());
 
     let music_routes = Router::new()

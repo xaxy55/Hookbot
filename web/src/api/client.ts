@@ -1311,7 +1311,8 @@ export interface DeskLightConfig {
   provider: string;
   name: string;
   bridge_ip: string | null;
-  api_key: string | null;
+  /** The credential itself is never sent to the client — only whether one exists. */
+  has_api_key: boolean;
   light_ids: string[];
   state_colors: Record<string, string>;
   enabled: boolean;
@@ -1341,6 +1342,14 @@ export const updateDeskLight = (id: string, data: {
   state_colors?: Record<string, string>;
   enabled?: boolean;
 }) => request<{ ok: boolean }>(`/desk-lights/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+/** Polls the bridge for up to ~30s while the link button is pressed. The
+ *  credential is stored encrypted server-side and never returned. */
+export const pairHueBridge = (data: { bridge_ip: string; name?: string; device_id?: string }) =>
+  request<{ ok: boolean; id: string; bridge_ip: string; message: string }>(
+    '/desk-lights/hue/pair',
+    { method: 'POST', body: JSON.stringify(data) },
+  );
 
 export const deleteDeskLight = (id: string) =>
   request<{ ok: boolean }>(`/desk-lights/${id}`, { method: 'DELETE' });
