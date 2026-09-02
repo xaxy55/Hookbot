@@ -18,10 +18,15 @@ use crate::db::DbPool;
 const LOCAL_ADMIN_ID: &str = "local-admin";
 
 fn local_admin_id(conn: &rusqlite::Connection) -> Result<String, rusqlite::Error> {
+    // Matches the `users` table created by SCHEMA in db.rs (workos_id/email/
+    // api_key). Note db.rs also declares a second, incompatible `users` table
+    // in run_migrations; SCHEMA runs first, so that one never takes effect.
+    // api_key is UNIQUE NOT NULL, so give the row its own value — it is never
+    // used to authenticate anything, this row only owns tokens.
     conn.execute(
-        "INSERT OR IGNORE INTO users (id, username, display_name, password_hash, role) \
-         VALUES (?1, 'admin', 'Administrator', '', 'admin')",
-        [LOCAL_ADMIN_ID],
+        "INSERT OR IGNORE INTO users (id, workos_id, email, name, api_key) \
+         VALUES (?1, ?1, 'admin@localhost', 'Administrator', ?2)",
+        rusqlite::params![LOCAL_ADMIN_ID, uuid::Uuid::new_v4().to_string()],
     )?;
     Ok(LOCAL_ADMIN_ID.to_string())
 }
