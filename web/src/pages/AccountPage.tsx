@@ -320,7 +320,7 @@ export default function AccountPage() {
             </p>
             <pre className="px-3 py-2 text-xs bg-inset border border-edge rounded-md text-subtle font-mono overflow-x-auto">
 {`curl -H "Authorization: Bearer hb_your_token_here" \\
-  https://bot.mr-ai.no/api/devices`}
+  ${window.location.origin}/api/devices`}
             </pre>
           </div>
         </div>

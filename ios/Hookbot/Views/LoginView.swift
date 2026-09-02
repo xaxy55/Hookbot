@@ -10,9 +10,14 @@ struct LoginView: View {
     @State private var manualAPIKey: String = ""
     @State private var showPairing = false
 
+    /// Comes from Info.plist, which Xcode Cloud fills from the
+    /// HOOKBOT_SERVER_URL environment variable. No host is committed: the repo
+    /// is public. Empty means the user types their own server on the login
+    /// screen, which is the right default for a self-hosted install anyway.
     private var defaultServerURL: String {
-        Bundle.main.object(forInfoDictionaryKey: "HookbotServerURL") as? String
-            ?? "https://hookbot.mr-ai.no"
+        let configured = Bundle.main.object(forInfoDictionaryKey: "HookbotServerURL") as? String
+        guard let configured, !configured.isEmpty, !configured.hasPrefix("$(") else { return "" }
+        return configured
     }
 
     var body: some View {

@@ -1,7 +1,7 @@
 #pragma once
 
 // ISRG Root X1 — Let's Encrypt root CA certificate.
-// Valid until 2035-06-04. Used for HTTPS cert pinning to bot.mr-ai.no.
+// Valid until 2035-06-04. Used for HTTPS cert pinning to the management server.
 // Source: https://letsencrypt.org/certs/isrgrootx1.pem
 
 static const char ISRG_ROOT_X1_CA[] PROGMEM = R"EOF(

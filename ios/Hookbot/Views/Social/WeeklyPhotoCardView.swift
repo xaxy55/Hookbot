@@ -5,6 +5,16 @@ import UIKit
 
 struct WeeklyPhotoCardView: View {
     @EnvironmentObject var engine: AvatarEngine
+
+    /// Footer watermark. Uses the server this install is actually pointed at
+    /// rather than a hostname committed to a public repo; falls back to the
+    /// product name when no server is configured.
+    private var shareFooter: String {
+        let configured = Bundle.main.object(forInfoDictionaryKey: "HookbotServerURL") as? String
+        guard let configured, !configured.isEmpty, !configured.hasPrefix("$("),
+              let host = URL(string: configured)?.host else { return "hookbot" }
+        return host
+    }
     @State private var cardImage: UIImage?
     @State private var showShareSheet = false
     @State private var weeklyStats: WeeklyStats = .empty
@@ -131,7 +141,7 @@ struct WeeklyPhotoCardView: View {
 
                 // Footer
                 HStack {
-                    Text("hookbot.mr-ai.no")
+                    Text(shareFooter)
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundStyle(.gray)
                     Spacer()
