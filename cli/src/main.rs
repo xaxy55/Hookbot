@@ -2,6 +2,7 @@ mod security;
 mod status;
 mod devices;
 mod config;
+mod hooks;
 mod tunnels;
 
 use clap::{Parser, Subcommand};
@@ -15,7 +16,7 @@ use colored::Colorize;
     after_help = "Environment variables:\n  HOOKBOT_URL       API base URL\n  HOOKBOT_API_KEY   API key for authentication"
 )]
 struct Cli {
-    /// API base URL (e.g. https://bot.mr-ai.no)
+    /// API base URL (e.g. https://hookbot.example.com)
     #[arg(long, env = "HOOKBOT_URL", global = true)]
     url: Option<String>,
 
@@ -36,9 +37,9 @@ enum Commands {
     /// Check server health and overview
     Status,
 
-    /// Login to a Hookbot instance
+    /// Login to a Hookbot instance and save the server URL + API key
     Login {
-        /// Server URL to login to
+        /// Server URL to login to (alias for --url)
         #[arg(long)]
         server: Option<String>,
 
@@ -49,6 +50,12 @@ enum Commands {
         /// Save credentials to ~/.hookbot for future use
         #[arg(long, default_value = "true")]
         save: bool,
+    },
+
+    /// Set up the Claude Code hook integration
+    Hooks {
+        #[command(subcommand)]
+        action: CliHookAction,
     },
 
     /// List and manage devices
@@ -147,6 +154,28 @@ enum DeviceAction {
 }
 
 #[derive(Subcommand)]
+enum CliHookAction {
+    /// Install the Hookbot hooks into your Claude Code settings
+    Install {
+        /// Install into ./.claude/settings.json instead of ~/.claude/settings.json
+        #[arg(long)]
+        project: bool,
+
+        /// Settings file to write (overrides --project)
+        #[arg(long)]
+        settings: Option<String>,
+
+        /// Path to the hook script (default: hooks/deskbot-hook.js in this checkout)
+        #[arg(long)]
+        script: Option<String>,
+
+        /// Bind the hooks to a specific device ID
+        #[arg(long)]
+        device: Option<String>,
+    },
+}
+
+#[derive(Subcommand)]
 enum OtaAction {
     /// List available firmware versions
     List,
@@ -199,10 +228,34 @@ fn api_client(key: &Option<String>) -> reqwest::Client {
         .expect("failed to build HTTP client")
 }
 
+/// Path to the CLI's credential file (~/.hookbot). Never inside the repo.
+fn saved_config_path() -> String {
+    let home = std::env::var("HOME").unwrap_or_default();
+    format!("{home}/.hookbot")
+}
+
+/// Save the server URL and API key to ~/.hookbot with owner-only permissions.
+fn save_config(url: &str, key: Option<&str>) -> Result<String, String> {
+    let path = saved_config_path();
+    let mut content = format!("url=\"{url}\"\n");
+    if let Some(k) = key {
+        content.push_str(&format!("api_key=\"{k}\"\n"));
+    }
+    std::fs::write(&path, &content).map_err(|e| format!("Failed to write {path}: {e}"))?;
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(path)
+}
+
 /// Load saved credentials from ~/.hookbot
 fn load_saved_config() -> (Option<String>, Option<String>) {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let path = format!("{home}/.hookbot");
+    let path = saved_config_path();
     let content = match std::fs::read_to_string(&path) {
         Ok(c) => c,
         Err(_) => return (None, None),
@@ -236,7 +289,16 @@ async fn main() {
     let result = match cli.command {
         Commands::Status => status::run(&client, &base, cli.json).await,
         Commands::Login { server, password, save } => {
-            login_cmd(server.as_deref().unwrap_or(&base), password, save).await
+            let target = server.as_deref().unwrap_or(&base);
+            login_cmd(target, password, key.as_deref(), save, cli.json).await
+        }
+        Commands::Hooks { action } => {
+            let ha = match action {
+                CliHookAction::Install { project, settings, script, device } => {
+                    hooks::HookAction::Install { project, settings, script, device }
+                }
+            };
+            hooks::run(ha, &base, key.as_deref(), cli.json).await
         }
         Commands::Devices { action } => devices::run(&client, &base, action, cli.json).await,
         Commands::Ping { device, count } => ping_cmd(&client, &base, device.as_deref(), count).await,
@@ -272,16 +334,24 @@ async fn main() {
     }
 }
 
-async fn login_cmd(server: &str, password: Option<String>, save: bool) -> Result<(), String> {
-    let password = match password {
-        Some(p) => p,
-        None => {
-            eprint!("Password: ");
-            let mut p = String::new();
-            std::io::stdin().read_line(&mut p).map_err(|e| e.to_string())?;
-            p.trim().to_string()
-        }
-    };
+/// Normalise a user-supplied server URL: default to HTTPS, drop trailing slashes.
+fn normalize_url(url: &str) -> String {
+    let url = url.trim().trim_end_matches('/');
+    if url.starts_with("http://") || url.starts_with("https://") {
+        url.to_string()
+    } else {
+        format!("https://{url}")
+    }
+}
+
+async fn login_cmd(
+    server: &str,
+    password: Option<String>,
+    key: Option<&str>,
+    save: bool,
+    json: bool,
+) -> Result<(), String> {
+    let server = normalize_url(server);
 
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
@@ -289,52 +359,144 @@ async fn login_cmd(server: &str, password: Option<String>, save: bool) -> Result
         .build()
         .map_err(|e: reqwest::Error| e.to_string())?;
 
-    let resp = client
-        .post(&format!("{server}/api/auth/login"))
-        .json(&serde_json::json!({"password": password}))
-        .send()
-        .await
-        .map_err(|e: reqwest::Error| format!("Connection failed: {e}"))?;
-
-    let status = resp.status();
-    let body: serde_json::Value = resp.json::<serde_json::Value>().await.unwrap_or_default();
-
-    if !status.is_success() {
-        let msg = body.get("error").and_then(|v: &serde_json::Value| v.as_str()).unwrap_or("Login failed");
-        return Err(msg.to_string());
+    // 1. Verify the URL points at a live Hookbot server before storing anything.
+    if !json {
+        println!("{}", "=== Hookbot Login ===".bold());
+        println!();
+        print!("  Server:    {server} ... ");
+        use std::io::Write;
+        let _ = std::io::stdout().flush();
     }
 
-    let api_key = body.get("api_key").and_then(|v: &serde_json::Value| v.as_str());
+    let health = client
+        .get(format!("{server}/api/health"))
+        .send()
+        .await
+        .map_err(|e: reqwest::Error| format!("Cannot reach {server}/api/health: {e}"))?;
 
-    println!("{} Logged in to {server}", "OK".green().bold());
+    if !health.status().is_success() {
+        return Err(format!(
+            "{server}/api/health returned HTTP {} — is this a Hookbot server?",
+            health.status()
+        ));
+    }
 
-    if let Some(key) = api_key {
-        if save {
-            let home = std::env::var("HOME").unwrap_or_default();
-            let path = format!("{home}/.hookbot");
-            let content = format!("url=\"{server}\"\napi_key=\"{key}\"\n");
-            std::fs::write(&path, &content).map_err(|e| e.to_string())?;
+    // A single-page-app host answers 200 with HTML for any path, so only a
+    // well-formed health payload proves this URL is really the API.
+    let health_body: serde_json::Value = health
+        .json()
+        .await
+        .map_err(|_| format!("{server}/api/health did not return JSON — is this a Hookbot server?"))?;
+    if health_body.get("status").and_then(|v| v.as_str()) != Some("ok") {
+        return Err(format!(
+            "{server}/api/health returned an unexpected payload — is this a Hookbot server?"
+        ));
+    }
+    if !json {
+        println!("{}", "reachable".green());
+    }
 
-            // Set file permissions to 600
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))
-                    .map_err(|e| e.to_string())?;
+    // 2. Authenticate. An API key is checked as-is; otherwise exchange the admin
+    //    password for a session cookie and read the API key back from /api/auth/me.
+    let api_key: Option<String> = match key {
+        Some(k) => {
+            let resp = client
+                .get(format!("{server}/api/auth/status"))
+                .header("X-API-Key", k)
+                .send()
+                .await
+                .map_err(|e: reqwest::Error| format!("Connection failed: {e}"))?;
+            let body: serde_json::Value = resp.json().await.unwrap_or_default();
+            if !body.get("authenticated").and_then(|v| v.as_bool()).unwrap_or(false) {
+                return Err("API key rejected by the server.".into());
+            }
+            Some(k.to_string())
+        }
+        None => {
+            let password = match password {
+                Some(p) => p,
+                None => {
+                    eprint!("  Password:  ");
+                    let mut p = String::new();
+                    std::io::stdin().read_line(&mut p).map_err(|e| e.to_string())?;
+                    p.trim().to_string()
+                }
+            };
+
+            let resp = client
+                .post(format!("{server}/api/auth/login"))
+                .json(&serde_json::json!({"password": password}))
+                .send()
+                .await
+                .map_err(|e: reqwest::Error| format!("Connection failed: {e}"))?;
+
+            let status = resp.status();
+            let body: serde_json::Value = resp.json::<serde_json::Value>().await.unwrap_or_default();
+
+            if !status.is_success() {
+                let msg = body
+                    .get("error")
+                    .and_then(|v: &serde_json::Value| v.as_str())
+                    .unwrap_or("Login failed");
+                return Err(format!("{msg} (HTTP {status})"));
             }
 
-            println!("  Credentials saved to {}", path.dimmed());
-            println!("  API key: {}", "****".dimmed());
-        } else {
-            println!("  API key: {}", "****".dimmed());
-            println!("  {}", "Tip: run with --save to persist credentials".dimmed());
+            // The session cookie is now in the jar — trade it for the API key
+            // so later runs can authenticate without a password.
+            let me = client
+                .get(format!("{server}/api/auth/me"))
+                .send()
+                .await
+                .map_err(|e: reqwest::Error| format!("Connection failed: {e}"))?;
+            let me_body: serde_json::Value = me.json().await.unwrap_or_default();
+            me_body
+                .get("api_key")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
         }
+    };
+
+    let saved_path = if save {
+        Some(save_config(&server, api_key.as_deref())?)
+    } else {
+        None
+    };
+
+    if json {
+        let report = serde_json::json!({
+            "ok": true,
+            "url": server,
+            "health": health_body,
+            "api_key_saved": api_key.is_some() && saved_path.is_some(),
+            "config": saved_path,
+        });
+        println!("{}", serde_json::to_string_pretty(&report).unwrap());
+        return Ok(());
+    }
+
+    println!("  Auth:      {}", "authenticated".green().bold());
+    match (&api_key, &saved_path) {
+        (Some(_), Some(path)) => {
+            println!("  API key:   {} (saved)", "****".dimmed());
+            println!("  Config:    {}", path.dimmed());
+        }
+        (Some(_), None) => {
+            println!("  API key:   {}", "****".dimmed());
+            println!("  {}", "Not saved (--save=false)".dimmed());
+        }
+        (None, Some(path)) => {
+            println!("  API key:   {}", "not issued by this server".yellow());
+            println!("  Config:    {} (URL only)", path.dimmed());
+        }
+        (None, None) => {}
     }
 
     println!();
-    println!("  You can now run commands without --key:");
+    println!("  {} Logged in to {server}", "OK".green().bold());
+    println!();
+    println!("  Next:");
     println!("    {} hookbot status", "$".dimmed());
-    println!("    {} hookbot devices list", "$".dimmed());
+    println!("    {} hookbot hooks install", "$".dimmed());
 
     Ok(())
 }
@@ -553,7 +715,7 @@ async fn ota_cmd(
 ) -> Result<(), String> {
     match action {
         OtaAction::List => {
-            let resp = client.get(&format!("{base}/api/firmware")).send().await.map_err(|e| e.to_string())?;
+            let resp = client.get(format!("{base}/api/firmware")).send().await.map_err(|e| e.to_string())?;
             if !resp.status().is_success() {
                 return Err(format!("HTTP {}", resp.status()));
             }
@@ -563,7 +725,7 @@ async fn ota_cmd(
                     println!("No firmware versions uploaded.");
                     return Ok(());
                 }
-                println!("{:<8} {:<12} {:<10} {}", "ID", "Version", "Size", "Created");
+                println!("{:<8} {:<12} {:<10} Created", "ID", "Version", "Size");
                 println!("{}", "-".repeat(60));
                 for fw in items {
                     let id = fw.get("id").and_then(|v| v.as_i64()).unwrap_or(0);
@@ -577,7 +739,7 @@ async fn ota_cmd(
             Ok(())
         }
         OtaAction::Status => {
-            let resp = client.get(&format!("{base}/api/ota/jobs")).send().await.map_err(|e| e.to_string())?;
+            let resp = client.get(format!("{base}/api/ota/jobs")).send().await.map_err(|e| e.to_string())?;
             if !resp.status().is_success() {
                 return Err(format!("HTTP {}", resp.status()));
             }

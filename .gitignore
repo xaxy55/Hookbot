@@ -26,6 +26,10 @@ dist-ssr/
 .env.local
 .env.*.local
 
+# Hook configs written by `hookbot hooks install` (may hold an API key)
+hooks/hookbot-config.json
+.hookbot
+
 # Database
 *.db
 *.db-shm

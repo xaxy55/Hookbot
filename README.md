@@ -126,7 +126,17 @@ build_flags = -DDEFAULT_MGMT_SERVER='"https://bot.mr-ai.no"'
 
 ### 4. Claude Code Hooks
 
-Copy `hooks/hookbot-hook.js` and `hooks/hookbot-config.json` to your Claude Code hooks directory. See the [Hook Setup Guide](docs/hooks.md) for configuration options.
+Install the CLI, point it at your server, and let it wire up Claude Code:
+
+```bash
+make install                                   # builds cli/ and installs `hookbot` on your PATH
+hookbot login --url https://your-hookbot-server # verifies /api/health, saves URL + API key to ~/.hookbot
+hookbot hooks install                          # merges the hooks into ~/.claude/settings.json
+```
+
+`hooks install` backs up your settings first, merges rather than overwrites, and
+is safe to re-run. Use `--project` to install into `./.claude/settings.json`
+instead. See the [Hook Setup Guide](docs/hooks.md) for configuration options.
 
 ### Docker (server + web)
 
@@ -152,6 +162,7 @@ You can also claim devices manually on the Devices page by typing the 6-characte
 
 ```bash
 make help              # Show all available commands
+make install           # Build + install the hookbot CLI onto your PATH
 make server            # Start backend dev server
 make web               # Start frontend dev server
 make build             # Production build (server + web)
@@ -160,6 +171,22 @@ make up                # Docker Compose
 make screenshots       # Generate App Store screenshots
 make build-testflight  # Archive and upload iOS app to TestFlight
 ```
+
+## CLI
+
+`make install` puts the `hookbot` binary on your PATH (`~/.cargo/bin` by default,
+override with `INSTALL_ROOT`). Run `hookbot --help` for the full list.
+
+```bash
+hookbot login --url https://your-hookbot-server  # verify + save server URL and API key
+hookbot hooks install                            # wire up the Claude Code hooks
+hookbot status                                   # server health, devices, firmware
+hookbot devices list                             # list registered devices
+hookbot doctor                                   # config + connectivity + quick security scan
+```
+
+Credentials live in `~/.hookbot` (mode `0600`) — never in the repo. `--url` and
+`--key` also read from `HOOKBOT_URL` / `HOOKBOT_API_KEY`.
 
 ## CI/CD & Infrastructure
 

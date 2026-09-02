@@ -21,6 +21,7 @@ DIM    := \033[2m
         update update-server update-web \
         build-testflight screenshots \
         gh-secrets cloud-secrets \
+        install \
         cli-build cli-security cli-config cli-status cli-doctor cli-ping
 
 # ============================================================
@@ -48,7 +49,7 @@ help: ## Show this help
 	@grep -E '^update.*:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@printf "\n$(BOLD)$(YELLOW) CLI$(RESET)\n"
-	@grep -E '^cli.*:.*?## .*$$' $(MAKEFILE_LIST) \
+	@grep -E '^(install|cli.*):.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@printf "\n$(BOLD)$(YELLOW) Secrets & CI$(RESET)\n"
 	@grep -E '^(gh-secrets|cloud-secrets):.*?## .*$$' $(MAKEFILE_LIST) \
@@ -198,6 +199,21 @@ update-web: ## Update npm dependencies (npm update)
 # ============================================================
 #  CLI
 # ============================================================
+# cargo install puts the binary in $(INSTALL_ROOT)/bin. Override to install
+# elsewhere, e.g. make install INSTALL_ROOT=/usr/local
+INSTALL_ROOT ?= $(HOME)/.cargo
+
+install: ## Build and install the hookbot CLI onto your PATH
+	@printf "$(BLUE)>> Installing hookbot CLI (release)...$(RESET)\n"
+	cargo install --path cli --root $(INSTALL_ROOT) --locked --force
+	@printf "$(GREEN)>> Installed: $(INSTALL_ROOT)/bin/hookbot$(RESET)\n"
+	@$(INSTALL_ROOT)/bin/hookbot --version
+	@case ":$$PATH:" in \
+		*":$(INSTALL_ROOT)/bin:"*) ;; \
+		*) printf "$(YELLOW)>> Add $(INSTALL_ROOT)/bin to your PATH to use 'hookbot'.$(RESET)\n" ;; \
+	esac
+	@printf "$(DIM)   Next: hookbot login --url <your-server> && hookbot hooks install$(RESET)\n"
+
 cli-build: ## Build hookbot CLI tool
 	@printf "$(BLUE)>> Building hookbot CLI...$(RESET)\n"
 	cd cli && cargo build --release

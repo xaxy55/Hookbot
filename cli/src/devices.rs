@@ -17,7 +17,7 @@ pub async fn run(
 
 async fn list(client: &reqwest::Client, base: &str, json: bool) -> Result<(), String> {
     let resp = client
-        .get(&format!("{base}/api/devices"))
+        .get(format!("{base}/api/devices"))
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -44,8 +44,8 @@ async fn list(client: &reqwest::Client, base: &str, json: bool) -> Result<(), St
     }
 
     println!(
-        "  {:<6} {:<20} {:<16} {:<8} {:<12} {}",
-        "ID", "Name", "IP", "Online", "Firmware", "Last Seen"
+        "  {:<6} {:<20} {:<16} {:<8} {:<12} Last Seen",
+        "ID", "Name", "IP", "Online", "Firmware"
     );
     println!("  {}", "-".repeat(80));
 
@@ -80,7 +80,7 @@ async fn list(client: &reqwest::Client, base: &str, json: bool) -> Result<(), St
 
 async fn info(client: &reqwest::Client, base: &str, id: &str, json: bool) -> Result<(), String> {
     let resp = client
-        .get(&format!("{base}/api/devices/{id}"))
+        .get(format!("{base}/api/devices/{id}"))
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -188,7 +188,7 @@ async fn reboot(client: &reqwest::Client, base: &str, id: &str) -> Result<(), St
     print!("Rebooting device {id}... ");
 
     let resp = client
-        .post(&format!("{base}/api/devices/{id}/reboot"))
+        .post(format!("{base}/api/devices/{id}/reboot"))
         .send()
         .await
         .map_err(|e| e.to_string())?;

@@ -203,7 +203,7 @@ pub async fn run(
     let mut findings = Arc::try_unwrap(findings).unwrap().into_inner();
 
     // Sort by severity (critical first)
-    findings.sort_by(|a, b| b.severity.cmp(&a.severity));
+    findings.sort_by_key(|f| std::cmp::Reverse(f.severity));
 
     if json {
         let report = serde_json::json!({
@@ -304,7 +304,7 @@ fn is_down(status: u16) -> bool {
 }
 
 async fn check_server_reachable(client: &reqwest::Client, url: &str, findings: &Findings) {
-    match client.get(&format!("{url}/api/health")).send().await {
+    match client.get(format!("{url}/api/health")).send().await {
         Ok(resp) => {
             if is_down(resp.status().as_u16()) {
                 add(findings, Severity::High, "A07:Security Misconfiguration",
@@ -394,7 +394,7 @@ async fn check_security_headers(client: &reqwest::Client, url: &str, findings: &
 async fn check_cors(client: &reqwest::Client, url: &str, findings: &Findings) {
     let evil_origin = "https://evil-attacker.com";
     let resp = match client
-        .get(&format!("{url}/api/health"))
+        .get(format!("{url}/api/health"))
         .header("Origin", evil_origin)
         .send()
         .await
@@ -432,7 +432,7 @@ async fn check_cors(client: &reqwest::Client, url: &str, findings: &Findings) {
 
 async fn check_cors_preflight(client: &reqwest::Client, url: &str, findings: &Findings) {
     let resp = match client
-        .request(reqwest::Method::OPTIONS, &format!("{url}/api/devices"))
+        .request(reqwest::Method::OPTIONS, format!("{url}/api/devices"))
         .header("Origin", "https://evil.com")
         .header("Access-Control-Request-Method", "DELETE")
         .header("Access-Control-Request-Headers", "X-Custom-Header")
@@ -510,7 +510,7 @@ async fn check_auth_enforcement(client: &reqwest::Client, url: &str, findings: &
 async fn check_cookie_security(client: &reqwest::Client, url: &str, findings: &Findings) {
     // Trigger a login attempt to see what cookies come back
     let resp = match client
-        .post(&format!("{url}/api/auth/login"))
+        .post(format!("{url}/api/auth/login"))
         .json(&serde_json::json!({"password": "test"}))
         .send()
         .await
@@ -558,7 +558,7 @@ async fn check_cookie_security(client: &reqwest::Client, url: &str, findings: &F
 async fn check_http_methods(client: &reqwest::Client, url: &str, findings: &Findings) {
     for method in ["TRACE", "TRACK"] {
         let resp = match client
-            .request(reqwest::Method::from_bytes(method.as_bytes()).unwrap(), &format!("{url}/api/health"))
+            .request(reqwest::Method::from_bytes(method.as_bytes()).unwrap(), format!("{url}/api/health"))
             .send()
             .await
         {
@@ -592,7 +592,7 @@ async fn check_info_disclosure(client: &reqwest::Client, url: &str, findings: &F
     ];
 
     for path in &test_paths {
-        let resp = match client.get(&format!("{url}{path}")).send().await {
+        let resp = match client.get(format!("{url}{path}")).send().await {
             Ok(r) => r,
             Err(_) => continue,
         };
@@ -657,27 +657,24 @@ async fn check_tls(_client: &reqwest::Client, url: &str, findings: &Findings) {
         .build()
         .unwrap();
 
-    match http_client.get(&http_url).send().await {
-        Ok(r) => {
-            let status = r.status().as_u16();
-            if !(301..=308).contains(&status) {
+    if let Ok(r) = http_client.get(&http_url).send().await {
+        let status = r.status().as_u16();
+        if !(301..=308).contains(&status) {
+            add(findings, Severity::Medium, "A02:Cryptographic Failures",
+                &format!("No HTTP->HTTPS redirect for {}", url.split("//").last().unwrap_or(url)),
+                &format!("HTTP returns {status} instead of 301/308 redirect."),
+                "Configure HTTP->HTTPS redirect."
+            ).await;
+        } else {
+            let loc = r.headers().get("location").and_then(|v| v.to_str().ok()).unwrap_or("");
+            if !loc.starts_with("https://") {
                 add(findings, Severity::Medium, "A02:Cryptographic Failures",
-                    &format!("No HTTP->HTTPS redirect for {}", url.split("//").last().unwrap_or(url)),
-                    &format!("HTTP returns {status} instead of 301/308 redirect."),
-                    "Configure HTTP->HTTPS redirect."
+                    "HTTP redirect not to HTTPS",
+                    &format!("Redirects to {loc} (not HTTPS)."),
+                    "Redirect to HTTPS URL."
                 ).await;
-            } else {
-                let loc = r.headers().get("location").and_then(|v| v.to_str().ok()).unwrap_or("");
-                if !loc.starts_with("https://") {
-                    add(findings, Severity::Medium, "A02:Cryptographic Failures",
-                        "HTTP redirect not to HTTPS",
-                        &format!("Redirects to {loc} (not HTTPS)."),
-                        "Redirect to HTTPS URL."
-                    ).await;
-                }
             }
         }
-        Err(_) => {}
     }
 }
 
@@ -778,7 +775,7 @@ async fn check_injection_vectors(client: &reqwest::Client, url: &str, findings: 
     ];
 
     for payload in &sqli_payloads {
-        let resp = match client.get(&format!("{url}{payload}")).send().await {
+        let resp = match client.get(format!("{url}{payload}")).send().await {
             Ok(r) => r,
             Err(_) => continue,
         };
@@ -802,7 +799,7 @@ async fn check_injection_vectors(client: &reqwest::Client, url: &str, findings: 
     ];
 
     for (path, marker) in &xss_payloads {
-        if let Ok(resp) = client.get(&format!("{url}{path}")).send().await {
+        if let Ok(resp) = client.get(format!("{url}{path}")).send().await {
             if !is_down(resp.status().as_u16()) {
                 let body = resp.text().await.unwrap_or_default();
                 if body.contains(marker) {
@@ -818,7 +815,7 @@ async fn check_injection_vectors(client: &reqwest::Client, url: &str, findings: 
 
     // NoSQL injection
     if let Ok(resp) = client
-        .post(&format!("{url}/api/auth/login"))
+        .post(format!("{url}/api/auth/login"))
         .json(&serde_json::json!({"password": {"$gt": ""}}))
         .send()
         .await
@@ -841,7 +838,7 @@ async fn check_open_redirect(client: &reqwest::Client, url: &str, findings: &Fin
     ];
 
     for path in &payloads {
-        let resp = match client.get(&format!("{url}{path}")).send().await {
+        let resp = match client.get(format!("{url}{path}")).send().await {
             Ok(r) => r,
             Err(_) => continue,
         };
@@ -871,7 +868,7 @@ async fn check_path_traversal(client: &reqwest::Client, url: &str, findings: &Fi
     ];
 
     for path in &payloads {
-        let resp = match client.get(&format!("{url}{path}")).send().await {
+        let resp = match client.get(format!("{url}{path}")).send().await {
             Ok(r) => r,
             Err(_) => continue,
         };
@@ -896,7 +893,7 @@ async fn check_idor(client: &reqwest::Client, url: &str, findings: &Findings) {
     let ids = ["1", "2", "3", "0", "-1"];
 
     for id in &ids {
-        let resp = match client.get(&format!("{url}/api/devices/{id}")).send().await {
+        let resp = match client.get(format!("{url}/api/devices/{id}")).send().await {
             Ok(r) => r,
             Err(_) => continue,
         };

@@ -6,7 +6,7 @@ pub async fn run(client: &reqwest::Client, base: &str, json: bool) -> Result<(),
 
     // Health check
     let start = Instant::now();
-    let health = client.get(&format!("{base}/api/health")).send().await;
+    let health = client.get(format!("{base}/api/health")).send().await;
     let health_ms = start.elapsed().as_secs_f64() * 1000.0;
 
     if !json {
@@ -58,7 +58,7 @@ pub async fn run(client: &reqwest::Client, base: &str, json: bool) -> Result<(),
     }
 
     // Auth status
-    match client.get(&format!("{base}/api/auth/status")).send().await {
+    match client.get(format!("{base}/api/auth/status")).send().await {
         Ok(resp) => {
             let body: serde_json::Value = resp.json().await.unwrap_or_default();
             let authed = body.get("authenticated").and_then(|v| v.as_bool()).unwrap_or(false);
@@ -88,7 +88,7 @@ pub async fn run(client: &reqwest::Client, base: &str, json: bool) -> Result<(),
     }
 
     // Devices
-    match client.get(&format!("{base}/api/devices")).send().await {
+    match client.get(format!("{base}/api/devices")).send().await {
         Ok(resp) => {
             if resp.status().as_u16() == 401 {
                 if json {
@@ -123,7 +123,7 @@ pub async fn run(client: &reqwest::Client, base: &str, json: bool) -> Result<(),
     }
 
     // Firmware
-    match client.get(&format!("{base}/api/firmware")).send().await {
+    match client.get(format!("{base}/api/firmware")).send().await {
         Ok(resp) => {
             if resp.status().as_u16() == 401 {
                 if !json { println!("  Firmware:  {}", "auth required".dimmed()); }
@@ -156,7 +156,7 @@ pub async fn run(client: &reqwest::Client, base: &str, json: bool) -> Result<(),
     }
 
     // OTA jobs
-    match client.get(&format!("{base}/api/ota/jobs")).send().await {
+    match client.get(format!("{base}/api/ota/jobs")).send().await {
         Ok(resp) if resp.status().is_success() => {
             let body: serde_json::Value = resp.json().await.unwrap_or_default();
             if let Some(jobs) = body.as_array() {

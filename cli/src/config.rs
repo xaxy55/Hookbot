@@ -161,7 +161,7 @@ pub async fn run(env_file: &str, json: bool) -> Result<(), String> {
     let mut warnings = 0;
     let mut errors = 0;
 
-    println!("  {:<28} {:<10} {}", "Variable", "Status", "Notes");
+    println!("  {:<28} {:<10} Notes", "Variable", "Status");
     println!("  {}", "-".repeat(70));
 
     for check in &checks {

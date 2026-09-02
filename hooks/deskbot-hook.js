@@ -28,13 +28,19 @@ function loadConfig() {
     }
   }
 
-  const configPath = path.join(__dirname, "hookbot-config.json");
-  try {
-    return JSON.parse(fs.readFileSync(configPath, "utf8"));
-  } catch (e) {
-    log(`Config error: ${e.message}`);
-    return { host: "http://hookbot.local" };
+  // Written by `hookbot hooks install`; deskbot-config.json is the legacy name.
+  for (const name of ["hookbot-config.json", "deskbot-config.json"]) {
+    const configPath = path.join(__dirname, name);
+    if (!fs.existsSync(configPath)) continue;
+    try {
+      return JSON.parse(fs.readFileSync(configPath, "utf8"));
+    } catch (e) {
+      log(`Config error (${name}): ${e.message}`);
+    }
   }
+
+  log("No config found, falling back to defaults");
+  return { host: "http://hookbot.local" };
 }
 
 function sendDirect(host, state, toolName) {
@@ -75,7 +81,7 @@ function sendDirect(host, state, toolName) {
   });
 }
 
-function sendToServer(host, event, input, deviceId) {
+function sendToServer(config, host, event, input, deviceId) {
   const url = new URL("/api/hook", host);
   const body = JSON.stringify({
     event,
@@ -150,7 +156,7 @@ async function main() {
   // Server mode: route through management server
   if (config.mode === "server") {
     log(`Event: ${hookEvent} -> server at ${config.host} (device: ${config.device_id || "auto"})`);
-    await sendToServer(config.host, hookEvent, input, config.device_id);
+    await sendToServer(config, config.host, hookEvent, input, config.device_id);
     process.exit(0);
   }
 

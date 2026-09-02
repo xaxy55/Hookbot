@@ -26,7 +26,7 @@ pub async fn run(
 }
 
 async fn list(client: &reqwest::Client, base: &str, json_output: bool) -> Result<(), String> {
-    let resp = client.get(&format!("{base}/api/tunnels"))
+    let resp = client.get(format!("{base}/api/tunnels"))
         .send().await.map_err(|e| e.to_string())?;
     if !resp.status().is_success() {
         return Err(format!("HTTP {}", resp.status()));
@@ -44,7 +44,7 @@ async fn list(client: &reqwest::Client, base: &str, json_output: bool) -> Result
             println!("  Use {} to create one instantly.", "hookbot tunnel quick-connect".cyan());
             return Ok(());
         }
-        println!("{:<12} {:<20} {:<10} {:<8} {}", "ID", "NAME", "STATUS", "PORT", "URL");
+        println!("{:<12} {:<20} {:<10} {:<8} URL", "ID", "NAME", "STATUS", "PORT");
         println!("{}", "-".repeat(75));
         for t in tunnels {
             let id = t.get("id").and_then(|v| v.as_str()).unwrap_or("?");
@@ -73,7 +73,7 @@ async fn list(client: &reqwest::Client, base: &str, json_output: bool) -> Result
 }
 
 async fn start(client: &reqwest::Client, base: &str, id: &str) -> Result<(), String> {
-    let resp = client.post(&format!("{base}/api/tunnels/{id}/start"))
+    let resp = client.post(format!("{base}/api/tunnels/{id}/start"))
         .send().await.map_err(|e| e.to_string())?;
     let status = resp.status();
     let body: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
@@ -89,7 +89,7 @@ async fn start(client: &reqwest::Client, base: &str, id: &str) -> Result<(), Str
 }
 
 async fn stop(client: &reqwest::Client, base: &str, id: &str) -> Result<(), String> {
-    let resp = client.post(&format!("{base}/api/tunnels/{id}/stop"))
+    let resp = client.post(format!("{base}/api/tunnels/{id}/stop"))
         .send().await.map_err(|e| e.to_string())?;
     let status = resp.status();
     let body: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
@@ -105,7 +105,7 @@ async fn stop(client: &reqwest::Client, base: &str, id: &str) -> Result<(), Stri
 
 async fn status(client: &reqwest::Client, base: &str, id: Option<&str>, json_output: bool) -> Result<(), String> {
     if let Some(id) = id {
-        let resp = client.get(&format!("{base}/api/tunnels/{id}/metrics"))
+        let resp = client.get(format!("{base}/api/tunnels/{id}/metrics"))
             .send().await.map_err(|e| e.to_string())?;
         if !resp.status().is_success() {
             return Err(format!("HTTP {}", resp.status()));
@@ -147,7 +147,7 @@ async fn status(client: &reqwest::Client, base: &str, id: Option<&str>, json_out
 async fn quick_connect(client: &reqwest::Client, base: &str) -> Result<(), String> {
     println!("Starting quick-connect tunnel (TryCloudflare)...");
 
-    let resp = client.post(&format!("{base}/api/tunnels/quick-connect"))
+    let resp = client.post(format!("{base}/api/tunnels/quick-connect"))
         .send().await.map_err(|e| e.to_string())?;
     let status = resp.status();
     let body: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
@@ -177,7 +177,7 @@ async fn quick_connect(client: &reqwest::Client, base: &str) -> Result<(), Strin
 }
 
 async fn logs(client: &reqwest::Client, base: &str, id: &str, limit: u32, json_output: bool) -> Result<(), String> {
-    let resp = client.get(&format!("{base}/api/tunnels/{id}/logs?limit={limit}"))
+    let resp = client.get(format!("{base}/api/tunnels/{id}/logs?limit={limit}"))
         .send().await.map_err(|e| e.to_string())?;
     if !resp.status().is_success() {
         return Err(format!("HTTP {}", resp.status()));
