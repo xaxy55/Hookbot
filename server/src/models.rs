@@ -869,8 +869,17 @@ pub struct MusicConfig {
     pub id: String,
     pub device_id: String,
     pub provider: String, // "spotify", "apple_music"
+    /// OAuth credentials are write-only. They are held here so handlers can
+    /// pass them to the database, but never serialized: the browser has no use
+    /// for them, and a refresh token is long-lived enough that handing it to
+    /// the client would undo the point of the PKCE flow (no secret leaves the
+    /// server). `connected` is what the UI actually needs.
+    #[serde(skip_serializing)]
     pub access_token: Option<String>,
+    #[serde(skip_serializing)]
     pub refresh_token: Option<String>,
+    /// True when a usable access token is stored server-side.
+    pub connected: bool,
     pub auto_pause_meetings: bool,
     pub focus_playlist_id: Option<String>,
     pub enabled: bool,
@@ -1013,7 +1022,12 @@ pub struct HomeAssistantConfig {
     pub id: String,
     pub device_id: String,
     pub ha_url: String,
+    /// Write-only, like the Spotify tokens: a Home Assistant long-lived token
+    /// grants full control of someone's home, and the UI only ever sets it.
+    #[serde(skip_serializing)]
     pub access_token: Option<String>,
+    /// True when a token is stored server-side.
+    pub connected: bool,
     pub entity_id: Option<String>,
     pub expose_states: bool,
     pub expose_sensors: bool,

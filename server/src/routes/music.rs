@@ -285,12 +285,15 @@ pub async fn get_config(
          FROM music_configs WHERE device_id = ?1"
     )?;
     let configs = stmt.query_map([&device_id], |row| {
+        let access_token: Option<String> = row.get(3)?;
+        let refresh_token: Option<String> = row.get(4)?;
         Ok(MusicConfig {
             id: row.get(0)?,
             device_id: row.get(1)?,
             provider: row.get(2)?,
-            access_token: row.get(3)?,
-            refresh_token: row.get(4)?,
+            connected: access_token.as_deref().is_some_and(|t| !t.is_empty()),
+            access_token,
+            refresh_token,
             auto_pause_meetings: row.get(5)?,
             focus_playlist_id: row.get(6)?,
             enabled: row.get(7)?,
@@ -320,6 +323,7 @@ pub async fn create_config(
         id,
         device_id,
         provider: input.provider,
+        connected: input.access_token.as_deref().is_some_and(|t| !t.is_empty()),
         access_token: input.access_token,
         refresh_token: input.refresh_token,
         auto_pause_meetings: true,
@@ -575,6 +579,31 @@ mod tests {
     use super::*;
 
     const SECRET: [u8; 32] = [7u8; 32];
+
+    /// The browser must never receive Spotify credentials. A refresh token is
+    /// long-lived, so leaking it would undo the point of the PKCE flow.
+    #[test]
+    fn serialized_config_never_carries_oauth_tokens() {
+        let cfg = MusicConfig {
+            id: "cfg-1".into(),
+            device_id: "dev-1".into(),
+            provider: "spotify".into(),
+            connected: true,
+            access_token: Some("BQAsecret-access".into()),
+            refresh_token: Some("AQAsecret-refresh".into()),
+            auto_pause_meetings: true,
+            focus_playlist_id: None,
+            enabled: true,
+            created_at: "2026-01-01".into(),
+        };
+
+        let json = serde_json::to_string(&cfg).expect("serializes");
+        assert!(!json.contains("secret-access"), "access token leaked: {json}");
+        assert!(!json.contains("secret-refresh"), "refresh token leaked: {json}");
+        assert!(!json.contains("access_token"), "field name still present: {json}");
+        assert!(!json.contains("refresh_token"), "field name still present: {json}");
+        assert!(json.contains("\"connected\":true"), "connected flag missing: {json}");
+    }
 
     fn now() -> i64 {
         chrono::Utc::now().timestamp()

@@ -1386,8 +1386,8 @@ export interface MusicConfig {
   id: string;
   device_id: string;
   provider: string;
-  access_token: string | null;
-  refresh_token: string | null;
+  /** The server never sends OAuth tokens to the browser; this is all it says. */
+  connected: boolean;
   auto_pause_meetings: boolean;
   focus_playlist_id: string | null;
   enabled: boolean;
@@ -1532,7 +1532,8 @@ export interface HomeAssistantConfig {
   id: string;
   device_id: string;
   ha_url: string;
-  access_token: string | null;
+  /** The long-lived token is write-only; the server never sends it back. */
+  connected: boolean;
   entity_id: string | null;
   expose_states: boolean;
   expose_sensors: boolean;

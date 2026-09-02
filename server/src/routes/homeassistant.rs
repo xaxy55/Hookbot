@@ -31,17 +31,20 @@ pub async fn get_config(
         "SELECT id, device_id, ha_url, access_token, entity_id, expose_states, expose_sensors, enabled, created_at \
          FROM homeassistant_configs WHERE device_id = ?1",
         [&device_id],
-        |row| Ok(HomeAssistantConfig {
+        |row| {
+            let access_token: Option<String> = row.get(3)?;
+            Ok(HomeAssistantConfig {
             id: row.get(0)?,
             device_id: row.get(1)?,
             ha_url: row.get(2)?,
-            access_token: row.get(3)?,
+            connected: access_token.as_deref().is_some_and(|t| !t.is_empty()),
+            access_token,
             entity_id: row.get(4)?,
             expose_states: row.get(5)?,
             expose_sensors: row.get(6)?,
             enabled: row.get(7)?,
             created_at: row.get(8)?,
-        }),
+        })},
     );
 
     match config {
@@ -69,6 +72,7 @@ pub async fn create_config(
         id,
         device_id,
         ha_url: input.ha_url,
+        connected: input.access_token.as_deref().is_some_and(|t| !t.is_empty()),
         access_token: input.access_token,
         entity_id: input.entity_id,
         expose_states: true,
