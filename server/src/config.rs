@@ -34,6 +34,9 @@ pub struct AppConfig {
     pub workos_redirect_uri: Option<String>,
     pub cookie_domain: Option<String>,
     pub frontend_url: Option<String>,
+    pub spotify_client_id: Option<String>,
+    pub spotify_client_secret: Option<String>,
+    pub spotify_redirect_uri: Option<String>,
     pub cloudflared_path: String,
     pub tunnel_auto_restart: bool,
 }
@@ -111,6 +114,12 @@ impl AppConfig {
         let workos_client_id = env::var("WORKOS_CLIENT_ID").ok().filter(|s| !s.is_empty());
         let workos_api_key = env::var("WORKOS_API_KEY").ok().filter(|s| !s.is_empty());
         let workos_redirect_uri = env::var("WORKOS_REDIRECT_URI").ok().filter(|s| !s.is_empty());
+        let spotify_client_id = env::var("SPOTIFY_CLIENT_ID").ok().filter(|s| !s.is_empty());
+        let spotify_client_secret = env::var("SPOTIFY_CLIENT_SECRET").ok().filter(|s| !s.is_empty());
+        let spotify_redirect_uri = env::var("SPOTIFY_REDIRECT_URI").ok().filter(|s| !s.is_empty());
+        if spotify_client_id.is_some() {
+            info!("Spotify integration configured");
+        }
         let cookie_domain = env::var("COOKIE_DOMAIN").ok().filter(|s| !s.is_empty());
         let frontend_url = env::var("FRONTEND_URL").ok().filter(|s| !s.is_empty());
         if workos_client_id.is_some() {
@@ -148,6 +157,9 @@ impl AppConfig {
             workos_redirect_uri,
             cookie_domain,
             frontend_url,
+            spotify_client_id,
+            spotify_client_secret,
+            spotify_redirect_uri,
             cloudflared_path,
             tunnel_auto_restart,
         }

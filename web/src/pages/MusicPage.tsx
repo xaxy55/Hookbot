@@ -141,12 +141,23 @@ export default function MusicPage() {
             <option value="spotify">Spotify</option>
             <option value="apple_music">Apple Music</option>
           </select>
-          <button
-            onClick={() => createMutation.mutate()}
-            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white"
-          >
-            Connect
-          </button>
+          {provider === 'spotify' ? (
+            // Spotify needs a real OAuth round trip, so hand the browser to the
+            // server's authorize route rather than creating an empty config row.
+            <a
+              href={`/api/music/spotify/authorize${deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : ''}`}
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white"
+            >
+              Authorize with Spotify
+            </a>
+          ) : (
+            <button
+              onClick={() => createMutation.mutate()}
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white"
+            >
+              Connect
+            </button>
+          )}
         </div>
       )}
 

@@ -1,10 +1,216 @@
 use axum::extract::{Path, Query, State};
-use axum::Json;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Redirect, Response};
+use axum::{Extension, Json};
+use hmac::{Hmac, Mac};
 use serde::Deserialize;
+use sha2::Sha256;
+use std::sync::Arc;
 
+use crate::config::AppConfig;
 use crate::db::DbPool;
 use crate::error::AppError;
 use crate::models::*;
+
+const SPOTIFY_SCOPES: &str =
+    "user-read-playback-state user-modify-playback-state user-read-currently-playing";
+
+/// Percent-encode for query strings (same helper style as the WorkOS flow).
+fn urlencode(s: &str) -> String {
+    s.bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                (b as char).to_string()
+            }
+            _ => format!("%{:02X}", b),
+        })
+        .collect()
+}
+
+/// The OAuth `state` is signed rather than stored: it carries the device id
+/// through the round trip, and the HMAC proves we issued it, so a stray
+/// callback cannot bind someone else's Spotify account to a device.
+fn sign_state(secret: &[u8; 32], device_id: &str, issued_at: i64) -> String {
+    let payload = format!("{}:{}", device_id, issued_at);
+    let mut mac = <Hmac<Sha256>>::new_from_slice(secret).expect("HMAC accepts any key length");
+    mac.update(payload.as_bytes());
+    let sig = hex::encode(mac.finalize().into_bytes());
+    format!("{}:{}", payload, sig)
+}
+
+fn verify_state(secret: &[u8; 32], state: &str) -> Option<String> {
+    let (payload, sig) = state.rsplit_once(':')?;
+    let (device_id, issued_at) = payload.rsplit_once(':')?;
+    let issued_at: i64 = issued_at.parse().ok()?;
+
+    // 10 minutes is plenty for a consent screen and keeps a leaked link short-lived.
+    if (chrono::Utc::now().timestamp() - issued_at).abs() > 600 {
+        return None;
+    }
+    let expected = sign_state(secret, device_id, issued_at);
+    let expected_sig = expected.rsplit_once(':')?.1;
+    // Constant-time compare so a mismatch cannot be probed byte by byte.
+    if sig.len() != expected_sig.len() {
+        return None;
+    }
+    let equal = sig
+        .bytes()
+        .zip(expected_sig.bytes())
+        .fold(0u8, |acc, (a, b)| acc | (a ^ b))
+        == 0;
+    equal.then(|| device_id.to_string())
+}
+
+#[derive(Debug, Deserialize)]
+struct SpotifyTokens {
+    access_token: String,
+    refresh_token: Option<String>,
+    expires_in: i64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CallbackQuery {
+    pub code: Option<String>,
+    pub state: Option<String>,
+    pub error: Option<String>,
+}
+
+/// GET /api/music/spotify/authorize — send the browser to Spotify's consent screen.
+pub async fn spotify_authorize(
+    State(db): State<DbPool>,
+    Extension(config): Extension<Arc<AppConfig>>,
+    Query(q): Query<DeviceQuery>,
+) -> Result<Redirect, AppError> {
+    let (client_id, redirect_uri) = spotify_credentials(&config)?;
+
+    let device_id = {
+        let conn = db.lock().unwrap();
+        resolve_device_id(&conn, q.device_id.as_deref())?
+    };
+
+    let state = sign_state(&config.session_secret, &device_id, chrono::Utc::now().timestamp());
+    let url = format!(
+        "https://accounts.spotify.com/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}&state={}",
+        urlencode(client_id),
+        urlencode(redirect_uri),
+        urlencode(SPOTIFY_SCOPES),
+        urlencode(&state),
+    );
+    Ok(Redirect::to(&url))
+}
+
+/// GET /api/music/spotify/callback — exchange the code and store the tokens.
+pub async fn spotify_callback(
+    State(db): State<DbPool>,
+    Extension(config): Extension<Arc<AppConfig>>,
+    Query(q): Query<CallbackQuery>,
+) -> Response {
+    let frontend = config.frontend_url.clone().unwrap_or_default();
+    let fail = |reason: &str| -> Response {
+        if frontend.is_empty() {
+            (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "error": reason }))).into_response()
+        } else {
+            Redirect::to(&format!("{}/music?spotify_error={}", frontend, urlencode(reason)))
+                .into_response()
+        }
+    };
+
+    if let Some(err) = q.error {
+        return fail(&err);
+    }
+    let (Some(code), Some(state)) = (q.code, q.state) else {
+        return fail("missing_code");
+    };
+    let Some(device_id) = verify_state(&config.session_secret, &state) else {
+        return fail("invalid_state");
+    };
+    let (client_id, redirect_uri) = match spotify_credentials(&config) {
+        Ok(v) => v,
+        Err(_) => return fail("not_configured"),
+    };
+    let Some(client_secret) = config.spotify_client_secret.as_deref() else {
+        return fail("not_configured");
+    };
+
+    let tokens = match exchange_code(client_id, client_secret, redirect_uri, &code).await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::warn!("Spotify token exchange failed: {}", e);
+            return fail("token_exchange_failed");
+        }
+    };
+
+    let expires_at = (chrono::Utc::now() + chrono::Duration::seconds(tokens.expires_in)).to_rfc3339();
+    {
+        let conn = db.lock().unwrap();
+        // Re-connecting an existing device replaces its tokens rather than
+        // creating a second row (device_id+provider is UNIQUE).
+        if let Err(e) = conn.execute(
+            "INSERT INTO music_configs (id, device_id, provider, access_token, refresh_token, token_expires_at, scopes, enabled)
+             VALUES (?1, ?2, 'spotify', ?3, ?4, ?5, ?6, 1)
+             ON CONFLICT(device_id, provider) DO UPDATE SET
+                 access_token = excluded.access_token,
+                 refresh_token = COALESCE(excluded.refresh_token, music_configs.refresh_token),
+                 token_expires_at = excluded.token_expires_at,
+                 scopes = excluded.scopes,
+                 enabled = 1",
+            rusqlite::params![
+                uuid::Uuid::new_v4().to_string(),
+                device_id,
+                tokens.access_token,
+                tokens.refresh_token,
+                expires_at,
+                SPOTIFY_SCOPES,
+            ],
+        ) {
+            tracing::error!("Failed to persist Spotify tokens: {}", e);
+            return fail("persist_failed");
+        }
+    }
+
+    tracing::info!("Spotify connected for device {}", device_id);
+    if frontend.is_empty() {
+        Json(serde_json::json!({ "ok": true, "provider": "spotify" })).into_response()
+    } else {
+        Redirect::to(&format!("{}/music?spotify=connected", frontend)).into_response()
+    }
+}
+
+fn spotify_credentials(config: &AppConfig) -> Result<(&str, &str), AppError> {
+    match (
+        config.spotify_client_id.as_deref(),
+        config.spotify_redirect_uri.as_deref(),
+    ) {
+        (Some(id), Some(uri)) => Ok((id, uri)),
+        _ => Err(AppError::BadRequest(
+            "Spotify is not configured. Set SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET and SPOTIFY_REDIRECT_URI.".into(),
+        )),
+    }
+}
+
+async fn exchange_code(
+    client_id: &str,
+    client_secret: &str,
+    redirect_uri: &str,
+    code: &str,
+) -> Result<SpotifyTokens, String> {
+    let res = reqwest::Client::new()
+        .post("https://accounts.spotify.com/api/token")
+        .basic_auth(client_id, Some(client_secret))
+        .form(&[
+            ("grant_type", "authorization_code"),
+            ("code", code),
+            ("redirect_uri", redirect_uri),
+        ])
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        return Err(format!("HTTP {}", res.status()));
+    }
+    res.json::<SpotifyTokens>().await.map_err(|e| e.to_string())
+}
 
 #[derive(Debug, Deserialize)]
 pub struct DeviceQuery {
@@ -117,50 +323,191 @@ pub async fn delete_config(
 /// GET /api/music/now-playing — get current track info
 pub async fn now_playing(
     State(db): State<DbPool>,
+    Extension(config): Extension<Arc<AppConfig>>,
     Query(q): Query<DeviceQuery>,
 ) -> Result<Json<NowPlaying>, AppError> {
-    let conn = db.lock().unwrap();
-    let device_id = resolve_device_id(&conn, q.device_id.as_deref())?;
+    let device_id = {
+        let conn = db.lock().unwrap();
+        resolve_device_id(&conn, q.device_id.as_deref())?
+    };
 
-    // Check if we have an enabled music config
-    let _config_exists: bool = conn.query_row(
-        "SELECT COUNT(*) > 0 FROM music_configs WHERE device_id = ?1 AND enabled = 1",
-        [&device_id],
-        |row| row.get(0),
-    ).unwrap_or(false);
+    // Nothing connected yet is a normal state, not an error — the UI renders
+    // an empty player and a Connect button.
+    let Some(token) = access_token(&db, &config, &device_id).await? else {
+        return Ok(Json(NowPlaying {
+            is_playing: false,
+            track_name: None,
+            artist_name: None,
+            album_name: None,
+            album_art_url: None,
+            progress_ms: None,
+            duration_ms: None,
+        }));
+    };
 
-    // In production, this would query the Spotify/Apple Music API.
-    // Return placeholder data indicating the integration is ready.
+    let res = reqwest::Client::new()
+        .get("https://api.spotify.com/v1/me/player/currently-playing")
+        .bearer_auth(&token)
+        .send()
+        .await
+        .map_err(|e| AppError::Internal(format!("Spotify request failed: {e}")))?;
+
+    // 204 means "nothing is playing right now", which is not a failure.
+    if res.status() == StatusCode::NO_CONTENT {
+        return Ok(Json(NowPlaying {
+            is_playing: false,
+            track_name: None,
+            artist_name: None,
+            album_name: None,
+            album_art_url: None,
+            progress_ms: None,
+            duration_ms: None,
+        }));
+    }
+    if !res.status().is_success() {
+        return Err(AppError::Internal(format!("Spotify returned {}", res.status())));
+    }
+
+    let body: serde_json::Value = res
+        .json()
+        .await
+        .map_err(|e| AppError::Internal(format!("Spotify sent invalid JSON: {e}")))?;
+    let item = &body["item"];
+
     Ok(Json(NowPlaying {
-        is_playing: false,
-        track_name: None,
-        artist_name: None,
-        album_name: None,
-        album_art_url: None,
-        progress_ms: None,
-        duration_ms: None,
+        is_playing: body["is_playing"].as_bool().unwrap_or(false),
+        track_name: item["name"].as_str().map(str::to_string),
+        artist_name: item["artists"][0]["name"].as_str().map(str::to_string),
+        album_name: item["album"]["name"].as_str().map(str::to_string),
+        album_art_url: item["album"]["images"][0]["url"].as_str().map(str::to_string),
+        progress_ms: body["progress_ms"].as_i64(),
+        duration_ms: item["duration_ms"].as_i64(),
     }))
+}
+
+/// Return a usable Spotify access token for the device, refreshing it first if
+/// it is expired or about to be. `None` means no account is connected.
+async fn access_token(
+    db: &DbPool,
+    config: &AppConfig,
+    device_id: &str,
+) -> Result<Option<String>, AppError> {
+    let row: Option<(String, Option<String>, Option<String>, Option<String>)> = {
+        let conn = db.lock().unwrap();
+        conn.query_row(
+            "SELECT id, access_token, refresh_token, token_expires_at \
+             FROM music_configs WHERE device_id = ?1 AND provider = 'spotify' AND enabled = 1 LIMIT 1",
+            [device_id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+        )
+        .ok()
+    };
+    let Some((config_id, access, refresh, expires_at)) = row else {
+        return Ok(None);
+    };
+    let Some(access) = access else { return Ok(None) };
+
+    // Refresh a minute early so a token cannot expire mid-request.
+    let expired = expires_at
+        .and_then(|t| chrono::DateTime::parse_from_rfc3339(&t).ok())
+        .map(|t| chrono::Utc::now() + chrono::Duration::seconds(60) >= t)
+        .unwrap_or(false);
+    if !expired {
+        return Ok(Some(access));
+    }
+
+    let (Some(refresh), Some(client_id), Some(client_secret)) = (
+        refresh,
+        config.spotify_client_id.as_deref(),
+        config.spotify_client_secret.as_deref(),
+    ) else {
+        // Expired with no way to refresh — the user has to reconnect.
+        return Ok(Some(access));
+    };
+
+    let res = reqwest::Client::new()
+        .post("https://accounts.spotify.com/api/token")
+        .basic_auth(client_id, Some(client_secret))
+        .form(&[("grant_type", "refresh_token"), ("refresh_token", &refresh)])
+        .send()
+        .await
+        .map_err(|e| AppError::Internal(format!("Spotify refresh failed: {e}")))?;
+
+    if !res.status().is_success() {
+        return Err(AppError::Internal(format!(
+            "Spotify refresh returned {}",
+            res.status()
+        )));
+    }
+    let tokens: SpotifyTokens = res
+        .json()
+        .await
+        .map_err(|e| AppError::Internal(format!("Spotify sent invalid JSON: {e}")))?;
+    let new_expiry =
+        (chrono::Utc::now() + chrono::Duration::seconds(tokens.expires_in)).to_rfc3339();
+
+    {
+        let conn = db.lock().unwrap();
+        // Spotify only returns a new refresh token sometimes; keep the old one otherwise.
+        conn.execute(
+            "UPDATE music_configs SET access_token = ?1, token_expires_at = ?2, \
+             refresh_token = COALESCE(?3, refresh_token) WHERE id = ?4",
+            rusqlite::params![tokens.access_token, new_expiry, tokens.refresh_token, config_id],
+        )?;
+    }
+    Ok(Some(tokens.access_token))
 }
 
 /// POST /api/music/action — control playback
 pub async fn music_action(
     State(db): State<DbPool>,
+    Extension(config): Extension<Arc<AppConfig>>,
     Query(q): Query<DeviceQuery>,
     Json(input): Json<MusicAction>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let conn = db.lock().unwrap();
-    let device_id = resolve_device_id(&conn, q.device_id.as_deref())?;
+    let device_id = {
+        let conn = db.lock().unwrap();
+        resolve_device_id(&conn, q.device_id.as_deref())?
+    };
 
-    let config = conn.query_row(
-        "SELECT provider FROM music_configs WHERE device_id = ?1 AND enabled = 1 LIMIT 1",
-        [&device_id],
-        |row| row.get::<_, String>(0),
-    ).map_err(|_| AppError::NotFound("No active music integration found".into()))?;
+    let token = access_token(&db, &config, &device_id)
+        .await?
+        .ok_or_else(|| AppError::NotFound("No active music integration found".into()))?;
+
+    // Spotify uses different verbs per action, and returns 204 on success.
+    let client = reqwest::Client::new();
+    let req = match input.action.as_str() {
+        "play" => client.put("https://api.spotify.com/v1/me/player/play"),
+        "pause" => client.put("https://api.spotify.com/v1/me/player/pause"),
+        "next" => client.post("https://api.spotify.com/v1/me/player/next"),
+        "previous" => client.post("https://api.spotify.com/v1/me/player/previous"),
+        other => {
+            return Err(AppError::BadRequest(format!(
+                "Unsupported action '{other}'. Use play, pause, next or previous."
+            )))
+        }
+    };
+
+    let res = req
+        .bearer_auth(&token)
+        .header("Content-Length", "0")
+        .send()
+        .await
+        .map_err(|e| AppError::Internal(format!("Spotify request failed: {e}")))?;
+
+    // 404 here means no active Spotify device, which is worth saying plainly.
+    if res.status() == StatusCode::NOT_FOUND {
+        return Err(AppError::BadRequest(
+            "No active Spotify player. Start playback on a device first.".into(),
+        ));
+    }
+    if !res.status().is_success() {
+        return Err(AppError::Internal(format!("Spotify returned {}", res.status())));
+    }
 
     Ok(Json(serde_json::json!({
         "ok": true,
-        "provider": config,
+        "provider": "spotify",
         "action": input.action,
-        "message": format!("Music action '{}' queued", input.action)
     })))
 }

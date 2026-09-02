@@ -27,6 +27,9 @@ fn run_migrations(conn: &Connection) {
         "ALTER TABLE device_config ADD COLUMN sound_pack TEXT DEFAULT 'default'",
         "ALTER TABLE community_plugins ADD COLUMN verified BOOLEAN DEFAULT 0",
         "ALTER TABLE shared_assets ADD COLUMN verified BOOLEAN DEFAULT 0",
+        // Spotify OAuth: access tokens expire hourly, so remember when to refresh
+        "ALTER TABLE music_configs ADD COLUMN token_expires_at TEXT",
+        "ALTER TABLE music_configs ADD COLUMN scopes TEXT",
         // Pet state
         "CREATE TABLE IF NOT EXISTS pet_state (
             device_id TEXT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,

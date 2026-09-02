@@ -300,6 +300,8 @@ async fn main() {
     let music_routes = Router::new()
         .route("/api/music/config", get(routes::music::get_config).post(routes::music::create_config))
         .route("/api/music/config/{id}", put(routes::music::update_config).delete(routes::music::delete_config))
+        .route("/api/music/spotify/authorize", get(routes::music::spotify_authorize))
+        .route("/api/music/spotify/callback", get(routes::music::spotify_callback))
         .route("/api/music/now-playing", get(routes::music::now_playing))
         .route("/api/music/action", post(routes::music::music_action))
         .with_state(pool.clone());
