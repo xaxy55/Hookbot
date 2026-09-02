@@ -1180,7 +1180,7 @@ function SensorReadingsChart({ deviceId, channel, label }: { deviceId: string; c
 
 function SensorsTab({ deviceId, online }: { deviceId: string; online: boolean }) {
   const qc = useQueryClient();
-  const { data: sensors, isLoading } = useQuery({
+  const { data: sensorData, isLoading } = useQuery({
     queryKey: ['sensors', deviceId],
     queryFn: () => getSensors(deviceId),
     enabled: online,
@@ -1208,12 +1208,17 @@ function SensorsTab({ deviceId, online }: { deviceId: string; online: boolean })
 
   if (isLoading) return <p className="text-subtle text-sm">Loading sensors...</p>;
 
-  const channels = editing ?? (sensors || Array.from({ length: 8 }, (_, i) => ({
+  // The endpoint returns { configs, live_readings }, not a bare array — reading
+  // it as one made channels.map() throw and blanked the whole page.
+  const configs = sensorData?.configs ?? [];
+  const liveChannels = sensorData?.live_readings?.channels ?? [];
+
+  const channels = editing ?? (configs.length > 0 ? configs : Array.from({ length: 8 }, (_, i) => ({
     channel: i, pin: -1, sensor_type: 'disabled', label: '', poll_interval_ms: 1000, threshold: 0,
   })));
 
   // Active (non-disabled) sensor channels for charting
-  const activeChannels = (sensors || []).filter(
+  const activeChannels = configs.filter(
     (ch: SensorChannelConfig) => ch.sensor_type !== 'disabled'
   );
 
@@ -1228,9 +1233,9 @@ function SensorsTab({ deviceId, online }: { deviceId: string; online: boolean })
             <div key={i} className="rounded-md border border-edge bg-inset/50 p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-fg-2">Channel {i}</span>
-                {sensors?.[i]?.last_value !== undefined && ch.sensor_type !== 'disabled' && (
+                {liveChannels[i] !== undefined && ch.sensor_type !== 'disabled' && (
                   <span className="text-xs font-mono text-green-400">
-                    Value: {sensors[i].last_value}
+                    Value: {liveChannels[i].lastValue}
                   </span>
                 )}
               </div>

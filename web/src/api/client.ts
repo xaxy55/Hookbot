@@ -316,8 +316,29 @@ export interface SensorChannelConfig {
   last_value?: number;
 }
 
+/** One channel as the device itself reports it (camelCase, numeric type). */
+export interface SensorLiveChannel {
+  pin: number;
+  type: number;
+  label: string;
+  pollIntervalMs: number;
+  threshold: number;
+  lastValue: number;
+  triggered: boolean;
+}
+
+/**
+ * GET /devices/:id/sensors returns the stored configs alongside a live read
+ * proxied from the device — not a bare array. live_readings is null when the
+ * device could not be reached.
+ */
+export interface SensorsResponse {
+  configs: SensorChannelConfig[];
+  live_readings: { channels: SensorLiveChannel[] } | null;
+}
+
 export const getSensors = (deviceId: string) =>
-  request<SensorChannelConfig[]>(`/devices/${deviceId}/sensors`);
+  request<SensorsResponse>(`/devices/${deviceId}/sensors`);
 
 export const updateSensors = (deviceId: string, channels: Partial<SensorChannelConfig>[]) =>
   request<{ ok: boolean }>(`/devices/${deviceId}/sensors`, {
