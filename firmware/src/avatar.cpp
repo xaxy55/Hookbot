@@ -440,20 +440,23 @@ static void drawFace(DisplayCanvas* d) {
         // Ignore stale pushes so the headphones do not stay on if the server
         // stops updating (e.g. it went away mid-track).
         if (music.playing && (millis() - music.lastUpdatedAt) < 120000) {
-            int16_t bandY = cy - 26;   // arc clears the top of the head
-            int16_t cupY  = cy - 12;
-            int16_t cupW  = 4;
-            int16_t cupH  = 11;
-            int16_t side  = 19;        // just outside the face
+            // The eyes sit at cx +/- eyeSpacing(18) and are eyeW(10) wide, so
+            // they reach cx +/- 23. Keep the cups outside that or they land on
+            // the eyes; the band arcs above the top hat's brim at cy - 22.
+            const int16_t cupInner = 26;          // inner edge of each ear cup
+            const int16_t cupW     = 4;
+            const int16_t cupY     = cy - 14;     // aligned with the eye tops
+            const int16_t cupH     = 12;
+            const int16_t bandY    = cy - 27;
 
             // Headband: three short segments approximate an arc cheaply.
-            d->drawLine(cx - side, cy - 14, cx - 11, bandY, COLOR_WHITE);
-            d->drawFastHLine(cx - 11, bandY, 22, COLOR_WHITE);
-            d->drawLine(cx + 11, bandY, cx + side, cy - 14, COLOR_WHITE);
+            d->drawLine(cx - cupInner - 2, cupY, cx - 14, bandY, COLOR_WHITE);
+            d->drawFastHLine(cx - 14, bandY, 29, COLOR_WHITE);
+            d->drawLine(cx + 14, bandY, cx + cupInner + 2, cupY, COLOR_WHITE);
 
-            // Ear cups
-            d->fillRect(cx - side - 1, cupY, cupW, cupH, COLOR_WHITE);
-            d->fillRect(cx + side - 2, cupY, cupW, cupH, COLOR_WHITE);
+            // Ear cups, just clear of the eyes on each side.
+            d->fillRect(cx - cupInner - cupW, cupY, cupW, cupH, COLOR_WHITE);
+            d->fillRect(cx + cupInner, cupY, cupW, cupH, COLOR_WHITE);
         }
     }
 
