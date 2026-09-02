@@ -80,3 +80,7 @@ infra/.terraform.tfstate.lock.info
 *.key
 *.crt
 
+
+# Playwright
+test-results/
+playwright-report/

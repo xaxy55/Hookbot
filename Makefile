@@ -35,6 +35,9 @@ help: ## Show this help
 	@printf "\n$(BOLD)$(YELLOW) Build$(RESET)\n"
 	@grep -E '^(build|build-testflight|screenshots):.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
+	@printf "\n$(BOLD)$(YELLOW) Firmware$(RESET)\n"
+	@grep -E '^firmware.*:.*?## .*$$' $(MAKEFILE_LIST) \
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@printf "\n$(BOLD)$(YELLOW) Testing$(RESET)\n"
 	@grep -E '^test:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
@@ -109,7 +112,7 @@ screenshots: ## Generate App Store screenshots via UI tests
 	@ls -la ios/screenshots/*.png 2>/dev/null || true
 
 # ============================================================
-#  Testing
+#  Firmware
 # ============================================================
 firmware: ## Build firmware for the OLED and 4848 LCD boards
 	cd firmware && pio run -e esp32 -e esp32-4848s040c
@@ -117,12 +120,24 @@ firmware: ## Build firmware for the OLED and 4848 LCD boards
 firmware-c6: ## Build firmware for the XIAO ESP32-C6 round LCD board
 	cd firmware && PLATFORMIO_CORE_DIR=$(PIO_C6_CORE_DIR) pio run -e xiao-c6-gc9a01
 
-firmware-c6-upload: ## Flash the XIAO ESP32-C6 round LCD board over USB
-	cd firmware && PLATFORMIO_CORE_DIR=$(PIO_C6_CORE_DIR) pio run -e xiao-c6-gc9a01 --target upload
+# PlatformIO's port auto-detect can pick a Bluetooth serial device instead of
+# the board ("Failed to connect to ESP32-C6: No serial data received"), so
+# prefer the USB CDC port. Override with: make firmware-c6-upload PORT=/dev/...
+PORT ?= $(shell ls /dev/cu.usbmodem* /dev/ttyACM* /dev/ttyUSB* 2>/dev/null | head -1)
 
-test: ## Run Playwright tests
-	@printf "$(MAGENTA)>> Running Playwright tests...$(RESET)\n"
-	npx playwright test
+firmware-c6-upload: ## Flash the XIAO ESP32-C6 round LCD board over USB
+	cd firmware && PLATFORMIO_CORE_DIR=$(PIO_C6_CORE_DIR) pio run -e xiao-c6-gc9a01 --target upload $(if $(PORT),--upload-port $(PORT),)
+
+# ============================================================
+#  Testing
+# ============================================================
+# These tests run against a real device on the LAN. Point them at yours:
+#   make test HOOKBOT_URL=http://192.168.1.50
+HOOKBOT_URL ?= http://hookbot.local
+
+test: ## Run Playwright tests against a device (override HOOKBOT_URL)
+	@printf "$(MAGENTA)>> Running Playwright tests against $(HOOKBOT_URL)...$(RESET)\n"
+	HOOKBOT_URL=$(HOOKBOT_URL) npx playwright test
 
 # ============================================================
 #  Linting
