@@ -550,13 +550,21 @@ pub async fn auth_status(
         check_user_api_key(&req, &db).is_some()
             || check_workos_session_cookie(&req, &config.session_secret).is_some()
     } else {
+        // Must accept the same credentials require_auth does, including tokens
+        // from Account -> API Tokens. Otherwise a client holding a working
+        // token is told it is not signed in, while every other endpoint
+        // accepts it.
         check_api_key(&req, &config.api_key)
+            || check_local_api_token(&req, &db)
             || check_session_cookie(&req, &config.session_secret)
     };
 
+    // Always report the mode. Returning null for single-admin left clients
+    // unable to tell "this server has no WorkOS" from "this server is too old
+    // to say", so the iOS app led with a WorkOS button that 404s here.
     Json(AuthStatusResponse {
         authenticated,
-        workos_enabled: if workos_enabled { Some(true) } else { None },
+        workos_enabled: Some(workos_enabled),
     })
 }
 

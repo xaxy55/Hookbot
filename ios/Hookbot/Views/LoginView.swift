@@ -9,6 +9,9 @@ struct LoginView: View {
     @State private var showManualEntry = false
     @State private var manualAPIKey: String = ""
     @State private var showPairing = false
+    /// nil until the server has been asked. Servers without WorkOS answer 404
+    /// on /auth/login, so offering that button there is a dead end.
+    @State private var workosEnabled: Bool? = nil
 
     /// Comes from Info.plist, which Xcode Cloud fills from the
     /// HOOKBOT_SERVER_URL environment variable. No host is committed: the repo
@@ -79,7 +82,8 @@ struct LoginView: View {
                 }
                 .padding(.horizontal, 32)
 
-                // Sign in button
+                // Sign in button — only where the server actually supports it.
+                if workosEnabled != false {
                 Button {
                     auth.login(serverURL: serverURL) { apiKey, email in
                         guard let apiKey else { return }
@@ -114,6 +118,12 @@ struct LoginView: View {
                 }
                 .disabled(serverURL.isEmpty || auth.isLoading)
                 .padding(.horizontal, 32)
+                } else {
+                    Text("This server signs in by pairing code or API key.")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(Color(white: 0.4))
+                        .padding(.horizontal, 32)
+                }
 
                 // Manual API key toggle
                 Button {
@@ -181,6 +191,29 @@ struct LoginView: View {
             if serverURL.isEmpty {
                 serverURL = defaultServerURL
             }
+            probeServerMode()
         }
+        .onChange(of: serverURL) { _, _ in
+            workosEnabled = nil
+            probeServerMode()
+        }
+    }
+
+    /// Ask the server which sign-in methods it actually has. Anything other
+    /// than a clear "WorkOS is on" leaves the button hidden: a self-hosted
+    /// server 404s that flow, and a dead button is worse than one fewer option.
+    private func probeServerMode() {
+        let base = PairingService.normalize(serverURL)
+        guard !serverURL.isEmpty, let url = URL(string: "\(base)/api/auth/status") else { return }
+
+        URLSession.shared.dataTask(with: url) { data, _, _ in
+            let enabled: Bool = {
+                guard let data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+                else { return false }
+                return json["workos_enabled"] as? Bool ?? false
+            }()
+            DispatchQueue.main.async { workosEnabled = enabled }
+        }.resume()
     }
 }

@@ -11,10 +11,13 @@ struct DeviceDetailView: View {
     @State private var isSaving = false
     @State private var statusMessage: String?
     @State private var errorMessage: String?
+    @State private var servoChannels: [ServoChannel] = []
+    @State private var sweepingChannel: Int?
 
     enum DetailTab: String, CaseIterable {
         case status = "Status"
         case config = "Config"
+        case servos = "Servos"
         case history = "History"
     }
 
@@ -33,6 +36,8 @@ struct DeviceDetailView: View {
                         statusTab
                     case .config:
                         configTab
+                    case .servos:
+                        servosTab
                     case .history:
                         historyTab
                     }
@@ -397,6 +402,133 @@ struct DeviceDetailView: View {
                 }
                 statusMessage = "Config pushed to device"
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) { statusMessage = nil }
+            }
+        }.resume()
+    }
+
+    // MARK: - Servos
+
+    private var servosTab: some View {
+        VStack(spacing: 12) {
+            let enabled = servoChannels.enumerated().filter { $0.element.enabled }
+
+            if enabled.isEmpty {
+                Text("No servos enabled. Set a pin in the dashboard to enable a channel.")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundColor(Color(white: 0.5))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color(white: 0.08)))
+            }
+
+            ForEach(enabled, id: \.offset) { index, channel in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Ch \(index): \(channel.label)")
+                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                            .foregroundColor(.white)
+                        // An enabled channel whose attach failed will never
+                        // move, so say so rather than showing it as healthy.
+                        if channel.attached == false {
+                            Text("not attached")
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundColor(.red)
+                        }
+                        Spacer()
+                        Text("\(channel.current)°")
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundColor(Color(white: 0.6))
+                    }
+
+                    Slider(
+                        value: Binding(
+                            get: { Double(channel.current) },
+                            set: { setServoAngle(channel: index, angle: Int($0)) }
+                        ),
+                        in: Double(channel.min)...Double(channel.max),
+                        step: 1
+                    )
+                    .disabled(channel.attached == false)
+
+                    Button {
+                        sweepServo(channel: index)
+                    } label: {
+                        Text(sweepingChannel == index ? "Sweeping…" : "Sweep test")
+                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                            .frame(maxWidth: .infinity)
+                            .padding(10)
+                            .background(Color(white: 0.18))
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    .disabled(sweepingChannel != nil || channel.attached == false)
+                }
+                .padding(12)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color(white: 0.08)))
+            }
+        }
+        .onAppear { fetchServos() }
+    }
+
+    private func fetchServos() {
+        guard !engine.config.serverURL.isEmpty,
+              let url = URL(string: "\(engine.config.serverURL)/api/devices/\(device.id)/servos") else { return }
+
+        var request = URLRequest(url: url)
+        if !engine.config.apiKey.isEmpty {
+            request.setValue(engine.config.apiKey, forHTTPHeaderField: "X-API-Key")
+        }
+
+        URLSession.shared.dataTask(with: request) { data, _, _ in
+            DispatchQueue.main.async {
+                guard let data,
+                      let decoded = try? JSONDecoder().decode(ServoResponse.self, from: data) else { return }
+                servoChannels = decoded.channels
+            }
+        }.resume()
+    }
+
+    private func setServoAngle(channel: Int, angle: Int) {
+        // Reflect the move locally so the slider tracks the thumb rather than
+        // snapping back while the round trip is in flight.
+        if servoChannels.indices.contains(channel) {
+            servoChannels[channel].current = angle
+        }
+        postServo(path: "servos", body: ["channel": channel, "angle": angle]) { _ in }
+    }
+
+    private func sweepServo(channel: Int) {
+        sweepingChannel = channel
+        postServo(path: "servos/sweep", body: ["channel": channel]) { ok in
+            if !ok { errorMessage = "Could not start the sweep" }
+            // The device drives the sweep for about three seconds; re-read
+            // afterwards so the slider shows where it actually came to rest.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                sweepingChannel = nil
+                fetchServos()
+            }
+        }
+    }
+
+    private func postServo(path: String, body: [String: Any], completion: @escaping (Bool) -> Void) {
+        guard !engine.config.serverURL.isEmpty,
+              let url = URL(string: "\(engine.config.serverURL)/api/devices/\(device.id)/\(path)") else {
+            completion(false)
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if !engine.config.apiKey.isEmpty {
+            request.setValue(engine.config.apiKey, forHTTPHeaderField: "X-API-Key")
+        }
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        URLSession.shared.dataTask(with: request) { _, response, _ in
+            DispatchQueue.main.async {
+                let ok = (response as? HTTPURLResponse)?.statusCode == 200
+                completion(ok)
             }
         }.resume()
     }

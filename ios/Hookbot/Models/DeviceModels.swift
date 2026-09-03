@@ -62,3 +62,22 @@ struct StatusHistoryEntry: Codable, Identifiable {
         case createdAt = "created_at"
     }
 }
+
+/// One servo channel as the device reports it on GET /servos.
+struct ServoChannel: Codable {
+    let pin: Int
+    let min: Int
+    let max: Int
+    let rest: Int
+    var current: Int
+    let label: String
+    let enabled: Bool
+    /// Whether the firmware's PWM attach actually succeeded. An enabled
+    /// channel that failed to attach will never move, however healthy the rest
+    /// of the record looks. Optional: older firmware does not report it.
+    let attached: Bool?
+}
+
+struct ServoResponse: Codable {
+    let channels: [ServoChannel]
+}
