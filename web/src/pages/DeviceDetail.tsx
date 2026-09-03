@@ -853,7 +853,7 @@ function ServosTab({ deviceId, online }: { deviceId: string; online: boolean }) 
                       <button
                         onClick={() => sweepMut.mutate(i)}
                         disabled={sweeping !== null || ch.attached === false}
-                        title="Drive this servo min → max → rest. If it does not move, the problem is wiring or power."
+                        title="Nudge this servo through a short arc and back. If it does not move, check wiring. If the device reboots, the servo is drawing more than its supply can hold up — give it its own 5V supply with a common ground."
                         className="px-2 py-0.5 text-[10px] bg-raised hover:bg-inset rounded text-fg-2 disabled:opacity-40 transition-colors"
                       >
                         {sweeping === i ? 'Sweeping…' : 'Sweep test'}

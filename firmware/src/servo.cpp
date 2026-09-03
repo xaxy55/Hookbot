@@ -103,29 +103,50 @@ bool isAttached(uint8_t ch) {
 // connection — so the request only records what to do and update() steps
 // through it.
 static int8_t sweepCh = -1;
-static uint8_t sweepStep = 0;
+static uint8_t sweepPhase = 0;      // index into the waypoints below
+static float sweepPos = 90.0f;      // angle currently commanded
 static uint32_t sweepNextMs = 0;
-static const uint32_t SWEEP_STEP_MS = 700;
+
+// Step toward each waypoint in short hops with a pause between, rather than
+// driving continuously. Measured on hardware: a single 5-15 degree move is
+// fine, but ~1s of continuous travel browns out a board whose servo shares the
+// USB supply and resets the device mid-test — which looks exactly like the
+// fault the test exists to find. Hopping lets the rail recover between moves.
+// This mitigates; it does not cure. A servo that must run continuously needs
+// its own supply, common ground, and a bulk capacitor.
+static const uint32_t SWEEP_HOP_MS = 260;   // pause between hops
+static const int SWEEP_HOP_DEG = 10;        // travel per hop
+static const int SWEEP_ARC_DEG = 35;
 
 bool requestSweep(uint8_t ch) {
     if (ch >= MAX_SERVOS || !attached[ch]) return false;
     sweepCh = (int8_t)ch;
-    sweepStep = 0;
+    sweepPhase = 0;
+    sweepPos = (float)channels[ch].currentAngle;
     sweepNextMs = 0;  // start on the next update()
     return true;
 }
 
 bool isSweeping() { return sweepCh >= 0; }
 
-/// Drive the extremes directly, bypassing the smoothing in update(), so the
-/// result is unambiguous: if the horn does not move for this, the problem is
-/// wiring or power rather than the animation.
+/// Drive the channel through its range, bypassing the state animation in
+/// update(), so the result is unambiguous: if the horn does not move for this,
+/// the problem is wiring or power rather than the animation.
 static void stepSweep() {
     if (sweepCh < 0 || millis() < sweepNextMs) return;
 
     const ServoChannel& c = channels[sweepCh];
-    const uint8_t points[3] = { c.minAngle, c.maxAngle, c.restAngle };
-    if (sweepStep >= 3) {
+    // A bounded arc around rest rather than the full min..max travel. Two
+    // reasons, both learned the hard way on real hardware: driving to the
+    // mechanical limits can push a mounted horn into the enclosure, and the
+    // sustained current of a long excursion browns out a board whose servo
+    // shares the USB supply — the device resets mid-test, which looks exactly
+    // like the failure the test is meant to diagnose.
+    const int lo = max((int)c.minAngle, (int)c.restAngle - SWEEP_ARC_DEG);
+    const int hi = min((int)c.maxAngle, (int)c.restAngle + SWEEP_ARC_DEG);
+    const uint8_t waypoints[3] = { (uint8_t)lo, (uint8_t)hi, c.restAngle };
+
+    if (sweepPhase >= 3) {
         currentSmooth[sweepCh] = c.restAngle;
         targetAngle[sweepCh] = c.restAngle;
         channels[sweepCh].currentAngle = c.restAngle;
@@ -134,10 +155,19 @@ static void stepSweep() {
         return;
     }
 
-    servoObjects[sweepCh].write(points[sweepStep]);
-    channels[sweepCh].currentAngle = points[sweepStep];
-    sweepNextMs = millis() + SWEEP_STEP_MS;
-    sweepStep++;
+    const float target = (float)waypoints[sweepPhase];
+    const float diff = target - sweepPos;
+    if (fabsf(diff) <= (float)SWEEP_HOP_DEG) {
+        sweepPos = target;
+        sweepPhase++;
+    } else {
+        sweepPos += (diff > 0 ? (float)SWEEP_HOP_DEG : -(float)SWEEP_HOP_DEG);
+    }
+
+    uint8_t angle = (uint8_t)constrain((int)lroundf(sweepPos), c.minAngle, c.maxAngle);
+    servoObjects[sweepCh].write(angle);
+    channels[sweepCh].currentAngle = angle;
+    sweepNextMs = millis() + SWEEP_HOP_MS;
 }
 
 void update(uint32_t deltaMs) {

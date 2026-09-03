@@ -462,6 +462,10 @@ struct DeviceDetailView: View {
                             .cornerRadius(8)
                     }
                     .disabled(sweepingChannel != nil || channel.attached == false)
+
+                    Text("If the device reboots during a sweep, the servo needs its own 5V supply.")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(Color(white: 0.4))
                 }
                 .padding(12)
                 .background(RoundedRectangle(cornerRadius: 10).fill(Color(white: 0.08)))
