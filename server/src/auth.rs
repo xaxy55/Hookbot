@@ -17,6 +17,7 @@ use tracing::warn;
 
 use crate::config::AppConfig;
 use crate::db::DbPool;
+use rusqlite::OptionalExtension;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -118,6 +119,16 @@ pub async fn require_auth(
             return next.run(req).await;
         }
 
+        // Check a token minted via Account -> API Tokens (or phone pairing,
+        // which now issues the same kind of token). Without this, every
+        // token "Create API Token" produces is unusable outside WorkOS mode —
+        // it gets written to user_api_tokens, but nothing here ever reads
+        // that table for a single-admin deployment.
+        if check_local_api_token(&req, &db) {
+            req.extensions_mut().insert(UserId(None));
+            return next.run(req).await;
+        }
+
         // Check legacy session cookie (timestamp:hmac)
         if check_session_cookie(&req, &config.session_secret) {
             req.extensions_mut().insert(UserId(None));
@@ -164,38 +175,71 @@ fn check_user_api_key(req: &Request<Body>, db: &DbPool) -> Option<String> {
     None
 }
 
+/// Legacy-mode counterpart to check_user_api_key: same user_api_tokens table,
+/// but without requiring a matching user_id, since single-admin mode has only
+/// the one (synthetic) user.
+fn check_local_api_token(req: &Request<Body>, db: &DbPool) -> bool {
+    let Some(key) = extract_api_key_from_headers(req) else { return false };
+    let conn = db.lock().unwrap();
+    let found: Option<String> = conn
+        .query_row(
+            "SELECT id FROM user_api_tokens WHERE token = ?1 AND revoked_at IS NULL",
+            [&key],
+            |row| row.get(0),
+        )
+        .optional()
+        .unwrap_or(None);
+    let Some(token_id) = found else { return false };
+    let _ = conn.execute(
+        "UPDATE user_api_tokens SET last_used_at = datetime('now') WHERE id = ?1",
+        [&token_id],
+    );
+    true
+}
+
 /// Extract API key from Authorization: Bearer or X-API-Key header.
 fn extract_api_key_from_headers(req: &Request<Body>) -> Option<String> {
     if let Some(auth) = req.headers().get(header::AUTHORIZATION) {
-        if let Ok(auth_str) = auth.to_str() {
-            if let Some(token) = auth_str.strip_prefix("Bearer ") {
-                return Some(token.trim().to_string());
-            }
+        let bytes = trim_ascii_ws(auth.as_bytes());
+        if let Some(token) = bytes.strip_prefix(b"Bearer ") {
+            // Lossy on purpose: an API key with a non-ASCII byte still needs a
+            // String here to look up in the (UTF-8) database, and this path is
+            // only used to *find* a token, never to prove equality with one —
+            // check_api_key below compares the original bytes exactly.
+            return Some(String::from_utf8_lossy(trim_ascii_ws(token)).into_owned());
         }
     }
     if let Some(key) = req.headers().get("x-api-key") {
-        if let Ok(key_str) = key.to_str() {
-            return Some(key_str.trim().to_string());
-        }
+        return Some(String::from_utf8_lossy(trim_ascii_ws(key.as_bytes())).into_owned());
     }
     None
 }
 
+fn trim_ascii_ws(b: &[u8]) -> &[u8] {
+    let b = match b.iter().position(|c| !c.is_ascii_whitespace()) {
+        Some(i) => &b[i..],
+        None => return &[],
+    };
+    match b.iter().rposition(|c| !c.is_ascii_whitespace()) {
+        Some(i) => &b[..=i],
+        None => &[],
+    }
+}
+
 fn check_api_key(req: &Request<Body>, expected_key: &str) -> bool {
+    let expected = expected_key.as_bytes();
+
     // Check Authorization: Bearer <key>
     if let Some(auth) = req.headers().get(header::AUTHORIZATION) {
-        if let Ok(auth_str) = auth.to_str() {
-            if let Some(token) = auth_str.strip_prefix("Bearer ") {
-                return constant_time_eq(token.trim(), expected_key);
-            }
+        let bytes = trim_ascii_ws(auth.as_bytes());
+        if let Some(token) = bytes.strip_prefix(b"Bearer ") {
+            return constant_time_eq_bytes(trim_ascii_ws(token), expected);
         }
     }
 
     // Check X-API-Key header
     if let Some(key) = req.headers().get("x-api-key") {
-        if let Ok(key_str) = key.to_str() {
-            return constant_time_eq(key_str.trim(), expected_key);
-        }
+        return constant_time_eq_bytes(trim_ascii_ws(key.as_bytes()), expected);
     }
 
     false
@@ -320,6 +364,13 @@ fn compute_workos_session_hmac(user_id: &str, timestamp: u64, secret: &[u8; 32])
     mac.update(b":");
     mac.update(timestamp.to_be_bytes().as_ref());
     hex::encode(mac.finalize().into_bytes())
+}
+
+fn constant_time_eq_bytes(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    a.iter().zip(b.iter()).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
 }
 
 fn constant_time_eq(a: &str, b: &str) -> bool {
@@ -832,12 +883,47 @@ pub async fn get_me(
                 .into_response()
         }
     } else {
-        // Legacy mode - return global API key
+        // Legacy mode: mint a revocable personal token rather than handing
+        // back config.api_key. Same reasoning as phone pairing: config.api_key
+        // is operator-chosen and may contain a byte an HTTP header cannot
+        // carry as visible ASCII, which silently made both this endpoint's
+        // output and the reqwest client that has to send it back unusable
+        // together — the CLI's `hookbot login` would save a key it could
+        // never actually present.
+        let conn = db.lock().unwrap();
+        let uid = match crate::routes::account::local_admin_id(&conn) {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::error!("Failed to resolve local admin: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({ "error": "Failed to issue credential" })),
+                )
+                    .into_response();
+            }
+        };
+        let id = uuid::Uuid::new_v4().to_string();
+        let token = format!("hb_{}", uuid::Uuid::new_v4().to_string().replace("-", ""));
+        let preview = format!("...{}", &token[token.len().saturating_sub(8)..]);
+
+        if let Err(e) = conn.execute(
+            "INSERT INTO user_api_tokens (id, user_id, token, token_preview, name)
+             VALUES (?1, ?2, ?3, ?4, 'CLI login')",
+            rusqlite::params![id, uid, token, preview],
+        ) {
+            tracing::error!("Failed to issue CLI login token: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to issue credential" })),
+            )
+                .into_response();
+        }
+
         (
             StatusCode::OK,
             Json(serde_json::json!({
                 "mode": "legacy",
-                "api_key": config.api_key,
+                "api_key": token,
             })),
         )
             .into_response()
@@ -852,4 +938,82 @@ fn urlencoding(s: &str) -> String {
             _ => format!("%{:02X}", c as u8),
         })
         .collect()
+}
+
+#[cfg(test)]
+mod header_key_tests {
+    use super::*;
+
+    fn request_with_header(name: &str, value: &[u8]) -> Request<Body> {
+        Request::builder()
+            .header(name, value)
+            .body(Body::empty())
+            .unwrap()
+    }
+
+    #[test]
+    fn matches_a_non_ascii_key_byte_for_byte() {
+        // A key an operator's password manager generated, containing a byte
+        // that is valid in an HTTP header but not visible ASCII. This is what
+        // silently broke every header-based login before: HeaderValue::to_str()
+        // rejects such bytes, so the old code never even reached the compare.
+        let key = "correct-horseø-battery-staple";
+        let req = request_with_header("x-api-key", key.as_bytes());
+        assert!(check_api_key(&req, key));
+    }
+
+    #[test]
+    fn rejects_a_wrong_key_of_the_same_shape() {
+        let req = request_with_header("x-api-key", "correct-horseø-battery-staple".as_bytes());
+        assert!(!check_api_key(&req, "correct-horseø-battery-staaple"));
+    }
+
+    #[test]
+    fn trims_surrounding_whitespace_on_bearer_and_header_forms() {
+        let key = "plain-ascii-key";
+        let bearer = request_with_header("authorization", format!("Bearer  {key}  ").as_bytes());
+        assert!(check_api_key(&bearer, key));
+
+        let header = request_with_header("x-api-key", format!("  {key}\t").as_bytes());
+        assert!(check_api_key(&header, key));
+    }
+
+    #[test]
+    fn extract_recovers_a_non_ascii_key_for_lookup() {
+        let key = "tökén-with-accénts";
+        let req = request_with_header("x-api-key", key.as_bytes());
+        assert_eq!(extract_api_key_from_headers(&req).as_deref(), Some(key));
+    }
+
+    #[test]
+    fn check_local_api_token_accepts_a_dashboard_minted_token_and_rejects_a_revoked_one() {
+        let conn = crate::db::open_memory();
+        conn.execute(
+            "INSERT INTO users (id, workos_id, email, name, api_key) VALUES ('u1','u1','a@b','A','k1')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO user_api_tokens (id, user_id, token, token_preview, name) \
+             VALUES ('t1','u1','hb_live','...live','Paired phone')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO user_api_tokens (id, user_id, token, token_preview, name, revoked_at) \
+             VALUES ('t2','u1','hb_dead','...dead','Old phone', datetime('now'))",
+            [],
+        )
+        .unwrap();
+        let db: DbPool = std::sync::Arc::new(std::sync::Mutex::new(conn));
+
+        let live = request_with_header("x-api-key", b"hb_live");
+        assert!(check_local_api_token(&live, &db));
+
+        let dead = request_with_header("x-api-key", b"hb_dead");
+        assert!(!check_local_api_token(&dead, &db));
+
+        let unknown = request_with_header("x-api-key", b"hb_never_issued");
+        assert!(!check_local_api_token(&unknown, &db));
+    }
 }

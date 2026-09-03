@@ -191,7 +191,7 @@ pub async fn create_pairing_token(
 /// POST /api/auth/pair/redeem — exchange a pairing token for a credential.
 /// Public: the phone has no credential yet, so the token is the whole proof.
 pub async fn redeem_pairing_token(
-    Extension(config): Extension<Arc<AppConfig>>,
+    Extension(_config): Extension<Arc<AppConfig>>,
     Extension(db): Extension<DbPool>,
     Extension(rate_limiter): Extension<PairingRateLimiter>,
     headers: HeaderMap,
@@ -297,15 +297,51 @@ pub async fn redeem_pairing_token(
             )
                 .into_response()
         }
-        // Single-user mode: there is exactly one credential to hand out.
+        // Single-user mode: mint a revocable personal token the same way the
+        // multi-tenant branch above does, rather than handing out
+        // config.api_key. Two reasons: a lost phone can be cut off from
+        // Account -> API Tokens without rotating the server's own shared
+        // secret, and config.api_key is operator-chosen and may contain bytes
+        // an HTTP header cannot carry (see check_api_key's byte-exact compare
+        // for why that used to fail silently), where a minted hb_ token never
+        // can.
         None => {
+            let uid = match crate::routes::account::local_admin_id(&conn) {
+                Ok(id) => id,
+                Err(e) => {
+                    tracing::error!("Failed to resolve local admin: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(serde_json::json!({ "error": "Failed to issue credential" })),
+                    )
+                        .into_response();
+                }
+            };
+            let id = uuid::Uuid::new_v4().to_string();
+            let token = format!("hb_{}", uuid::Uuid::new_v4().to_string().replace("-", ""));
+            let preview = format!("...{}", &token[token.len().saturating_sub(8)..]);
+            let name = "Paired phone";
+
+            if let Err(e) = conn.execute(
+                "INSERT INTO user_api_tokens (id, user_id, token, token_preview, name)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                rusqlite::params![id, uid, token, preview, name],
+            ) {
+                tracing::error!("Failed to issue paired-device token: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({ "error": "Failed to issue credential" })),
+                )
+                    .into_response();
+            }
+
             tracing::info!("Paired a phone in single-user mode");
             (
                 StatusCode::OK,
                 Json(serde_json::json!({
                     "ok": true,
                     "mode": "legacy",
-                    "api_key": config.api_key,
+                    "api_key": token,
                 })),
             )
                 .into_response()

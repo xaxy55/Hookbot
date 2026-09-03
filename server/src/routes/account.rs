@@ -17,7 +17,7 @@ use crate::db::DbPool;
 /// tokens and can never be used to log in.
 const LOCAL_ADMIN_ID: &str = "local-admin";
 
-fn local_admin_id(conn: &rusqlite::Connection) -> Result<String, rusqlite::Error> {
+pub(crate) fn local_admin_id(conn: &rusqlite::Connection) -> Result<String, rusqlite::Error> {
     // Matches the `users` table created by SCHEMA in db.rs (workos_id/email/
     // api_key). Note db.rs also declares a second, incompatible `users` table
     // in run_migrations; SCHEMA runs first, so that one never takes effect.
