@@ -14,7 +14,7 @@ RED    := \033[31m
 DIM    := \033[2m
 
 .PHONY: help \
-        test deploy require-server-url \
+        test deploy release require-server-url \
         firmware firmware-c6 firmware-c6-upload \
         server web up build \
         lint lint-fix lint-server lint-web lint-ios lint-fix-ios swift-check \
@@ -282,21 +282,83 @@ audit-deps: ## Check Rust and npm dependencies for known vulnerabilities
 # ============================================================
 #  Deploy
 # ============================================================
-deploy: ## Pull the published images and restart the production stack
+# The tag docker-push.yml publishes for a commit is its short SHA, so a deploy
+# can name the exact image built from the code in front of you. Deploying
+# ":latest" cannot do that: if the build for this commit never ran, ":latest"
+# still resolves — to the previous commit — and every step reports success
+# while shipping stale code.
+GIT_SHA      = $(shell git rev-parse --short HEAD)
+IMAGE_PREFIX ?= xaxyxy/hookbot
+COMPOSE      = docker compose -f docker-compose.prod.yml --env-file .env
+PINNED_IMAGES = SERVER_IMAGE=$(IMAGE_PREFIX)-server:$(GIT_SHA) \
+                WEB_IMAGE=$(IMAGE_PREFIX)-web:$(GIT_SHA)
+
+deploy: ## Deploy the image built from the current commit (fails if there isn't one)
 	@if [ -z "$(DEPLOY_HOST)" ]; then \
 		printf "$(RED)>> DEPLOY_HOST is not set.$(RESET)\n"; \
 		printf "   Add it to .env or run: make deploy DEPLOY_HOST=root@your.server\n"; \
 		exit 1; \
 	fi
+	@# A dirty tree means the published image is not the code you are looking at.
+	@if [ -n "$$(git status --porcelain)" ] && [ -z "$(ALLOW_DIRTY)" ]; then \
+		printf "$(RED)>> Working tree is dirty — the built image cannot match it.$(RESET)\n"; \
+		git status --short; \
+		printf "   Commit and push, or override with: make deploy ALLOW_DIRTY=1\n"; \
+		exit 1; \
+	fi
+	@# CI builds from the remote, so an unpushed commit has no image either.
+	@git fetch -q origin main 2>/dev/null || true
+	@if ! git merge-base --is-ancestor HEAD origin/main 2>/dev/null; then \
+		printf "$(RED)>> HEAD ($(GIT_SHA)) is not on origin/main, so CI never built it.$(RESET)\n"; \
+		printf "   Run: git push origin main && make release\n"; \
+		exit 1; \
+	fi
 	@printf "$(BLUE)>> Syncing deploy/ to $(DEPLOY_HOST)...$(RESET)\n"
 	rsync -az --exclude '.env' deploy $(DEPLOY_HOST):$(dir $(DEPLOY_DIR))
-	@printf "$(BLUE)>> Pulling images and recreating...$(RESET)\n"
+	@printf "$(BLUE)>> Pulling $(GIT_SHA)...$(RESET)\n"
+	@if ! ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR) && $(PINNED_IMAGES) $(COMPOSE) pull'; then \
+		printf "$(RED)>> No published image tagged $(GIT_SHA).$(RESET)\n"; \
+		printf "   docker-push.yml only runs on demand — run: make release\n"; \
+		exit 1; \
+	fi
+	@printf "$(BLUE)>> Recreating containers...$(RESET)\n"
 	@# --force-recreate every service: `up -d` alone leaves containers running on
 	@# a stale image even after a successful pull, which silently ships old code.
-	ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR) && \
-		docker compose -f docker-compose.prod.yml --env-file .env pull && \
-		docker compose -f docker-compose.prod.yml --env-file .env up -d --force-recreate'
-	@printf "$(GREEN)>> Deployed.$(RESET)\n"
+	ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR) && $(PINNED_IMAGES) $(COMPOSE) up -d --force-recreate'
+	@# Confirm what is actually running, rather than trusting that it worked.
+	@running=$$(ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR) && $(PINNED_IMAGES) $(COMPOSE) ps --format "{{.Image}}"' \
+		| grep -c ":$(GIT_SHA)$$" || true); \
+	if [ "$$running" -lt 2 ]; then \
+		printf "$(RED)>> server and web are not both running $(GIT_SHA) (matched $$running).$(RESET)\n"; \
+		exit 1; \
+	fi
+	@printf "$(GREEN)>> Deployed $(GIT_SHA) and verified running.$(RESET)\n"
+
+release: ## Build the image for HEAD in CI, wait for it, then deploy
+	@printf "$(BLUE)>> Dispatching image build for $(GIT_SHA)...$(RESET)\n"
+	@if ! gh workflow run docker-push.yml --ref main; then \
+		printf "$(RED)>> Could not dispatch the build.$(RESET)\n"; \
+		printf "   gh is authenticated as: %s\n" "$$(gh api user -q .login 2>/dev/null || echo unknown)"; \
+		printf "   That account needs admin on the repo — switch with: gh auth switch --user <account>\n"; \
+		exit 1; \
+	fi
+	@# Wait for the run *for this commit*. Taking "the most recent run" can match
+	@# an earlier commit's run that has already finished, which then deploys
+	@# stale code with every step reporting success.
+	@sha=$$(git rev-parse HEAD); id=""; \
+	for i in $$(seq 1 30); do \
+		id=$$(gh run list --workflow=docker-push.yml --limit 10 \
+			--json databaseId,headSha -q "[.[] | select(.headSha==\"$$sha\")][0].databaseId"); \
+		[ -n "$$id" ] && [ "$$id" != "null" ] && break; \
+		sleep 5; \
+	done; \
+	if [ -z "$$id" ] || [ "$$id" = "null" ]; then \
+		printf "$(RED)>> No workflow run appeared for $(GIT_SHA).$(RESET)\n"; exit 1; \
+	fi; \
+	printf "$(BLUE)>> Waiting on run %s...$(RESET)\n" "$$id"; \
+	gh run watch "$$id" --exit-status || { \
+		printf "$(RED)>> Image build failed for $(GIT_SHA).$(RESET)\n"; exit 1; }
+	@$(MAKE) deploy
 
 # ============================================================
 #  Secrets & CI
