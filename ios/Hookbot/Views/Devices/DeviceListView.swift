@@ -95,20 +95,30 @@ struct DeviceListView: View {
             request.setValue(engine.config.apiKey, forHTTPHeaderField: "X-API-Key")
         }
 
+        let host = url.host
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 isLoading = false
-                if let error {
-                    errorMessage = error.localizedDescription
+                if let message = APIFailure.describe(
+                    "Couldn't load devices", host: host,
+                    data: data, response: response, error: error
+                ) {
+                    errorMessage = message
                     return
                 }
-                guard let data,
-                      let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-                    errorMessage = "Failed to load devices"
+                guard let data else {
+                    errorMessage = "Couldn't load devices: the server sent nothing back."
                     return
                 }
-                if let decoded = try? JSONDecoder().decode([DeviceWithStatus].self, from: data) {
-                    devices = decoded
+                do {
+                    // Decoding used to fail silently, leaving an empty list and
+                    // no clue that anything went wrong.
+                    devices = try JSONDecoder().decode([DeviceWithStatus].self, from: data)
+                    errorMessage = nil
+                } catch {
+                    errorMessage = APIFailure.describeUnreadable(
+                        "Couldn't load devices", host: host, data: data)
                 }
             }
         }.resume()
