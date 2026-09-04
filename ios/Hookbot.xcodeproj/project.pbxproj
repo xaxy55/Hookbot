@@ -10,6 +10,7 @@
 		0162053190C7BC9DBA9DEDC4 /* DailyRewardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6925F42E4EC6A7C63DEE66B1 /* DailyRewardView.swift */; };
 		022226845D92B0D3589A7212 /* WeeklyPhotoCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15641C8A81C4042D8266061 /* WeeklyPhotoCardView.swift */; };
 		03595AAAB78474F4277F3D87 /* HookbotWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BAE77E44DC07E2A2F72BF42 /* HookbotWidget.swift */; };
+		040416E7E9A31DA6DD1CDE61 /* APIFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = C847FF35E59705BCFEED116D /* APIFailure.swift */; };
 		0515C156A218A06627632BFA /* ProximityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D41E7C2A33644788D086D7A /* ProximityService.swift */; };
 		051FEAACFBA8DC2629AF6815 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BD95AF6D12050ED18D77B05 /* LiveActivityManager.swift */; };
 		059E26B7DE33F1D35D4E3D76 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 766D0CA26BEC59F21E8825DA /* ControlPanelView.swift */; };
@@ -271,6 +272,7 @@
 		C1CC860A6D555386CA4917BE /* ComplicationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationProvider.swift; sourceTree = "<group>"; };
 		C5705359022323E7A2AC93CE /* MoodJournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodJournalView.swift; sourceTree = "<group>"; };
 		C5CA4CE70846E9E34736A060 /* GlobalWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalWallView.swift; sourceTree = "<group>"; };
+		C847FF35E59705BCFEED116D /* APIFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIFailure.swift; sourceTree = "<group>"; };
 		CAF8AD9DCE1B38800DA1ACAA /* HookbotWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookbotWidget.swift; sourceTree = "<group>"; };
 		CF64571AB7B292F2ED074EE1 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		D16341E57A503F0A2E6D2757 /* MultipeerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerService.swift; sourceTree = "<group>"; };
@@ -298,6 +300,7 @@
 		06CBB800FED0EF03CF145128 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				C847FF35E59705BCFEED116D /* APIFailure.swift */,
 				53DE514E94C25BEC44DEF58A /* APIService.swift */,
 				843995434E3E46D862C43990 /* AuthService.swift */,
 				F367097B190E6F4E7477FCE9 /* AvatarEvolutionEngine.swift */,
@@ -793,6 +796,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				040416E7E9A31DA6DD1CDE61 /* APIFailure.swift in Sources */,
 				3CC69393822B06DB812E7AD6 /* APIService.swift in Sources */,
 				61ED41A2159A237E24DEB2F7 /* AchievementShowcaseView.swift in Sources */,
 				534DC2F445262130EE95584A /* ActivityFeedView.swift in Sources */,

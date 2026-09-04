@@ -18,6 +18,7 @@ DIM    := \033[2m
         firmware firmware-c6 firmware-c6-upload \
         server web up build \
         lint lint-fix lint-server lint-web lint-ios lint-fix-ios swift-check \
+        check-ios-project \
         update update-server update-web \
         build-testflight screenshots \
         gh-secrets cloud-secrets \
@@ -174,9 +175,13 @@ lint-web: ## Lint web with ESLint
 	@printf "$(YELLOW)>> ESLint (web)...$(RESET)\n"
 	cd web && npm run lint
 
-lint-ios: ## Lint Swift code with SwiftLint
+lint-ios: check-ios-project ## Lint Swift code with SwiftLint
 	@printf "$(YELLOW)>> SwiftLint (iOS)...$(RESET)\n"
 	cd ios && swiftlint lint
+
+check-ios-project: ## Verify every iOS source file is in the Xcode project
+	@printf "$(YELLOW)>> Xcode project consistency...$(RESET)\n"
+	@./scripts/check-ios-project.sh
 
 lint-fix-ios: ## Auto-fix Swift lint issues (SwiftLint)
 	@printf "$(YELLOW)>> SwiftLint --fix (iOS)...$(RESET)\n"
