@@ -27,8 +27,26 @@ struct HookbotApp: App {
                 setupBindings()
                 setupManagers()
                 if auth.checkExistingAuth(config: engine.config) {
+                    // Show the app immediately rather than blocking on a round
+                    // trip, but check the credential is still accepted. A key
+                    // the server rejects used to leave every screen showing
+                    // "Failed to load, retry" with no hint that the problem was
+                    // sign-in.
                     auth.isAuthenticated = true
                     network.start(engine: engine)
+                    auth.validateStoredCredential(
+                        serverURL: engine.config.serverURL,
+                        apiKey: engine.config.apiKey
+                    ) { stillValid in
+                        guard !stillValid else { return }
+                        network.stop()
+                        engine.config.apiKey = ""
+                        if let data = try? JSONEncoder().encode(engine.config) {
+                            UserDefaults.standard.set(data, forKey: "hookbot_config")
+                        }
+                        auth.errorMessage = "Your saved sign-in is no longer valid. Please sign in again."
+                        auth.isAuthenticated = false
+                    }
                 }
                 WatchBridge.shared.activate()
             }

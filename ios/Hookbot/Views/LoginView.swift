@@ -8,6 +8,7 @@ struct LoginView: View {
     @State private var serverURL: String = ""
     @State private var showManualEntry = false
     @State private var manualAPIKey: String = ""
+    @State private var password: String = ""
     @State private var showPairing = false
     /// nil until the server has been asked. Servers without WorkOS answer 404
     /// on /auth/login, so offering that button there is a dead end.
@@ -82,6 +83,48 @@ struct LoginView: View {
                 }
                 .padding(.horizontal, 32)
 
+                // Password sign-in. Single-admin servers have no WorkOS, so
+                // without this the only ways in are scanning a code from
+                // another screen or typing a long API key.
+                if workosEnabled == false {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("PASSWORD")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color(white: 0.5))
+                        SecureField("Admin password", text: $password)
+                            .font(.system(.body, design: .monospaced))
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .padding(12)
+                            .background(Color(white: 0.1))
+                            .cornerRadius(8)
+                            .foregroundColor(.white)
+                            .submitLabel(.go)
+                            .onSubmit { signInWithPassword() }
+
+                        Button {
+                            signInWithPassword()
+                        } label: {
+                            HStack(spacing: 10) {
+                                if auth.isLoading {
+                                    ProgressView().tint(.black)
+                                } else {
+                                    Image(systemName: "key.fill")
+                                }
+                                Text("Sign in")
+                                    .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(14)
+                            .background(Color.white)
+                            .foregroundColor(.black)
+                            .cornerRadius(10)
+                        }
+                        .disabled(serverURL.isEmpty || password.isEmpty || auth.isLoading)
+                    }
+                    .padding(.horizontal, 32)
+                }
+
                 // Sign in button — only where the server actually supports it.
                 if workosEnabled != false {
                 Button {
@@ -119,7 +162,7 @@ struct LoginView: View {
                 .disabled(serverURL.isEmpty || auth.isLoading)
                 .padding(.horizontal, 32)
                 } else {
-                    Text("This server signs in by pairing code or API key.")
+                    Text("Or use a pairing code or API key.")
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundColor(Color(white: 0.4))
                         .padding(.horizontal, 32)
@@ -196,6 +239,22 @@ struct LoginView: View {
         .onChange(of: serverURL) { _, _ in
             workosEnabled = nil
             probeServerMode()
+        }
+    }
+
+    private func signInWithPassword() {
+        guard !serverURL.isEmpty, !password.isEmpty else { return }
+        auth.loginWithPassword(serverURL: serverURL, password: password) { apiKey in
+            guard let apiKey else { return }
+            engine.config.apiKey = apiKey
+            engine.config.serverURL = AuthService.normalizeServerURL(serverURL)
+            if let data = try? JSONEncoder().encode(engine.config) {
+                UserDefaults.standard.set(data, forKey: "hookbot_config")
+            }
+            // The password itself is never stored — the server handed back a
+            // revocable token, and that is all the device keeps.
+            password = ""
+            network.start(engine: engine)
         }
     }
 
