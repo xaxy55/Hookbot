@@ -66,13 +66,6 @@ targets:
         INFOPLIST_KEY_NSNearbyInteractionUsageDescription: "Hookbot uses Ultra Wideband to detect when a buddy's phone is nearby so your avatars can react to each other — wave, high-five, or celebrate when you're close."
         PRODUCT_BUNDLE_IDENTIFIER: com.mr-ai.hookbot
         GENERATE_INFOPLIST_FILE: true
-        # Default server, surfaced to the app via Info.plist. Empty here on
-        # purpose — the repo is public, so no hostname is committed. Xcode
-        # Cloud sets HOOKBOT_SERVER_URL from its environment (see
-        # ci_scripts/ci_post_clone.sh); a blank value just means the user types
-        # their own server on the login screen.
-        HOOKBOT_SERVER_URL: ""
-        INFOPLIST_KEY_HookbotServerURL: "$(HOOKBOT_SERVER_URL)"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 1.0.0

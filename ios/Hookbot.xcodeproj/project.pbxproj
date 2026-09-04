@@ -979,10 +979,8 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				HOOKBOT_SERVER_URL = "";
 				INFOPLIST_FILE = Hookbot/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
-				INFOPLIST_KEY_HookbotServerURL = "$(HOOKBOT_SERVER_URL)";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Hookbot uses NFC to pair with a buddy's phone by tapping devices together.";
@@ -1157,10 +1155,8 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				HOOKBOT_SERVER_URL = "";
 				INFOPLIST_FILE = Hookbot/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Hookbot;
-				INFOPLIST_KEY_HookbotServerURL = "$(HOOKBOT_SERVER_URL)";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Hookbot uses NFC to pair with a buddy's phone by tapping devices together.";

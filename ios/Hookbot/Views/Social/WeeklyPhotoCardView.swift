@@ -6,13 +6,12 @@ import UIKit
 struct WeeklyPhotoCardView: View {
     @EnvironmentObject var engine: AvatarEngine
 
-    /// Footer watermark. Uses the server this install is actually pointed at
-    /// rather than a hostname committed to a public repo; falls back to the
-    /// product name when no server is configured.
+    /// Footer watermark: the server this install is actually pointed at, which
+    /// the user entered at sign-in. Falls back to the product name.
     private var shareFooter: String {
-        let configured = Bundle.main.object(forInfoDictionaryKey: "HookbotServerURL") as? String
-        guard let configured, !configured.isEmpty, !configured.hasPrefix("$("),
-              let host = URL(string: configured)?.host else { return "hookbot" }
+        guard let host = URL(string: engine.config.serverURL)?.host, !host.isEmpty else {
+            return "hookbot"
+        }
         return host
     }
     @State private var cardImage: UIImage?

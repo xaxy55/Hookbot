@@ -14,16 +14,6 @@ struct LoginView: View {
     /// on /auth/login, so offering that button there is a dead end.
     @State private var workosEnabled: Bool? = nil
 
-    /// Comes from Info.plist, which Xcode Cloud fills from the
-    /// HOOKBOT_SERVER_URL environment variable. No host is committed: the repo
-    /// is public. Empty means the user types their own server on the login
-    /// screen, which is the right default for a self-hosted install anyway.
-    private var defaultServerURL: String {
-        let configured = Bundle.main.object(forInfoDictionaryKey: "HookbotServerURL") as? String
-        guard let configured, !configured.isEmpty, !configured.hasPrefix("$(") else { return "" }
-        return configured
-    }
-
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -72,7 +62,7 @@ struct LoginView: View {
                     Text("SERVER")
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
                         .foregroundColor(Color(white: 0.5))
-                    TextField("Server URL", text: $serverURL)
+                    TextField("hookbot.example.com", text: $serverURL)
                         .font(.system(.body, design: .monospaced))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -231,9 +221,9 @@ struct LoginView: View {
                 .environmentObject(network)
         }
         .onAppear {
-            if serverURL.isEmpty {
-                serverURL = defaultServerURL
-            }
+            // Nothing is baked in: every install points somewhere different,
+            // and a stale built-in default silently sends the app at a server
+            // that is not yours. The field below is the only source.
             probeServerMode()
         }
         .onChange(of: serverURL) { _, _ in
